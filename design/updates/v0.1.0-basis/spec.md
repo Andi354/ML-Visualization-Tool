@@ -8,7 +8,7 @@ A local results tool for ds-init projects that replaces "open CSV, sort, scroll,
 deliverable": runs, experiments, comparisons, details and deliverables, read directly from `runs/`.
 
 ## Blocks
-- A · Design system — in progress (colours decided)
+- A · Design system — decided (colours, type, density); states follow in the views
 - B · Frame — open
 - C · Runs — open
 - D · Experiment — open
@@ -44,6 +44,14 @@ comparability warning, and chart series. Everything else is a cool slate grey.
 | `warn-bg` / `warn-line` | `#2E2414` / `#5A4420` | warning banner |
 | `series-1…6` | `#1FA3A3` `#C47F14` `#5A8DEE` `#D9607E` `#8C7CF0` `#6A9B33` | chart series, fixed order |
 
+**Type:** IBM Plex Sans (UI text, 13 px base) and IBM Plex Mono (config keys, values, numbers, paths).
+Numbers use the German decimal comma and a thin space as thousands separator (`412,8`, `222 264`).
+
+**Density:** as in the colour prototypes: everything at a glance, no detail overload. Table rows about
+34 px, 8 px cell padding, 24 px page gutter. Radii 4 px (controls), 6 px (panels).
+
+**States** (hover, focus, disabled, loading) are set per view in the blocks where they occur.
+
 **Behaviour:**
 - Best value in a sorted metric column → value in `best` plus a text tag "Bestwert" (never colour alone)
 - Group with failed cells → status cell in `error` with the count ("1 Fehler")
@@ -66,4 +74,4 @@ comparability warning, and chart series. Everything else is a cool slate grey.
 - Light theme
 
 ## Open
-- Typography, density, radii, states: still to design in block A.
+- States per view: if a view's block does not define one, then hover = `raised`, focus = 2 px `accent` outline, disabled = `text-3`, loading = muted placeholder rows.
