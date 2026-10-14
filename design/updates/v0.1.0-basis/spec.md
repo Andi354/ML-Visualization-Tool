@@ -18,7 +18,7 @@ _Working record for the design session; removed at handover._
 | D · Experiment | decided | row "Feature D", D5 ✓ |
 | E · Analysis: two runs + project history | decided | row "Feature E", E4 ✓ |
 | F · Detail | open | – |
-| G · Analysis: one run + saving deliverables | running | – |
+| G · Analysis: one run + saving deliverables | running | row "Feature G", G1–G3 (no choice yet) |
 | H · Agent (optional) | open | – |
 
 **Running block G · Analysis for one run + saving deliverables**
@@ -41,8 +41,16 @@ _Working record for the design session; removed at handover._
   replicates; forecast plot only where predictions exist (F). Each widget = one deliverable image with
   editable key-statement title, automatic subtitle (run, metric, pred_len, replicates) and footer.
 - Later concepts: project-specific widgets (e.g. holiday plot) living in the project; dataset analysis.
-- Proposed alternatives (awaiting go): G1 board like E4; G2 widget builder (type + rows/columns/
-  metric, live preview); G3 deliverable-first (each widget as an export-ready card with title).
+- Alternatives on the canvas (Tim: "Ja, bitte bauen"); shared widget component `W-Widget` (types
+  table, channel, config, effect, stability; dark/light), catalog + controls in `g-shared.js`, sample
+  run in `one-data.js` (TIM-52 model comparison: forecaster × pred_len × features, 4 regions):
+  - G1 · board: tiles in two columns, per tile "Einstellen" (rows/column groups, series, table|bars)
+    and remove; "+ Widget" from the catalog.
+  - G2 · builder: left type → settings → key statement; right live preview; "Zum Board hinzufügen".
+  - G3 · deliverable first: widgets stacked as export-ready cards on the chosen background, editable
+    title, "Bild speichern" per card, select several → "Ausgewählte speichern".
+  - Save dialog (all): widget checklist (one widget = one image, file names), background light
+    (for slides) or dark, configs yes/no, path + linked issue, large preview of the focused widget.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
