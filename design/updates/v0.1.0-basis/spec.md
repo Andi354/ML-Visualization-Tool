@@ -13,7 +13,7 @@ _Working record for the design session; removed at handover._
 | Block | Status | Canvas (page "v0.1 · Basis") |
 |---|---|---|
 | A · Design system | decided | row "Feature A", A5 · Schiefer ✓ |
-| B · Frame | running | row "Feature B", B1–B3 (no choice yet) |
+| B · Frame | decided | row "Feature B", B2 ✓; overall prototype row "Gesamtprototyp" |
 | C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
 | D · Experiment | decided | row "Feature D", D5 ✓ |
 | E · Comparison | open | – |
@@ -21,20 +21,16 @@ _Working record for the design session; removed at handover._
 | G · Deliverables | open | – |
 | H · Agent (optional) | open | – |
 
-**Running block B · Frame**
-- Alternatives on the canvas, all clickable, with C and D embedded as content pages
-  (`F-Runs`, `F-Issues`, `F-Exp`, derived from the Main artboards; shared logic in `frame.js`):
-  B1 · path only (top bar with breadcrumb, Vergleich/Deliverables/Agent as text buttons);
-  B2 · VS-Code-like icon bar left + open runs as tabs — recommended;
-  B3 · top tabs + command palette (`Strg K`, searches runs, issues, views).
-  Agent (H) is a right-hand panel in every variant; Vergleich and Deliverables are placeholders.
-- Assumption (stated to Tim, not yet confirmed): one tool instance per project, no project switcher.
-- Tim's last word: "Ok weiter / Lass uns mit B weitermachen".
+**Running block:** none. Next candidate: E · Comparison.
+- Tim's last word (on B): "B2 gefällt mir mit Abstand am besten, vor allem die Möglichkeit mehrere
+  Tabs zu öffnen. So kann ich mehrere Läufe miteinander vergleichen."
+- Input for E: Tim uses run tabs to compare runs; E must decide how that relates to a dedicated
+  comparison view (switching tabs vs. side by side).
 
 **Working notes**
-- Overall prototype now: three linked artboards `Main` (C4), `Main-Issues` (C3), `Main-Experiment`
-  (D5); sample data in `exp-data.js`, `runs-data.js` on the canvas (issues real from Linear, numbers
-  made up). Replace with one artboard after B.
+- Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
+  pages `F-Runs` (C4), `F-Issues` (C3), `F-Exp` (D5); sample data in `exp-data.js`, `runs-data.js`
+  (issues real from Linear, numbers made up). New views get their own `F-*` page.
 - Tim wants token-saving prototypes: shared data files, derive variants instead of rewriting.
 - Later-update idea: create configs and start runs from the tool.
 
@@ -87,6 +83,44 @@ Numbers use the German decimal comma and a thin space as thousands separator (`4
 - A2 · Tinte: blue-black, liked; its depth is kept, its strong blue cast and gold best value are not.
 - A3 · Terminal: accent and best value share one green; green vs. red error is risky.
 - A4 · Kohle-Violett: violet reads as product rather than workbench.
+
+### B · Frame
+**What:** The app shell around all views, like VS Code: a narrow icon bar on the left for the areas,
+a tab strip on top for open runs, the agent as a right-hand panel. One tool instance per project;
+the project's short name sits at the top of the icon bar, there is no project switcher.
+
+**Layout:**
+- Icon bar, 52 px, `surface`, right border `line`. Top: project badge (two letters, mono, tooltip =
+  project name). Then areas Läufe, Vergleich, Deliverables (18 px line icons, 36 px buttons). Bottom:
+  Agent toggle. Active area: `accent` icon on `accent-bg` with `accent-line` border; others `text-3`.
+- Tab strip, 36 px, `surface`, bottom border `line`. First tab is pinned and shows the current area
+  (Läufe / Vergleich / Deliverables), no close button. Then one tab per opened run, label = run folder
+  name without the timestamp (full name as tooltip), mono 12 px, close `×`. Active tab: `bg` fill,
+  2 px `accent` top border, `text`; inactive `text-3`.
+- Content fills the rest. Each view keeps its own header row (breadcrumb, view switches, actions)
+  as designed in C and D.
+- Agent panel, 340 px, right, `surface`, left border `line`; header "Agent" + close. Content: block H.
+
+**Behaviour:**
+- Clicking a run (name or "Öffnen") in Läufe opens it in a new tab and focuses it; if a tab for that
+  run is already open, it is focused instead. Several runs can be open at once; switching tabs keeps
+  each run's state (filters, grouping, sort, scroll).
+- Closing the active tab focuses the tab to its left (or the pinned tab).
+- Clicking an area icon switches the pinned tab to that area and focuses it; open run tabs stay.
+- The Läufe area remembers its view (Liste or Issues).
+- Agent toggle opens/closes the panel; content keeps its width minus 340 px. The panel stays open
+  across tab switches.
+- Open tabs and the active tab survive a reload (stored per project in the browser).
+- Keyboard: `Ctrl+W` closes the active run tab, `Ctrl+Tab` / `Ctrl+Shift+Tab` cycle tabs.
+
+**Edge cases:**
+- Many tabs: tabs shrink to min 120 px with ellipsis, then the strip scrolls horizontally.
+- A run folder deleted while its tab is open: tab stays, content shows "Lauf nicht mehr vorhanden"
+  with a close button.
+- Areas not built yet in an update are not shown in the icon bar.
+
+**Rejected:** B1 path only (no way to keep several runs open), B3 top tabs + command palette
+(palette adds little with a short run list; tabs for areas instead of runs).
 
 ### C · Runs
 **What:** The start page of the tool. It replaces clicking through `runs/` in VS Code: every run of
@@ -248,4 +282,3 @@ aggregation in `exp-data.js` (`aggregate`, `sortRows`).
 
 ## Open
 - States per view: if a view's block does not define one, then hover = `raised`, focus = 2 px `accent` outline, disabled = `text-3`, loading = muted placeholder rows.
-- Overall prototype: the three linked artboards on the canvas (`Main`, `Main-Issues`, `Main-Experiment`) are interim; after block B they are replaced by one clickable artboard with the chosen frame and shared state (selected run, search, compare selection). If the session ends before that, the three artboards plus `exp-data.js` and `runs-data.js` are the prototype.
