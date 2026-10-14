@@ -40,10 +40,14 @@ _Working record for the design session; removed at handover._
   two views, "Zwei Läufe" (E1 widgets + optional E2 widgets) and "Projektverlauf" (timeline + map);
   3+ runs later. Widgets should be extensible; agent-configurable widgets later (block H / later).
   Open concept to formalise: what splits the timeline when a project has no pred_len.
-- My proposal (sent, awaiting OK): call it "Lauf-Merkmal" = config entry that is constant inside a
-  run but differs between runs (pred_len, dataset, forecaster …); tool detects candidates from
-  configs, `project.yaml` may set a default (`compare_by`); timeline "Färben nach" picker; epoch stays
-  a separate comparability guard. Widgets in v0.1: fixed set, each can be shown/hidden.
+- "Lauf-Merkmal" accepted as name; where it is configured (project.yaml vs. in the tool) deferred.
+- Tim's last word: comparison and deliverables look like the same thing — widgets on runs; asks
+  whether to build one "analysis tool" (one run, two runs, project history) so work is not doubled.
+- My proposal (sent, awaiting OK): merge E and G into one area "Analyse": one widget system, a
+  widget declares its scope (1 run / 2 runs / all runs); a board = widgets on a scope, live and
+  exploratory; "Als Deliverable speichern" freezes a board into `deliverables/<date> <title>/`
+  (export + numbers + which runs/commit). Existing deliverable folders are listed read-only.
+  D stays the table view of one run. Open: what Tim's deliverables contain and who reads them.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
