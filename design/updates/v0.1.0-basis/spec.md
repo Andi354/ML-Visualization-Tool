@@ -16,54 +16,19 @@ _Working record for the design session; removed at handover._
 | B · Frame | decided | row "Feature B", B2 ✓; overall prototype row "Gesamtprototyp" |
 | C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
 | D · Experiment | decided | row "Feature D", D5 ✓ |
-| E · Analysis: two runs + project history | running | row "Feature E", E1–E3, E4 = combination (no choice yet) |
+| E · Analysis: two runs + project history | decided | row "Feature E", E4 ✓ |
 | F · Detail | open | – |
-| G · Analysis: one run + saving deliverables | open (next after E) | – |
+| G · Analysis: one run + saving deliverables | running | – |
 | H · Agent (optional) | open | – |
 
-**Running block E · Comparison**
-- Tim's last word: so far he only picked "the best config" inside one run; he wants context across
-  runs: e.g. pred_len 30 vs 90 — which config entries matter and how much, where an effect flips
-  (lstm_layer good at 30, bad at 90); and how the project developed. Asked for E1–E3, "be creative".
-- Alternatives on the canvas (shared sample data `cmp-data.js`, effects designed to flip with pred_len):
-  - E1 · two runs: config diff strip + horizon warning; "who wins where" per metric (best / median,
-    diverging bars); best config of each run and its rank in the other; strip plot of all combos;
-    regions per channel; size and errors.
-  - E2 · matched comparison: "effect per parameter value" dumbbell (relative to run mean, so
-    horizons compare), flips flagged, auto headline; rank-vs-rank scatter with Spearman, top-5
-    overlap, rank of A's best in B; biggest rank jumps.
-  - E3 · project history: best value per run over time (series per pred_len, best-so-far line, other
-    epoch hollow, click toggles a run) + parameter map: axis value × selected runs, diverging cells,
-    consistency per horizon, auto insight.
-- Tim's feedback: E1 good ("auf einen Blick alles sichtbar"); E2 hard to read, at most optional
-  widgets; E3 timeline good, parameter map "also a good widget". Direction (his): area Vergleich with
-  two views, "Zwei Läufe" (E1 widgets + optional E2 widgets) and "Projektverlauf" (timeline + map);
-  3+ runs later. Widgets should be extensible; agent-configurable widgets later (block H / later).
-  Open concept to formalise: what splits the timeline when a project has no pred_len.
-- "Lauf-Merkmal" accepted as name; where it is configured (project.yaml vs. in the tool) deferred.
-- Tim's last word: comparison and deliverables look like the same thing — widgets on runs; asks
-  whether to build one "analysis tool" (one run, two runs, project history) so work is not doubled.
-- Decided: E and G merge into one area "Analyse": one widget system, widgets declare their scope
-  (1 run / 2 runs / all runs); a board = widgets on a scope, live; "Als Deliverable speichern" freezes
-  a board into `deliverables/<date> <title>/` (export + numbers + runs/commit); existing deliverable
-  folders listed read-only; D stays the table view of one run; icon bar: one entry "Analyse".
-- Tim's last word: wants later to tell the agent e.g. "bau eine Analyse aus den heutigen Läufen,
-  Laufvergleich 30 vs 90" and have it pick the widgets; agent part deferred to H, but the design
-  must allow it. Consequence (proposed): a board is a declarative file (scope, runs, widgets with
-  params), widgets come from a documented registry; the tool only renders boards.
-- Deliverables today: images plus the configs they were built from; agents used to produce ~10 files,
-  Tim wants one image that says exactly what is needed (for supervisor meetings). Saving can be less
-  restrictive since Tim sees the widget first; default format image; several widgets may be combined
-  into one image.
-- Block split (Tim): E = analysis for two runs + project history (E4); G = one-run widgets and the
-  deliverable saving, same analysis tool; only then into the overall prototype.
-- E4 on the canvas: area "Analyse" with views "Zwei Läufe" (E1 widgets default, E2 widgets optional)
-  and "Projektverlauf" (timeline default, parameter map optional); "Färben nach Lauf-Merkmal"
-  (pred_len / keins); widget menu with the question each widget answers; "Als Deliverable speichern"
-  dialog (title, one image or one per widget, board file + configs, path, linked issue).
-- Tim's idea for later (H or later): agent writes new widgets inside the tool. Feasible if widgets are
-  declarative chart specs (e.g. Vega-Lite / Plotly JSON) over a documented data API; code widgets
-  would need the agent outside the tool.
+**Running block G · Analysis for one run + saving deliverables**
+- From E (Tim): a deliverable is a widget, not the whole board. "Als Deliverable speichern" needs a
+  preview and a choice of which widgets are saved. Default format image; several widgets may be
+  combined into one image. Deliverables today: images + the configs they were built from; Tim wants
+  one image that shows exactly what is needed (supervisor meetings).
+- Tim on widget tech: most widgets are not Plotly charts (tables, verdicts, chips) → widget format
+  decided in H.
+- Next: context on today's deliverables (examples) and which one-run questions matter.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
@@ -312,6 +277,73 @@ aggregation in `exp-data.js` (`aggregate`, `sortRows`).
 - D2 · checkboxes "Gruppieren nach": value selection kept, flat lists get long with many axes.
 - D3 · Pivot zones: least natural; only "sd under the value" is kept.
 - D4 · charts first: the charts are kept as the overview strip, not as the main layout.
+
+### E · Analysis (two runs, project history)
+**What:** One analysis area ("Analyse", one icon in the frame's icon bar) built from widgets. A widget
+answers one question and declares its scope: one run (block G), two runs, or all runs of the project.
+A *board* is a set of widgets on one scope; this block covers the views "Zwei Läufe" and
+"Projektverlauf". Saving widgets as deliverables is specified in G.
+
+**Board as data (requirement for H):** a board is a declarative description — scope, runs, widgets
+with their settings — that the tool only renders; widgets come from a documented catalog (key,
+scope, settings, the question it answers). The tool and, later, the agent create boards the same way.
+In v0.1 boards are created in the UI only; the catalog is fixed, every widget can be shown/hidden and
+the selection is remembered per project.
+
+**Terms:** *Lauf-Merkmal* = a config entry that is constant inside a run but differs between runs
+(repnet-bench: `data.pred_len`; elsewhere e.g. dataset, forecaster). The tool proposes candidates by
+comparing the resolved configs of all runs (entries with few distinct values across runs). Where the
+default is configured (project.yaml or in the tool) is deferred. Epoch is not a Lauf-Merkmal: it is a
+comparability guard.
+
+**Header:** "Analyse /" + view switch "Zwei Läufe | Projektverlauf"; scope controls (two runs: A and B
+with colour dots, A = series 1 `#1FA3A3`, B = series 5 `#8C7CF0`; project: "Färben nach
+Lauf-Merkmal" with the detected candidates plus "keins"); right: "Widgets · n von m" menu and
+"Als Deliverable speichern" (see G).
+
+**Entry points:** two runs ticked in Läufe → "Vergleichen"; in a run tab "Vergleichen mit …";
+"Projektverlauf" from the Analyse icon. Comparing 3+ runs is out of scope for v0.1.
+
+**Widgets "Zwei Läufe"** (default on unless marked optional):
+- *Config-Unterschiede:* chips for every config entry that differs (`data.pred_len 30 → 90`, code
+  commit). If a Lauf-Merkmal differs, a `warn` note: absolute values are not fairly comparable, rank
+  and effect are.
+- *Wer gewinnt wo?* one row per metric of the catalog: value A, value B (better one in `best`), and a
+  diverging bar from the centre towards the better run, length = relative gap; switch "Bester Wert |
+  Median" (best combination vs. median over all combinations); verdict sentence ("B ist bei 3 von 4
+  Metriken besser. Nicht eindeutig: A gewinnt bei 1."). Scaled metrics are marked; they are hidden
+  when the runs have different forecasters.
+- *Beste Config je Lauf:* for A and B the best combination (mean over replicates) as `axis = value`
+  chips, its value, and its value and rank in the other run; rank ≤ 3 `best`, rank > 10 `warn`.
+- *Alle Kombinationen:* strip plot per run on a shared axis, one dot per combination, best enlarged
+  with ring, median tick.
+- *Regionen:* per channel two bars (A, B) for the best combination and the relative difference.
+- *Umfang und Fehler:* cells, errors (`error` when > 50), duration, pred_len and epoch per run.
+- optional *Wirkung je Parameter:* per axis value its effect in A and B (mean MAPE of combinations
+  with this value vs. the run mean, in %) as a dumbbell on −8 … +8 %; "kippt" (`warn`) when the
+  sign flips and both |effect| > 1.5 %; sort by axis or by difference; headline sentence.
+- optional *Hält die Rangfolge?* scatter rank in A vs. rank in B with diagonal; Spearman, top-5
+  overlap, rank of A's best in B.
+- optional *Größte Rangsprünge:* the 7 combinations with the largest rank change.
+- Combinations are matched by their axis values; only combinations present in both runs count; the
+  header shows "n von m Kombinationen in beiden Läufen".
+
+**Widgets "Projektverlauf":**
+- *Bester Wert je Lauf:* x = run date, y = best value of the primary real metric; one series per value
+  of the chosen Lauf-Merkmal (series colours), line = best so far per series; runs of another epoch
+  hollow and excluded from the line; label = issue key; click toggles the run for the map.
+- optional *Parameter-Landkarte:* rows = axis values, columns = selected runs grouped by Lauf-Merkmal;
+  cell = effect relative to that run's mean (diverging: lower error `#1FA3A3`, higher `#C47F14`,
+  opacity by size, cap ±6 %); dashed empty cell when the axis is not varied in that run;
+  "Konsistenz" column per Lauf-Merkmal value ("immer besser", "2× besser, 1× schlechter"),
+  `warn` when the direction flips between values; headline sentence.
+
+**Edge cases:** runs without shared axes → effect/rank widgets show "Keine gemeinsamen
+Kombinationen"; different epochs → `warn` in Config-Unterschiede and comparisons stay possible but
+flagged; a run still running → values marked "vorläufig"; project without a Lauf-Merkmal → one series.
+
+**Rejected:** E1 alone (no project context), E2 as its own view (hard to read; its widgets stay
+optional), E3 alone; widgets laid out as two full experiment screens side by side.
 
 ## Changes to principles.md / tokens.json
 - Create both: colours and their meanings from feature A.
