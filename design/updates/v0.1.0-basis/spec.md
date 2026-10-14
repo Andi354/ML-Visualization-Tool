@@ -31,6 +31,9 @@ _Working record for the design session; removed at handover._
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
   pages `F-Runs` (C4), `F-Issues` (C3), `F-Exp` (D5); sample data in `exp-data.js`, `runs-data.js`
   (issues real from Linear, numbers made up). New views get their own `F-*` page.
+  Content pages are mounted with `dc-import` (the canvas does not render iframes); `exp-data.js`
+  seeds its sample numbers by run id so open run tabs differ. Known prototype gap: filters/grouping
+  are shared across run tabs (the spec requires per-tab state).
 - Tim wants token-saving prototypes: shared data files, derive variants instead of rewriting.
 - Later-update idea: create configs and start runs from the tool.
 
