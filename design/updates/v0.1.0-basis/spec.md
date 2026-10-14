@@ -16,9 +16,9 @@ _Working record for the design session; removed at handover._
 | B · Frame | decided | row "Feature B", B2 ✓; overall prototype row "Gesamtprototyp" |
 | C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
 | D · Experiment | decided | row "Feature D", D5 ✓ |
-| E · Comparison | running | row "Feature E", E1–E3 (no choice yet) |
+| E · Analysis (was E Comparison + G Deliverables) | running | row "Feature E", E1–E3; no build of the merged area yet |
 | F · Detail | open | – |
-| G · Deliverables | open | – |
+| G · Deliverables | merged into E | – |
 | H · Agent (optional) | open | – |
 
 **Running block E · Comparison**
@@ -43,11 +43,15 @@ _Working record for the design session; removed at handover._
 - "Lauf-Merkmal" accepted as name; where it is configured (project.yaml vs. in the tool) deferred.
 - Tim's last word: comparison and deliverables look like the same thing — widgets on runs; asks
   whether to build one "analysis tool" (one run, two runs, project history) so work is not doubled.
-- My proposal (sent, awaiting OK): merge E and G into one area "Analyse": one widget system, a
-  widget declares its scope (1 run / 2 runs / all runs); a board = widgets on a scope, live and
-  exploratory; "Als Deliverable speichern" freezes a board into `deliverables/<date> <title>/`
-  (export + numbers + which runs/commit). Existing deliverable folders are listed read-only.
-  D stays the table view of one run. Open: what Tim's deliverables contain and who reads them.
+- Decided: E and G merge into one area "Analyse": one widget system, widgets declare their scope
+  (1 run / 2 runs / all runs); a board = widgets on a scope, live; "Als Deliverable speichern" freezes
+  a board into `deliverables/<date> <title>/` (export + numbers + runs/commit); existing deliverable
+  folders listed read-only; D stays the table view of one run; icon bar: one entry "Analyse".
+- Tim's last word: wants later to tell the agent e.g. "bau eine Analyse aus den heutigen Läufen,
+  Laufvergleich 30 vs 90" and have it pick the widgets; agent part deferred to H, but the design
+  must allow it. Consequence (proposed): a board is a declarative file (scope, runs, widgets with
+  params), widgets come from a documented registry; the tool only renders boards.
+- Open: what Tim's deliverables contain and who reads them (export format); go-ahead to build.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
