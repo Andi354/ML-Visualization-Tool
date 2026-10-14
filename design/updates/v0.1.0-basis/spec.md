@@ -9,7 +9,7 @@ deliverable": runs, experiments, comparisons, details and deliverables, read dir
 
 ## Blocks
 - A · Design system — decided (colours, type, density); states follow in the views
-- B · Frame — open
+- B · Frame — in discussion: B1 path only, B2 VS-Code-like icon bar + run tabs (recommended), B3 top tabs + command palette; agent (H) as right panel in every variant; open questions: project switcher yes/no, build B1–B3 as clickable frames
 - C · Runs — decided (C4 · Kombination as default view, C3 as second view "Issues")
 - D · Experiment — decided (D5 · Kombination)
 - E · Comparison — open
@@ -227,3 +227,4 @@ aggregation in `exp-data.js` (`aggregate`, `sortRows`).
 
 ## Open
 - States per view: if a view's block does not define one, then hover = `raised`, focus = 2 px `accent` outline, disabled = `text-3`, loading = muted placeholder rows.
+- Overall prototype: the three linked artboards on the canvas (`Main`, `Main-Issues`, `Main-Experiment`) are interim; after block B they are replaced by one clickable artboard with the chosen frame and shared state (selected run, search, compare selection). If the session ends before that, the three artboards plus `exp-data.js` and `runs-data.js` are the prototype.
