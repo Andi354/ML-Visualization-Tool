@@ -10,7 +10,7 @@ deliverable": runs, experiments, comparisons, details and deliverables, read dir
 ## Blocks
 - A · Design system — decided (colours, type, density); states follow in the views
 - B · Frame — open
-- C · Runs — open
+- C · Runs — decided (C4 · Kombination as default view, C3 as second view "Issues")
 - D · Experiment — decided (D5 · Kombination)
 - E · Comparison — open
 - F · Detail — open
@@ -66,6 +66,74 @@ Numbers use the German decimal comma and a thin space as thousands separator (`4
 - A2 · Tinte: blue-black, liked; its depth is kept, its strong blue cast and gold best value are not.
 - A3 · Terminal: accent and best value share one green; green vs. red error is risky.
 - A4 · Kohle-Violett: violet reads as product rather than workbench.
+
+### C · Runs
+**What:** The start page of the tool. It replaces clicking through `runs/` in VS Code: every run of
+the project, structured by Linear issue and experiment, newest first, with the key facts of each run
+visible without opening it. Two views of the same data, switched in the header next to "Läufe":
+"Liste" (default) and "Issues".
+
+**Terms and sources:** *issue* = prefix of the config name (`configs/experiments/<ISSUE>/<ISSUE>_<slug>.yaml`,
+also in `meta.json`); *experiment* = one config = run folder name without the timestamp; *run* = one
+folder in `runs/`. Issue title and status come from Linear through an optional API key in the
+environment; without a key only the issue ID is shown. Analyses (`analysis/<ISSUE>_*/`) and
+deliverables (`deliverables/`) are linked to an issue by its ID; paths come from `project.yaml`.
+
+**Header and toolbar (both views):** breadcrumb `<project> / Läufe`, view switch "Liste | Issues".
+Toolbar of the list view: search, status filter "Alle | Läuft | Mit Fehlern", epoch filter
+"Alle Epochen | <epochs from epochs.yaml>", toggle "Verlauf" (collapsed by default), count
+"<shown> von <total> Läufen", button "Vergleichen".
+
+**List view (default):**
+- On top, a card "Neuester Lauf · <relative time>": full run name, issue line, cell progress bar,
+  best value of the first `real` metric ("bester MAPE bisher · pred_len 30"), button "Öffnen".
+  Hidden while a search or status filter is active.
+- Below, blocks sorted by their newest run: an issue block per issue, and runs without an issue as
+  standalone rows at their own date (no "ohne Issue" group at the bottom).
+- Issue block head: caret, issue ID, title (15 px), status dot + Linear status, links "Bericht" /
+  "Deliverables" when they exist, "<n> Läufe · <relative time>". No box around the block; a rule
+  under the head.
+- One row per experiment, showing its newest run, two lines: name (config slug without issue
+  prefix) with flags only for deviations ("● läuft" accent, "Epoche <old>" warn); second line muted:
+  swept axes, then available extras (Kurven, Vorhersagen, migriert); standalone rows start with
+  "ohne Issue". Columns: checkbox, name, relative date, cell bar (ok grey, errors `error`, running
+  `accent`) with "<cells> Zellen · <errors> Fehler" or "<done> / <total>", best value with "MAPE ·
+  pred_len <h>" (muted and "vorläufig" while running).
+- Experiment with several runs → "▸ <n> ältere Läufe" under the name; click → older runs appear
+  below, indented and dimmed, named by their timestamp.
+
+**Issues view:** two columns. Left: search and the list of issues (status dot, ID, relative time,
+title on up to two lines, "<n> Läufe · <status>", "● läuft" when a run is running), same order as
+the list view; runs without issue as an entry "Ohne Issue". Right: the selected issue — ID, status,
+links ("In Linear ↗", "Bericht", "Deliverables"), title (20 px), four figures (runs, cells with
+errors, best MAPE for pred_len 30 and 90), then one card per experiment with all its runs (date,
+timestamp, flags, cell bar, best value, "Öffnen"). Initial selection: the issue of the newest run.
+
+**Behaviour:**
+- Open the tool → list view, issues with a run in the last 7 days expanded, others collapsed.
+- Click on an issue head → expands / collapses it.
+- Search → matches run name, issue ID, issue title and axis names; all matching issues expand.
+- Status filter "Läuft" / "Mit Fehlern" → only matching runs; their issues expand.
+- Click on a run name, a row or "Öffnen" → the experiment view (feature D) of that run.
+- Tick two or more checkboxes → "Vergleichen (<n>)" becomes active and opens feature E with them.
+- Click "Verlauf" → a strip opens above the list: best value of the first `real` metric per run over
+  time, one colour per `pred_len` (`series-1`, `series-2`), step line = best so far within the
+  current epoch, dashed line at the epoch start, runs of older epochs at 40 % opacity; click on a
+  point → its issue expands and the run row is highlighted.
+- Switch "Issues" / "Liste" → the other view; search text is kept.
+- A run without an end time in `meta.json` counts as running; its progress is cells written / planned.
+
+**Edge cases:**
+- Project without Linear key → issue head shows only the ID; status dot and title are left out.
+- Config name without issue prefix → standalone row.
+- Migrated run → "migriert" in the second line; values as stored.
+
+**In the prototype:** `C4-Kombination.dc.html` and `C3-Zweispaltig.dc.html` (as `Main.dc.html` and
+`Main-Issues.dc.html`), sample data in `runs-data.js` (`groups`, `rel`).
+**Rejected:**
+- C1 · Issue list: style kept; boxes per issue and seven columns were too busy.
+- C2 · timeline always open: kept only as the collapsible "Verlauf".
+- C3 alone as default: kept as the second view.
 
 ### D · Experiment
 **What:** The view of one run that replaces opening `summary.csv`. A sidebar on the left lists every
@@ -141,7 +209,7 @@ that value in the sidebar.
   "Konstante Werte" shows what exists.
 - Group whose cells all failed → metric cells show "–", sorted last.
 
-**In the prototype:** `D5-Kombination.dc.html` (copied as `Main.dc.html`), sample data and
+**In the prototype:** `D5-Kombination.dc.html` (copied as `Main-Experiment.dc.html`), sample data and
 aggregation in `exp-data.js` (`aggregate`, `sortRows`).
 **Rejected:**
 - D1 · header menus: clean, but the state of hidden dimensions is easy to lose; its sidebar idea is kept.
