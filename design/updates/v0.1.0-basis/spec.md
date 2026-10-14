@@ -138,7 +138,7 @@ that value in the sidebar.
 - Paired axis (list of dicts in `sweep:`) → one dimension with the label as value, e.g.
   `learning_rate=0.0005, max_epochs=20`.
 - Migrated run (`meta.json: migrated: true`) → works the same; `config.yaml` may lack keys, then
-  "Konstant" shows what exists.
+  "Konstante Werte" shows what exists.
 - Group whose cells all failed → metric cells show "–", sorted last.
 
 **In the prototype:** `D5-Kombination.dc.html` (copied as `Main.dc.html`), sample data and
