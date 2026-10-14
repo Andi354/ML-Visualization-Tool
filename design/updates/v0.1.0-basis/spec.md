@@ -80,16 +80,18 @@ the dimensions currently averaged.
 
 **Sidebar:**
 - Sections in this order: one per config block that holds swept axes (`data`, `model`, `train`, … in
-  config order), then "Konstant", then "Wiederholungen", then "Kanäle" (only if the run has a
-  `channels` table with more than one channel).
+  config order), then "Wiederholungen", then "Kanäle" (only if the run has a `channels` table with
+  more than one channel).
 - Each dimension is one collapsed row: name and a state tag on the right — `geteilt` (accent),
   `Ø` (neutral), `= <value>` or `<k> von <n>` when values are selected, `Ø · = <value>` when both.
 - Click on a row → it expands: a two-way switch "Teilen | Ø mitteln" (for channels "je Kanal |
   gesamt") and the list of values as checkboxes with their cell count.
-- "Konstant" is collapsed by default and lists the non-swept parameters of the resolved `config.yaml`
-  (and axes with a single value), grouped by block, as `key   value` rows. Read-only.
+- "Konstante Werte" sits apart at the bottom of the sidebar (pushed down, own bordered panel on a
+  darker ground, count badge), collapsed by default. Expanded, it lists the non-swept parameters of
+  the resolved `config.yaml` (and axes with a single value), grouped by block, as `key   value` rows.
+  Read-only.
 - Search field on top → filters dimensions, values and constants by substring; matching rows and the
-  "Konstant" section expand automatically.
+  "Konstante Werte" panel expand automatically.
 
 **Defaults:** axes split, replicates averaged, channels "gesamt" (metrics from `cells`), sort by
 `primary_metric` ascending for `min` metrics, overview shown.
