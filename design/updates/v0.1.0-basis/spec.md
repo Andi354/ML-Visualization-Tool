@@ -111,7 +111,7 @@ the project's short name sits at the top of the icon bar, there is no project sw
 - Agent toggle opens/closes the panel; content keeps its width minus 340 px. The panel stays open
   across tab switches.
 - Open tabs and the active tab survive a reload (stored per project in the browser).
-- Keyboard: `Ctrl+W` closes the active run tab, `Ctrl+Tab` / `Ctrl+Shift+Tab` cycle tabs.
+- Middle click on a run tab closes it. No custom tab shortcuts: the tool runs in a browser, where `Ctrl+W` / `Ctrl+Tab` belong to the browser.
 
 **Edge cases:**
 - Many tabs: tabs shrink to min 120 px with ellipsis, then the strip scrolls horizontally.
