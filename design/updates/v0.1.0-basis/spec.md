@@ -16,19 +16,27 @@ _Working record for the design session; removed at handover._
 | B · Frame | decided | row "Feature B", B2 ✓; overall prototype row "Gesamtprototyp" |
 | C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
 | D · Experiment | decided | row "Feature D", D5 ✓ |
-| E · Comparison | running | brainstorm in chat, no artboards yet |
+| E · Comparison | running | row "Feature E", E1–E3 (no choice yet) |
 | F · Detail | open | – |
 | G · Deliverables | open | – |
 | H · Agent (optional) | open | – |
 
 **Running block E · Comparison**
-- Tim's last word: wants a dedicated comparison area besides run tabs; asks what helps most: two
-  runs left/right with charts, many runs on one aspect, or the same config at pred_len 30 vs 90.
-- Brainstorm offered (chat only): E1 side by side (2 runs, mirrored panels); E2 matched comparison
-  (join runs on shared config, Δ table, A-vs-B scatter, rank agreement); E3 many runs on one aspect
-  (leaderboard of best per run + one axis effect across runs); building blocks: reference run,
-  comparability guard (epoch, metric family, pred_len), compare items = run or cell selection from D.
-- Open question to Tim: which questions he asks most when comparing; which of E1–E3 to build.
+- Tim's last word: so far he only picked "the best config" inside one run; he wants context across
+  runs: e.g. pred_len 30 vs 90 — which config entries matter and how much, where an effect flips
+  (lstm_layer good at 30, bad at 90); and how the project developed. Asked for E1–E3, "be creative".
+- Alternatives on the canvas (shared sample data `cmp-data.js`, effects designed to flip with pred_len):
+  - E1 · two runs: config diff strip + horizon warning; "who wins where" per metric (best / median,
+    diverging bars); best config of each run and its rank in the other; strip plot of all combos;
+    regions per channel; size and errors.
+  - E2 · matched comparison: "effect per parameter value" dumbbell (relative to run mean, so
+    horizons compare), flips flagged, auto headline; rank-vs-rank scatter with Spearman, top-5
+    overlap, rank of A's best in B; biggest rank jumps.
+  - E3 · project history: best value per run over time (series per pred_len, best-so-far line, other
+    epoch hollow, click toggles a run) + parameter map: axis value × selected runs, diverging cells,
+    consistency per horizon, auto insight.
+- Open question to Tim: which of E1–E3 (or which parts) to keep; how E fits the frame (area
+  "Vergleich" vs. from run tabs).
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
