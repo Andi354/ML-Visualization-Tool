@@ -28,7 +28,21 @@ _Working record for the design session; removed at handover._
   one image that shows exactly what is needed (supervisor meetings).
 - Tim on widget tech: most widgets are not Plotly charts (tables, verdicts, chips) → widget format
   decided in H.
-- Next: context on today's deliverables (examples) and which one-run questions matter.
+- Tim's examples (14.10.): (1) model comparison table: forecasters (REP-Net, SARIMA, ETS, ETS damped,
+  Prophet, sNaive) × pred_len 30/90 × MAPE/Commitment Cost, best per column green, plus the winner's
+  config with per-pred_len differences; forecasters are trained inside one run (axis). (2) forecast
+  plot for one region and window with holidays + error panel — project-specific, later as an
+  agent-built project widget. (3) per-region table multivariate vs univariate + best combo per scope.
+  (4) per-region grouped bars. (5) dataset CV folds — dataset analysis, later. Look may be simpler and
+  nicer than the examples; one format per kind of graphic.
+- Derived generic widgets for one run: comparison table (rows = one dimension, column groups = another
+  dimension or Lauf-Merkmal, columns = metrics, best per column); per channel (table | bars, series =
+  values of one dimension); best config card (with differences); effect per axis; stability over
+  replicates; forecast plot only where predictions exist (F). Each widget = one deliverable image with
+  editable key-statement title, automatic subtitle (run, metric, pred_len, replicates) and footer.
+- Later concepts: project-specific widgets (e.g. holiday plot) living in the project; dataset analysis.
+- Proposed alternatives (awaiting go): G1 board like E4; G2 widget builder (type + rows/columns/
+  metric, live preview); G3 deliverable-first (each widget as an export-ready card with title).
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
