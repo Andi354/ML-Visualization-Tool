@@ -11,7 +11,7 @@ deliverable": runs, experiments, comparisons, details and deliverables, read dir
 - A · Design system — decided (colours, type, density); states follow in the views
 - B · Frame — open
 - C · Runs — open
-- D · Experiment — open
+- D · Experiment — decided (D5 · Kombination)
 - E · Comparison — open
 - F · Detail — open
 - G · Deliverables — open
@@ -67,11 +67,93 @@ Numbers use the German decimal comma and a thin space as thousands separator (`4
 - A3 · Terminal: accent and best value share one green; green vs. red error is risky.
 - A4 · Kohle-Violett: violet reads as product rather than workbench.
 
+### D · Experiment
+**What:** The view of one run that replaces opening `summary.csv`. A sidebar on the left lists every
+dimension of the run by role; the main area shows a toolbar, an optional overview strip with small
+charts, and the group table. Everything project-specific comes from the run folder: axes and
+replicates from `meta.json`, parameter blocks from the resolved `config.yaml`, metrics (direction,
+family) from `project.yaml`, channels from `channels.parquet`.
+
+**Terms:** *axis* = `sweep:` key; *replicates* ("Wiederholungen") = `replicates:` keys (`shuffle_seed`,
+`cv_fold`); *channel* = output dimension (regions in repnet-bench); *group* = cells that differ only in
+the dimensions currently averaged.
+
+**Sidebar:**
+- Sections in this order: one per config block that holds swept axes (`data`, `model`, `train`, … in
+  config order), then "Konstant", then "Wiederholungen", then "Kanäle" (only if the run has a
+  `channels` table with more than one channel).
+- Each dimension is one collapsed row: name and a state tag on the right — `geteilt` (accent),
+  `Ø` (neutral), `= <value>` or `<k> von <n>` when values are selected, `Ø · = <value>` when both.
+- Click on a row → it expands: a two-way switch "Teilen | Ø mitteln" (for channels "je Kanal |
+  gesamt") and the list of values as checkboxes with their cell count.
+- "Konstant" is collapsed by default and lists the non-swept parameters of the resolved `config.yaml`
+  (and axes with a single value), grouped by block, as `key   value` rows. Read-only.
+- Search field on top → filters dimensions, values and constants by substring; matching rows and the
+  "Konstant" section expand automatically.
+
+**Defaults:** axes split, replicates averaged, channels "gesamt" (metrics from `cells`), sort by
+`primary_metric` ascending for `min` metrics, overview shown.
+
+**Behaviour:**
+- Axis switched to Ø → the table groups over the remaining split dimensions; its column disappears;
+  a chip "Ø <axis>" appears in the toolbar.
+- Value checkboxes ticked → only cells with those values are used (filter); none ticked = all values;
+  a chip "<axis> ∈ <values>" appears.
+- Replicates switched to "Teilen" → `shuffle_seed` and `cv_fold` become columns, one row per cell.
+- Channels switched to "je Kanal" → a `channel` column appears and every group gets one row per
+  channel, values from `channels`; channel checkboxes then filter the channels.
+- Click × on a chip → that dimension returns to its default.
+- Click on a metric column head → sort by it ascending; second click → descending. Sorting is global
+  over all groups, never only over the rendered rows.
+- More than 200 rows → the first 200 are rendered; the toolbar says "<N> Gruppen · <M> Zellen ·
+  sortiert über alle".
+- Best value of the sort metric → `best` colour and a "Bestwert" tag in that cell.
+- Group with failed cells → `n` counts only successful cells; status column shows "<k> Fehler" in
+  `error`.
+
+**Toolbar:** "Überblick" toggle, "Spalten <visible>/<total>" dropdown, the chips, and the summary on
+the right.
+
+**Columns dropdown** (MLflow-like): groups "Metriken" (each catalogue metric with its family tag
+`real`/`scaled`) and "Statistik" (`n`, `min`, `max` of the sort metric, `Status`), plus a three-way
+switch "± sd: unter Wert | eigene Spalte | aus" (default "unter Wert": sd in small muted text below
+the mean). Defaults: the primary metric plus the first `real` metric of the catalogue (if the primary
+metric is itself `real` or no `real` metric exists, only the primary metric); `n` and `Status` on;
+`min`, `max` off. Choices are remembered per project in browser storage.
+
+**Table head:** two rows — a group row "Parameter (<split count>)" | "Metriken (<visible>/<total>)",
+then the column names. No menus in the head; all dimension control lives in the sidebar.
+
+**Overview strip** (toggle "Überblick", shown by default): one small card per axis and one for the
+channel, sorted by spread (largest first). Each card lists the axis values with the mean of the sort
+metric (dot, best in `best`, others `series-1`) and ± sd (bar), averaged over all other dimensions
+under the current filters, on one shared scale; header shows "Spanne <max − min>". Last card: a
+histogram of all group means (best bin in `best`). Click on a value in a card → the same as ticking
+that value in the sidebar.
+
+**Edge cases:**
+- Run without `channels` or with one channel → no "Kanäle" section, no channel card.
+- Paired axis (list of dicts in `sweep:`) → one dimension with the label as value, e.g.
+  `learning_rate=0.0005, max_epochs=20`.
+- Migrated run (`meta.json: migrated: true`) → works the same; `config.yaml` may lack keys, then
+  "Konstant" shows what exists.
+- Group whose cells all failed → metric cells show "–", sorted last.
+
+**In the prototype:** `D5-Kombination.dc.html` (copied as `Main.dc.html`), sample data and
+aggregation in `exp-data.js` (`aggregate`, `sortRows`).
+**Rejected:**
+- D1 · header menus: clean, but the state of hidden dimensions is easy to lose; its sidebar idea is kept.
+- D2 · checkboxes "Gruppieren nach": value selection kept, flat lists get long with many axes.
+- D3 · Pivot zones: least natural; only "sd under the value" is kept.
+- D4 · charts first: the charts are kept as the overview strip, not as the main layout.
+
 ## Changes to principles.md / tokens.json
 - Create both: colours and their meanings from feature A.
 
 ## Out of scope
 - Light theme
+- Creating configs and starting runs from the tool (idea for a later update, synced with the folders)
+- Overview as a separate view mode (only the toggleable strip in this update)
 
 ## Open
 - States per view: if a view's block does not define one, then hover = `raised`, focus = 2 px `accent` outline, disabled = `text-3`, loading = muted placeholder rows.
