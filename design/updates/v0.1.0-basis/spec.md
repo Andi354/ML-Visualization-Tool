@@ -16,9 +16,9 @@ _Working record for the design session; removed at handover._
 | B · Frame | decided | row "Feature B", B2 ✓; overall prototype row "Gesamtprototyp" |
 | C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
 | D · Experiment | decided | row "Feature D", D5 ✓ |
-| E · Analysis (was E Comparison + G Deliverables) | running | row "Feature E", E1–E3; no build of the merged area yet |
+| E · Analysis: two runs + project history | running | row "Feature E", E1–E3, E4 = combination (no choice yet) |
 | F · Detail | open | – |
-| G · Deliverables | merged into E | – |
+| G · Analysis: one run + saving deliverables | open (next after E) | – |
 | H · Agent (optional) | open | – |
 
 **Running block E · Comparison**
@@ -51,7 +51,19 @@ _Working record for the design session; removed at handover._
   Laufvergleich 30 vs 90" and have it pick the widgets; agent part deferred to H, but the design
   must allow it. Consequence (proposed): a board is a declarative file (scope, runs, widgets with
   params), widgets come from a documented registry; the tool only renders boards.
-- Open: what Tim's deliverables contain and who reads them (export format); go-ahead to build.
+- Deliverables today: images plus the configs they were built from; agents used to produce ~10 files,
+  Tim wants one image that says exactly what is needed (for supervisor meetings). Saving can be less
+  restrictive since Tim sees the widget first; default format image; several widgets may be combined
+  into one image.
+- Block split (Tim): E = analysis for two runs + project history (E4); G = one-run widgets and the
+  deliverable saving, same analysis tool; only then into the overall prototype.
+- E4 on the canvas: area "Analyse" with views "Zwei Läufe" (E1 widgets default, E2 widgets optional)
+  and "Projektverlauf" (timeline default, parameter map optional); "Färben nach Lauf-Merkmal"
+  (pred_len / keins); widget menu with the question each widget answers; "Als Deliverable speichern"
+  dialog (title, one image or one per widget, board file + configs, path, linked issue).
+- Tim's idea for later (H or later): agent writes new widgets inside the tool. Feasible if widgets are
+  declarative chart specs (e.g. Vega-Lite / Plotly JSON) over a documented data API; code widgets
+  would need the agent outside the tool.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
