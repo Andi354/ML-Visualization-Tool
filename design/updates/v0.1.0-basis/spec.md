@@ -16,16 +16,19 @@ _Working record for the design session; removed at handover._
 | B · Frame | decided | row "Feature B", B2 ✓; overall prototype row "Gesamtprototyp" |
 | C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
 | D · Experiment | decided | row "Feature D", D5 ✓ |
-| E · Comparison | open | – |
+| E · Comparison | running | brainstorm in chat, no artboards yet |
 | F · Detail | open | – |
 | G · Deliverables | open | – |
 | H · Agent (optional) | open | – |
 
-**Running block:** none. Next candidate: E · Comparison.
-- Tim's last word (on B): "B2 gefällt mir mit Abstand am besten, vor allem die Möglichkeit mehrere
-  Tabs zu öffnen. So kann ich mehrere Läufe miteinander vergleichen."
-- Input for E: Tim uses run tabs to compare runs; E must decide how that relates to a dedicated
-  comparison view (switching tabs vs. side by side).
+**Running block E · Comparison**
+- Tim's last word: wants a dedicated comparison area besides run tabs; asks what helps most: two
+  runs left/right with charts, many runs on one aspect, or the same config at pred_len 30 vs 90.
+- Brainstorm offered (chat only): E1 side by side (2 runs, mirrored panels); E2 matched comparison
+  (join runs on shared config, Δ table, A-vs-B scatter, rank agreement); E3 many runs on one aspect
+  (leaderboard of best per run + one axis effect across runs); building blocks: reference run,
+  comparability guard (epoch, metric family, pred_len), compare items = run or cell selection from D.
+- Open question to Tim: which questions he asks most when comparing; which of E1–E3 to build.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
