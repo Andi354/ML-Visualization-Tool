@@ -7,15 +7,35 @@ Prototype: prototype.dc.html · Builds on: nothing (first update)
 A local results tool for ds-init projects that replaces "open CSV, sort, scroll, ask an agent for a
 deliverable": runs, experiments, comparisons, details and deliverables, read directly from `runs/`.
 
-## Blocks
-- A · Design system — decided (colours, type, density); states follow in the views
-- B · Frame — in discussion: B1 path only, B2 VS-Code-like icon bar + run tabs (recommended), B3 top tabs + command palette; agent (H) as right panel in every variant; open questions: project switcher yes/no, build B1–B3 as clickable frames
-- C · Runs — decided (C4 · Kombination as default view, C3 as second view "Issues")
-- D · Experiment — decided (D5 · Kombination)
-- E · Comparison — open
-- F · Detail — open
-- G · Deliverables — open
-- H · Agent (optional) — open
+## State
+_Working record for the design session; removed at handover._
+
+| Block | Status | Canvas (page "v0.1 · Basis") |
+|---|---|---|
+| A · Design system | decided | row "Feature A", A5 · Schiefer ✓ |
+| B · Frame | running | no artboards yet |
+| C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
+| D · Experiment | decided | row "Feature D", D5 ✓ |
+| E · Comparison | open | – |
+| F · Detail | open | – |
+| G · Deliverables | open | – |
+| H · Agent (optional) | open | – |
+
+**Running block B · Frame**
+- Alternatives (so far only in chat, not on the canvas): B1 · path only (breadcrumb, tabs inside a
+  run); B2 · VS-Code-like icon bar left (Läufe, Vergleich, Deliverables, Agent) + breadcrumb + open
+  runs as tabs — recommended; B3 · top tabs + command palette `Ctrl+K`. In every variant the agent
+  (H) is a right-hand panel; `Ctrl+K` palette as extra shortcut in B1/B2.
+- Tim's last word: "Ja lass uns den Rahmen angehen" — agreed to do B next; agreed that after B the
+  overall prototype becomes one clickable artboard with shared state.
+- Open questions to Tim: project switcher yes/no; build B1–B3 as clickable frames (containing C and D)?
+
+**Working notes**
+- Overall prototype now: three linked artboards `Main` (C4), `Main-Issues` (C3), `Main-Experiment`
+  (D5); sample data in `exp-data.js`, `runs-data.js` on the canvas (issues real from Linear, numbers
+  made up). Replace with one artboard after B.
+- Tim wants token-saving prototypes: shared data files, derive variants instead of rewriting.
+- Later-update idea: create configs and start runs from the tool.
 
 ## Features
 
