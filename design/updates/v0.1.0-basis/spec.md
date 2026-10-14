@@ -35,8 +35,15 @@ _Working record for the design session; removed at handover._
   - E3 · project history: best value per run over time (series per pred_len, best-so-far line, other
     epoch hollow, click toggles a run) + parameter map: axis value × selected runs, diverging cells,
     consistency per horizon, auto insight.
-- Open question to Tim: which of E1–E3 (or which parts) to keep; how E fits the frame (area
-  "Vergleich" vs. from run tabs).
+- Tim's feedback: E1 good ("auf einen Blick alles sichtbar"); E2 hard to read, at most optional
+  widgets; E3 timeline good, parameter map "also a good widget". Direction (his): area Vergleich with
+  two views, "Zwei Läufe" (E1 widgets + optional E2 widgets) and "Projektverlauf" (timeline + map);
+  3+ runs later. Widgets should be extensible; agent-configurable widgets later (block H / later).
+  Open concept to formalise: what splits the timeline when a project has no pred_len.
+- My proposal (sent, awaiting OK): call it "Lauf-Merkmal" = config entry that is constant inside a
+  run but differs between runs (pred_len, dataset, forecaster …); tool detects candidates from
+  configs, `project.yaml` may set a default (`compare_by`); timeline "Färben nach" picker; epoch stays
+  a separate comparability guard. Widgets in v0.1: fixed set, each can be shown/hidden.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
