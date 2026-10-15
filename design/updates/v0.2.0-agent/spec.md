@@ -14,8 +14,10 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 | E · Widget format | open |
 | F · Agent connection | open |
 
-Running block: C · Tool control. Alternatives proposed in chat: C1 act directly + undo, C2 propose and
-confirm, C3 navigation directly / changes with confirmation; none built yet. Notes from Tim for later
+Running block: C · Tool control. Tim: like Claude Code, all three as modes switchable in the chat,
+undo everywhere. On the canvas: C1 Direkt, C2 Gemischt, C3 Bestätigen (same example chat per mode,
+mode switch bottom left). Open: default mode, whether the mode is per chat or global, tool list
+(proposed in chat: search, navigate, view settings, change analysis, save). Notes from Tim for later
 blocks: F: subscription via `claude -p` is fine (personal tool; a published version would use an API
 key). Whether chats show up in claude.ai does not matter.
 
