@@ -120,6 +120,15 @@ rasterized with `html-to-image` at pixel ratio 2 and sent as PNG. The preview in
 component, so it shows what is saved. Widgets that fetch their own data (config) are given preloaded
 data for export.
 
+## Combining images
+
+In the save dialog an *image* is one file and holds one widget or, after "Zu einem Bild", several
+(`web/src/analysis/images.ts`, pure functions): `combine` merges the selected images in list order into
+a group at the place of the first, `split` ("Trennen") and `detach` ("lösen") undo it, `reorder` moves a
+member, the layout is `stack` or `side`. A group has one title (default "A und B"), its parts show no title
+of their own but their subtitle and note when "Hinweise einblenden" is on (default off for a group, on for
+a single image), and one footer. Group file names are `NN_<type>+<type>.png`.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.

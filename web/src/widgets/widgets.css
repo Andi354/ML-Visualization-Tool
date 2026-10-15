@@ -806,3 +806,46 @@
   width: 420px;
   max-height: 320px;
 }
+
+/* combining images */
+.list-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.image-item.group {
+  border-left: 3px solid var(--accent);
+}
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.group-label {
+  font-size: var(--size-tiny);
+  color: var(--accent);
+}
+.member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* combined images: parts keep the width their content needs, nothing is clipped or scrolled */
+.export-card .w-scroll {
+  overflow: visible;
+}
+.ex-parts.side .ex-part {
+  flex: 1 1 auto;
+}
+.ex-parts.side .w-svg {
+  min-width: 340px;
+}
+.group-head {
+  flex-wrap: wrap;
+}
+.group-label {
+  white-space: nowrap;
+}

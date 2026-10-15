@@ -10,6 +10,8 @@ export interface Part {
   configData?: ConfigInfo;
   title: string;
   hints: boolean;
+  /** Members of a combined image have no title of their own: the image has one. */
+  hideTitle?: boolean;
 }
 
 export interface CardProps {
@@ -45,6 +47,7 @@ export function ExportCard({ parts, title, layout = "stack", theme, footer, run,
               type={p.type}
               result={p.result}
               title={p.title}
+              hideTitle={p.hideTitle}
               hints={p.hints}
               ctx={{ project, run, combo, settings: {}, onSettings: () => {}, configData: p.configData, scope }}
             />

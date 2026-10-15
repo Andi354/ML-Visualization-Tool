@@ -71,6 +71,7 @@ export interface FigureProps {
   ctx: Ctx;
   /** Key statement; the data's own title when not overridden. */
   title?: string;
+  hideTitle?: boolean;
   /** Show the grey texts: subtitle and note line. */
   hints?: boolean;
   /** Footer text (run folder, epoch, commit), or null for none. */
@@ -78,12 +79,14 @@ export interface FigureProps {
 }
 
 /** Title, subtitle, graphic, note and footer of a widget: the tile body and the exported image. */
-export function WidgetFigure({ type, result, ctx, title, hints = true, footer = null }: FigureProps) {
+export function WidgetFigure({ type, result, ctx, title, hideTitle = false, hints = true, footer = null }: FigureProps) {
   return (
     <figure class="w-figure" data-testid="widget-figure">
-      <figcaption class="w-title" data-testid="widget-title">
-        {title ?? result.title}
-      </figcaption>
+      {!hideTitle && (
+        <figcaption class="w-title" data-testid="widget-title">
+          {title ?? result.title}
+        </figcaption>
+      )}
       {hints && result.subtitle && <div class="w-sub small muted">{result.subtitle}</div>}
       {renderWidget(type, result, ctx)}
       {hints && result.note && <div class="w-note small muted">{result.note}</div>}

@@ -5,16 +5,7 @@ import type { BoardWidget } from "../widgets/board";
 import { EXPORT_WIDTH, ExportCard, footerFor, type Part, type Theme } from "../widgets/ExportCard";
 import { rasterize, settle } from "../widgets/rasterize";
 import { FolderPicker } from "./FolderPicker";
-
-interface Image {
-  id: string;
-  widgetId: string;
-  name: string;
-  nameEdited: boolean;
-  title: string | null; // null = the data's own key statement
-  hints: boolean;
-  footer: boolean;
-}
+import { combine, defaultName, detach, groupTitle, patchImage, reorder, reselect, setLayout, singles, split, type Image } from "./images";
 
 interface Loaded {
   result: WidgetResult;
@@ -42,8 +33,6 @@ interface Props {
   onSaved: (info: { path: string; count: number }) => void;
 }
 
-const pad2 = (n: number) => String(n).padStart(2, "0");
-export const defaultName = (index: number, type: string) => `${pad2(index + 1)}_${type}.png`;
 const day = (iso: string) => iso.slice(0, 10);
 
 async function load(w: BoardWidget, req: WidgetRequest): Promise<Loaded> {
@@ -61,9 +50,7 @@ async function load(w: BoardWidget, req: WidgetRequest): Promise<Loaded> {
 export function SaveDialog({ project, req, run, footerRuns, footerText, defaultTitle, defaultIssue, widgets, catalog, initial, onClose, onSaved }: Props) {
   const scope = req.scope ?? "run";
   const combo = req.combo ?? {};
-  const [images, setImages] = useState<Image[]>(() =>
-    widgets.map((w, i) => ({ id: w.id, widgetId: w.id, name: defaultName(i, w.type), nameEdited: false, title: null, hints: true, footer: true })),
-  );
+  const [images, setImages] = useState<Image[]>(() => singles(widgets.map((w) => w.id)));
   const [selected, setSelected] = useState<string[]>(initial);
   const [focus, setFocus] = useState<string | null>(initial[0] ?? widgets[0]?.id ?? null);
   const [loaded, setLoaded] = useState<Record<string, Loaded>>({});
@@ -90,28 +77,55 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
     };
   }, []);
 
-  // default names follow the position among the selected images, until the name was edited
+  // --- derived -------------------------------------------------------------------------------------
+  const labelOf = (widgetId: string) => catalog.find((c) => c.key === widgets.find((w) => w.id === widgetId)?.type)?.label ?? "";
+  const typeOf = (widgetId: string) => widgets.find((w) => w.id === widgetId)?.type ?? "";
   const ordered = images.filter((i) => selected.includes(i.id));
   const nameOf = (img: Image) => {
     if (img.nameEdited) return img.name;
-    const w = widgets.find((x) => x.id === img.widgetId)!;
     const pos = ordered.findIndex((o) => o.id === img.id);
-    return defaultName(pos >= 0 ? pos : widgets.indexOf(w), w.type);
+    return defaultName(pos >= 0 ? pos : images.indexOf(img), img.members.map(typeOf));
   };
-  const patch = (id: string, p: Partial<Image>) => setImages((all) => all.map((i) => (i.id === id ? { ...i, ...p } : i)));
+  const isGroup = (img: Image) => img.members.length > 1;
+  const titleOf = (img: Image) => (isGroup(img) ? (img.title ?? groupTitle(img.members.map(labelOf))) : (img.title ?? loaded[img.members[0]]?.result.title ?? ""));
+  const unavailable = (img: Image) => img.members.map((m) => loaded[m]?.result.unavailable).find(Boolean);
+  const ready = (img: Image) => img.members.every((m) => loaded[m] && !loaded[m].result.unavailable);
+
+  const partsOf = (img: Image): Part[] | null => {
+    if (!ready(img)) return null;
+    return img.members.map((m) => {
+      const w = widgets.find((x) => x.id === m)!;
+      const l = loaded[m];
+      return {
+        id: m,
+        type: w.type,
+        result: l.result,
+        configData: l.configData,
+        title: isGroup(img) ? "" : titleOf(img),
+        hideTitle: isGroup(img),
+        hints: img.hints,
+      };
+    });
+  };
+
   const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  /** Trennen and lösen: the new images are selected when all their widgets were. */
+  const applyChange = (after: Image[]) => {
+    setSelected(reselect(images, selected, after));
+    setImages(after);
+    if (focus && !after.some((i) => i.id === focus)) setFocus(after[0]?.id ?? null);
+  };
+  const doCombine = () => {
+    const out = combine(images, selected);
+    setImages(out.images);
+    setSelected([out.id]); // the new group stays selected and focused
+    setFocus(out.id);
+  };
 
   const target = `${base}/${day(project.now)} ${folderTitle}`.replace(/\/+/g, "/");
   const focused = images.find((i) => i.id === focus);
-  const focusedWidget = widgets.find((w) => w.id === focused?.widgetId);
-  const focusedLoaded = focused ? loaded[focused.widgetId] : undefined;
-
-  const partOf = (img: Image): Part | null => {
-    const w = widgets.find((x) => x.id === img.widgetId)!;
-    const l = loaded[w.id];
-    if (!l || l.result.unavailable) return null;
-    return { id: img.id, type: w.type, result: l.result, configData: l.configData, title: img.title ?? l.result.title ?? "", hints: img.hints };
-  };
+  const focusedParts = focused ? partsOf(focused) : null;
+  const n = ordered.filter(ready).length;
 
   const save = async (overwrite = false) => {
     setBusy(true);
@@ -119,20 +133,30 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
     try {
       const files: { name: string; data: string; title: string }[] = [];
       for (const img of ordered) {
-        const part = partOf(img);
-        if (!part) continue;
+        const parts = partsOf(img);
+        if (!parts) continue;
         const host = document.createElement("div");
         host.style.cssText = "position:fixed;left:-20000px;top:0";
         document.body.append(host);
         render(
-          <ExportCard parts={[part]} theme={theme} footer={img.footer ? (footerText ?? footerFor(footerRuns)) : null} run={run} project={project} combo={combo} scope={scope} />,
+          <ExportCard
+            parts={parts}
+            title={titleOf(img)}
+            layout={img.layout}
+            theme={theme}
+            footer={img.footer ? (footerText ?? footerFor(footerRuns)) : null}
+            run={run}
+            project={project}
+            combo={combo}
+            scope={scope}
+          />,
           host,
         );
         await settle();
         const data = await rasterize(host.firstElementChild as HTMLElement, { pixelRatio: 2 });
         render(null, host);
         host.remove();
-        files.push({ name: nameOf(img), data, title: part.title });
+        files.push({ name: nameOf(img), data, title: titleOf(img) });
       }
       const r = await fetch("/api/deliverables", {
         method: "POST",
@@ -158,9 +182,9 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
 
   // preview scaled to its box
   const box = useRef<HTMLDivElement>(null);
+  const card = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.5);
   const [cardH, setCardH] = useState(400);
-  const card = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const fit = () => {
       if (box.current) setScale(Math.min(1, (box.current.clientWidth - 2) / EXPORT_WIDTH));
@@ -171,11 +195,12 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
     if (box.current) ro.observe(box.current);
     if (card.current) ro.observe(card.current);
     return () => ro.disconnect();
-  }, [focus, focusedLoaded, theme, focused?.hints, focused?.footer, focused?.title]);
+  }, [focus, loaded, theme, focused?.hints, focused?.footer, focused?.title, focused?.layout, focused?.members.join(",")]);
 
-  const part = focused ? partOf(focused) : null;
-  const n = ordered.filter((i) => partOf(i)).length;
-  const label = (id: string) => catalog.find((c) => c.key === widgets.find((w) => w.id === id)?.type)?.label ?? "";
+  const layouts: [Image["layout"], string][] = [
+    ["stack", "übereinander"],
+    ["side", "nebeneinander"],
+  ];
 
   return (
     <div class="modal-backdrop" role="dialog" aria-modal="true" aria-label="Als Deliverable speichern" data-testid="save-dialog">
@@ -189,32 +214,89 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
         </header>
         <div class="modal-body">
           <div class="modal-left">
-            <div class="small muted">Widgets des Boards</div>
+            <div class="list-bar">
+              <span class="small muted" data-testid="mark-text">
+                {selected.length} {selected.length === 1 ? "Bild" : "Bilder"} gewählt
+              </span>
+              <span class="grow" />
+              <button class="btn" data-testid="combine" disabled={selected.length < 2} onClick={doCombine}>
+                Zu einem Bild
+              </button>
+            </div>
             <div class="image-list" data-testid="image-list">
               {images.map((img) => {
-                const l = loaded[img.widgetId];
-                const unavailable = l?.result.unavailable;
+                const group = isGroup(img);
+                const missing = unavailable(img);
                 return (
-                  <div key={img.id} class={"image-item" + (focus === img.id ? " focused" : "")} data-testid="image-item" data-image={img.id} onClick={() => setFocus(img.id)}>
+                  <div
+                    key={img.id}
+                    class={"image-item" + (focus === img.id ? " focused" : "") + (group ? " group" : "")}
+                    data-testid="image-item"
+                    data-image={img.id}
+                    data-group={group}
+                    onClick={() => setFocus(img.id)}
+                  >
                     <input
                       type="checkbox"
-                      aria-label={`${label(img.widgetId)} speichern`}
+                      aria-label={`${img.members.map(labelOf).join(" und ")} speichern`}
                       data-testid="image-check"
                       checked={selected.includes(img.id)}
-                      disabled={!!unavailable}
+                      disabled={!!missing}
                       onClick={(e) => e.stopPropagation()}
                       onChange={() => toggle(img.id)}
                     />
                     <div class="image-info">
-                      <span class="image-label">{label(img.widgetId)}</span>
-                      <span class="small muted ellipsis">{unavailable ?? l?.result.title ?? "…"}</span>
+                      {group && (
+                        <div class="group-head">
+                          <span class="group-label" data-testid="group-label">
+                            1 Bild · {img.members.length} Widgets
+                          </span>
+                          <span class="grow" />
+                          <div class="seg" role="group" aria-label="Anordnung">
+                            {layouts.map(([l, label]) => (
+                              <button
+                                key={l}
+                                class={img.layout === l ? "on" : ""}
+                                aria-pressed={img.layout === l}
+                                data-testid={`layout-${l}`}
+                                onClick={(e) => (e.stopPropagation(), setImages(setLayout(images, img.id, l)))}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                          <button class="btn" data-testid="split" onClick={(e) => (e.stopPropagation(), applyChange(split(images, img.id)))}>
+                            Trennen
+                          </button>
+                        </div>
+                      )}
+                      {img.members.map((m) => (
+                        <div class="member" key={m} data-testid="member" data-widget-id={m}>
+                          <span class="image-label">{labelOf(m)}</span>
+                          {!group && <span class="small muted ellipsis grow">{loaded[m]?.result.unavailable ?? loaded[m]?.result.title ?? "…"}</span>}
+                          {group && <span class="grow" />}
+                          {group && (
+                            <>
+                              <button class="icon-small" aria-label="nach oben" data-testid="member-up" onClick={(e) => (e.stopPropagation(), setImages(reorder(images, img.id, m, -1)))}>
+                                ↑
+                              </button>
+                              <button class="icon-small" aria-label="nach unten" data-testid="member-down" onClick={(e) => (e.stopPropagation(), setImages(reorder(images, img.id, m, 1)))}>
+                                ↓
+                              </button>
+                              <button class="link" data-testid="member-detach" onClick={(e) => (e.stopPropagation(), applyChange(detach(images, img.id, m)))}>
+                                lösen
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      ))}
                       <input
                         class="name-input mono"
                         aria-label="Dateiname"
                         data-testid="image-name"
-                        value={selected.includes(img.id) ? nameOf(img) : img.nameEdited ? img.name : nameOf(img)}
+                        value={nameOf(img)}
                         onClick={(e) => e.stopPropagation()}
-                        onInput={(e) => patch(img.id, { name: (e.target as HTMLInputElement).value, nameEdited: true })}
+                        onInput={(e) => setImages(patchImage(images, img.id, { name: (e.target as HTMLInputElement).value, nameEdited: true }))}
                       />
                     </div>
                   </div>
@@ -277,32 +359,37 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
               <div class="preview-tools">
                 <label class="setting grow">
                   <span class="small muted">Titel</span>
-                  <input
-                    class="text-input"
-                    data-testid="image-title"
-                    value={focused.title ?? focusedLoaded?.result.title ?? ""}
-                    onInput={(e) => patch(focused.id, { title: (e.target as HTMLInputElement).value })}
-                  />
+                  <input class="text-input" data-testid="image-title" value={titleOf(focused)} onInput={(e) => setImages(patchImage(images, focused.id, { title: (e.target as HTMLInputElement).value }))} />
                 </label>
                 <label class="check">
-                  <input type="checkbox" data-testid="hints-check" checked={focused.hints} onChange={() => patch(focused.id, { hints: !focused.hints })} />
+                  <input type="checkbox" data-testid="hints-check" checked={focused.hints} onChange={() => setImages(patchImage(images, focused.id, { hints: !focused.hints }))} />
                   Hinweise einblenden
                 </label>
                 <label class="check">
-                  <input type="checkbox" data-testid="footer-check" checked={focused.footer} onChange={() => patch(focused.id, { footer: !focused.footer })} />
+                  <input type="checkbox" data-testid="footer-check" checked={focused.footer} onChange={() => setImages(patchImage(images, focused.id, { footer: !focused.footer }))} />
                   Fußzeile einblenden
                 </label>
               </div>
             )}
-            <div class="preview-box" ref={box} data-testid="preview" style={{ height: part ? `${cardH * scale + 2}px` : undefined }}>
-              {part && focused && focusedWidget ? (
+            <div class="preview-box" ref={box} data-testid="preview" style={{ height: focusedParts ? `${cardH * scale + 2}px` : undefined }}>
+              {focused && focusedParts ? (
                 <div class="preview-scale" style={{ transform: `scale(${scale})`, width: `${EXPORT_WIDTH}px` }}>
                   <div ref={card}>
-                    <ExportCard parts={[part]} theme={theme} footer={focused.footer ? (footerText ?? footerFor(footerRuns)) : null} run={run} project={project} combo={combo} scope={scope} />
+                    <ExportCard
+                      parts={focusedParts}
+                      title={titleOf(focused)}
+                      layout={focused.layout}
+                      theme={theme}
+                      footer={focused.footer ? (footerText ?? footerFor(footerRuns)) : null}
+                      run={run}
+                      project={project}
+                      combo={combo}
+                      scope={scope}
+                    />
                   </div>
                 </div>
               ) : (
-                <div class="muted pad">{focusedLoaded?.result.unavailable ?? "Lade Vorschau …"}</div>
+                <div class="muted pad">{focused ? (unavailable(focused) ?? "Lade Vorschau …") : ""}</div>
               )}
             </div>
           </div>
@@ -331,5 +418,3 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
     </div>
   );
 }
-
-export { useMemo };
