@@ -11,13 +11,10 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 | B · Voice | moved to a later update (not included) |
 | C · Tool control | decided |
 | D · Analysis by agent | decided |
-| E · Widget format | running |
+| E · Widget format | decided |
 | F · Agent connection | open |
 
-Running block: E · Widget format. Tim agreed to E1 (declarative spec, no builder screen) as direction.
-On the canvas: E1 · Eigene Widgets. Tim: widget width must be settable (half / full row) for every
-widget, and the draft must already show its later width — E1 updated: draft centered in its own row at
-its width, "Breite Halb | Ganz" in every tile's settings and in the draft header. Waiting for Tim's word. Notes from Tim for later
+Running block: none. Notes from Tim for later
 blocks: F: subscription via `claude -p` is fine (personal tool; a published version would use an API
 key). Whether chats show up in claude.ai does not matter.
 
@@ -114,9 +111,49 @@ boards bound to runs.
 **In the prototype:** `D1-Vorlagen.dc.html` (template menu `tpls`, `apply`, `dirty`, `updateTpl`, `doSaveTpl`; agent demo `SUG` in mode Gemischt); in the overall prototype `Prototyp-02.dc.html` → `P-Analyse-02.dc.html` → `G-Vorlagen.dc.html` (scope "Ein Lauf" only; the two other scopes behave the same).
 **Rejected:** Boards saved with their runs (D2): reopening runs is quick and results already live as saved images. Boards and templates as two concepts (D3): one concept is enough, a template remembers its last runs.
 
+### E · Widget format (own widgets, width, order)
+**What:** The agent creates new widgets without code changes by writing a declarative description that
+the tool renders. There is no widget builder screen: the agent is the builder. A new widget first appears
+as a draft on the board; kept widgets go to the catalog section "Eigene" and work like built-in ones
+(settings, save as image, templates). Every widget, built-in or own, has a width (half or full row) and
+a position that Tim or the agent can change.
+
+**Format:** Vega-Lite (v5) with a thin wrapper, stored per project as one JSON file per own widget:
+`{ name, question, scope: "one" | "two" | "project", width: "half" | "full", params: [{ name, label,
+options, default }], data: { source, filter }, spec: <Vega-Lite without data> }`.
+- Sources the tool provides (already aggregated over replicates unless stated): `cells` (one row per
+  combination: axes + catalog metrics, mean and sd), `channels` (per combination and channel), `curves`
+  (per epoch), `predictions` (per window and step), `runs` (one row per run: Lauf-Merkmale, date, state).
+  In scope "two" every row carries `run` = "A" | "B"; in "project" every row carries the run id.
+- `filter` and Vega-Lite fields may reference params as `{{param.<name>}}`; params appear under
+  "Einstellen" like built-in settings.
+- The tool applies its own theme (tokens.json: fonts, series colours, grid, dark board / light export),
+  so own widgets look like built-in ones; the spec must not set colours or fonts.
+- Invalid spec or empty data → the tile shows "Widget kann nicht gezeichnet werden: <reason>" and the
+  agent sees the same message.
+
+**Behaviour:**
+- Tim describes a widget to the agent → a draft appears as the first row of the board: the row is hatched, the draft tile sits centered in it at its own width (half → half the board width, the free sides say "halbe Breite, wie später im Board"), dashed violet border, label "Entwurf · vom Agenten" and its title. Creating or changing a draft is kind nav (no confirmation in Gemischt).
+- Tim asks for changes → the draft is updated in place.
+- Draft header "Breite Halb | Ganz" → the draft changes its width at once.
+- Draft header "Beschreibung" → the tile shows the JSON description instead of the chart (read only); click again → back to the chart.
+- Draft header "Verwerfen" → the draft disappears.
+- Draft header "Behalten" or telling the agent to keep it → (kind change, confirmation in Gemischt) the widget is saved under its name in "Eigene", becomes a normal tile at the position of the draft with label "<name> · eigen", keeps its width.
+- "+ Widget" → the menu shows "Katalog" and "Eigene" (with "Noch keine …" when empty); an own widget can be added any number of times.
+- Own tile "Einstellen" → its params plus "Breite".
+- Every tile's "Einstellen" → "Breite Halb | Ganz"; default: Vergleichstabelle full, all others half. Width is stored with the board and in templates (D).
+- Tile header ↑ / ↓ → the tile moves one position earlier / later in the board order; the grid fills rows left to right, a full-width tile always starts a new row.
+- Agent: "schieb das unterste Widget nach oben", "mach die Tabelle breit", "setz Je Region neben Beste Config" → moves or width changes (kind change, confirmation in Gemischt).
+- Delete an own widget from the catalog → only via the agent or the "Eigene" menu entry's ×; tiles already on boards and in templates show "Widget gelöscht".
+**Edge cases:** A draft is open and Tim switches tab or scope → the draft is kept for that board until kept or discarded. Two drafts at once are not possible; a new request replaces the open draft (the old one is listed in the chat with "Wiederholen").
+**In the prototype:** `E1-Eigene.dc.html` (draft `draft`, `draftWidths`, `draftSpec`, `keep`, catalog `ownCat`, own tile renderer `chart`, width control, ↑/↓ `up`/`down`); in the overall prototype `G-Vorlagen.dc.html` has width and ↑/↓ for the built-in widgets; the own-widget flow is only in `E1-Eigene.dc.html`.
+**Rejected:** Python code widgets (E2): look different, not switchable, run code; moved to a later update if the description proves too narrow. Description plus code escape hatch (E3): later, same reason. A separate widget builder screen: the agent is the builder.
+
 ## Changes to principles.md / tokens.json
 
 ## Out of scope
+- Code widgets (Python) and a code escape hatch for own widgets; later update if needed.
+- Free drag-and-drop layout and widths other than half / full.
 - Voice input (feature B, later update); only the disabled microphone button is in v0.2.
 
 ## Open
