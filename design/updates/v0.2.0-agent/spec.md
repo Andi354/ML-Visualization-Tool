@@ -12,9 +12,12 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 | C · Tool control | decided |
 | D · Analysis by agent | decided |
 | E · Widget format | decided |
-| F · Agent connection | open |
+| F · Agent connection | running |
 
-Running block: none. Notes from Tim for later
+Running block: F · Agent connection. Proposed in chat: backend runs `claude -p` per message with
+`--resume`, stream-json, the tool's own MCP server (localhost) for the C tools, confirmations enforced by
+the tool; read-only file access to the project; streaming with stop; connection check and error states.
+Waiting for Tim's word. Notes from Tim for later
 blocks: F: subscription via `claude -p` is fine (personal tool; a published version would use an API
 key). Whether chats show up in claude.ai does not matter.
 
