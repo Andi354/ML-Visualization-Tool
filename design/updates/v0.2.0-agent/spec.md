@@ -8,16 +8,16 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 | Block | Status |
 |---|---|
 | A · Agent panel | decided |
-| B · Voice | open |
-| C · Tool control | open |
+| B · Voice | moved to a later update (not included) |
+| C · Tool control | running |
 | D · Analysis by agent | open |
 | E · Widget format | open |
 | F · Agent connection | open |
 
-Running block: none. Notes from Tim for later blocks: B (voice) is a big area of its own, text is
-an acceptable fallback, voice must be reliable. F: the subscription via `claude -p` is fine (personal
-tool, not published; a published version would use an API key). Whether chats show up in claude.ai
-does not matter.
+Running block: C · Tool control. Alternatives proposed in chat: C1 act directly + undo, C2 propose and
+confirm, C3 navigation directly / changes with confirmation; none built yet. Notes from Tim for later
+blocks: F: subscription via `claude -p` is fine (personal tool; a published version would use an API
+key). Whether chats show up in claude.ai does not matter.
 
 ## Goal
 The agent can operate the tool on Tim's behalf, by text or voice.
@@ -40,6 +40,7 @@ microphone button. Minimised, it shrinks to a capsule in the bottom right corner
 - Switch tab or area → the context chip changes: "Lauf · <run name without timestamp>", "Analyse", "Läufe · Liste" or "Läufe · Issues".
 - Click the chat title → a list of the project's chats opens (title, last activity), newest first; click one → it becomes the current chat.
 - Click + → a new empty chat "Neuer Chat" becomes current.
+- Click the microphone button (window or capsule) → nothing happens; it is disabled with the tooltip "Sprache kommt in einem späteren Update" (B is not included in v0.2).
 - Type and press Enter or click ↑ → the message is appended to the current chat and sent to the agent (F).
 - Position, size, open/minimised/closed state and the chat list are stored per project, like the frame state of v0.1.
 **Edge cases:** The tool window gets smaller than the agent window → the window is pushed and shrunk to fit.
@@ -52,5 +53,6 @@ and `session_id`; a new message continues it with `claude -p --resume <session_i
 ## Changes to principles.md / tokens.json
 
 ## Out of scope
+- Voice input (feature B, later update); only the disabled microphone button is in v0.2.
 
 ## Open
