@@ -17,7 +17,7 @@ _Working record for the design session; removed at handover._
 | C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
 | D · Experiment | decided | row "Feature D", D5 ✓ |
 | E · Analysis: two runs + project history | decided | row "Feature E", E4 ✓ |
-| F · Detail | running | brainstorm in chat |
+| F · Detail | running | row "Feature F", F1 and F1+F3 (no choice yet) |
 | G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
 | I · Combining widgets into one image | decided | row "Feature I", I1 ✓ |
 | H · Agent (optional) | open | – |
@@ -32,6 +32,17 @@ _Working record for the design session; removed at handover._
   F3 analysis scope "Eine Kombination" with widgets (curves, prediction) — savable as deliverables.
   Recommendation F1 + "In Analyse öffnen" (= F3) for saving. Missing data (no curves/predictions in
   migrated runs) shown as an explained empty state.
+- Tim's last word: F not as an analysis but as its own detail window "um einen Lauf einfach
+  anzuschauen"; maybe the widgets can be moved into an analysis somehow. Build F1, and F1 with F3
+  (= an analysis with only the time-series widgets).
+- On the canvas (D rows in `F-Exp` are now clickable with selection; new widget types in `W-Widget`:
+  curves, forecast, replicates; sample data `f-data.js`):
+  - F1 · detail panel (640 px, right of D): combination chips, metric means ± sd, then Wiederholungen
+    (seed × fold grid), Loss-Kurven (per seed thin, mean thick, best epoch; "je Seed | nur Mittel"),
+    Vorhersage (actual vs. model with min–max band, ETS baseline optional, error panel; region
+    switch), collapsible config. Plain view, no saving.
+  - F1+F3 · same panel as a mini board: tiles with Einstellen / × / blue save icon, "+ Widget" limited
+    to the three time-series widgets, header button "Als Analyse öffnen"; save dialog as in G.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
