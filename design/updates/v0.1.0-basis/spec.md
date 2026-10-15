@@ -399,6 +399,9 @@ comparison table on top and the best config below. One widget = one image stays 
 - Combined image: one title (default "A und B" from the widget names, editable), each part with its own
   subtitle and note, parts separated by a rule (stacked) or a gutter (side by side), one footer.
 - File name of a group: `NN_<type>+<type>.png`, editable like every file name.
+- Checkbox "Hinweise unter den Grafiken" above the preview, per image: shows or hides the small note
+  line under each graphic ("niedriger = besser · …"); default on for single images, off for combined
+  ones (Tim, 15.10.).
 - The preview on the right always shows the focused image exactly as it will be saved.
 
 **Rejected:** I2 drag one widget onto another (hard to discover, no fallback without drag); I3 layout
