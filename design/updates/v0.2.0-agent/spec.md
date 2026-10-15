@@ -10,14 +10,11 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 | A · Agent panel | decided |
 | B · Voice | moved to a later update (not included) |
 | C · Tool control | decided |
-| D · Analysis by agent | running |
+| D · Analysis by agent | decided |
 | E · Widget format | open |
 | F · Agent connection | open |
 
-Running block: D · Analysis by agent. Tim: no boards bound to runs; own templates (scope + widgets
-with order and settings, no runs) built up over time and applicable to any run. On the canvas: D1 ·
-Vorlagen (G1 board + template menu, save as template, update when changed, agent demo in mode
-Gemischt). Waiting for Tim's word. Notes from Tim for later
+Running block: none. Notes from Tim for later
 blocks: F: subscription via `claude -p` is fine (personal tool; a published version would use an API
 key). Whether chats show up in claude.ai does not matter.
 
@@ -89,6 +86,30 @@ line; actions awaiting confirmation appear as a confirmation card. Every execute
 **Edge cases:** Undo of a save whose file was changed or moved since → the line says "Datei wurde inzwischen geändert, nicht gelöscht" and nothing is deleted. Undo is offered only for actions of the current tool session; after a reload the lines stay but without "Rückgängig".
 **In the prototype:** `C1-Direkt.dc.html`, `C2-Gemischt.dc.html`, `C3-Bestaetigen.dc.html` (same example per mode: `MODES`, `ACTIONS` with `kind` 'nav' | 'change', `stateOf`); in `Prototyp-02.dc.html` the mode switch (`agentMode2`, `MODES`) and undo on action lines.
 **Rejected:** A single fixed behaviour (only direct, only confirm or only mixed); Tim wants all three as modes like Claude Code.
+
+### D · Analysis by agent (templates)
+**What:** The agent builds and adjusts analysis boards with the tools of C (group "Change analysis") —
+switch scope and runs, show/hide and configure widgets, change their order. New is the *template*
+(Vorlage): a saved board without runs — scope, visible widgets in order, and their settings — that Tim
+builds up over time and applies to any run(s). Boards themselves stay unsaved as in v0.1; there are no
+boards bound to runs.
+
+**Template as data:** `{ name, scope: "one" | "two" | "project", widgets: [{ type, opts }], last_used:
+{ runs: [...], at } }`, stored per project next to the frame state. One built-in template per scope,
+"Standard", equals the v0.1 default board and cannot be deleted or overwritten.
+
+**Behaviour:**
+- Analysis header (all three scopes) → new button "Vorlage <name> ▾" left of the spacer, new button "Als Vorlage speichern" left of "+ Widget".
+- Click "Vorlage … ▾" → a menu lists the templates of the current scope: name, "zuletzt <run> · <date>" (or "eingebaut"), and the widget names joined by " · "; the current one is highlighted.
+- Click a template → it is applied to the current run(s): the board shows exactly its widgets, order and settings; the board glows briefly; `last_used` is updated.
+- Change the board after applying (settings, + Widget, ×) → the template button shows "· geändert" and a button "Vorlage aktualisieren" appears.
+- Click "Vorlage aktualisieren" → the template is overwritten with the current board; "geändert" disappears. On "Standard" the button is not shown; use "Als Vorlage speichern" instead.
+- Click "Als Vorlage speichern" → a small popover asks for a name (empty → "Neue Vorlage") with the hint that runs are not saved; "Speichern" → the template is saved for the current scope and becomes the current template. An existing name is overwritten.
+- Open a run's analysis for the first time → the template last used in that scope is applied (first ever: "Standard").
+- Agent: "mach <template> mit <runs>" → applies the template (kind nav); "wie letzte Woche" → the agent may use a template's `last_used.runs`; saving or updating a template is kind change (confirmation in Gemischt).
+**Edge cases:** A template contains a widget whose settings name an axis or value the current run does not have → the widget falls back to its catalog default settings and shows a `warn` note "Einstellung aus der Vorlage passt nicht zu diesem Lauf". A template for "Zwei Läufe" applied with only one run selected → the scope controls ask for run B as in v0.1.
+**In the prototype:** `D1-Vorlagen.dc.html` (template menu `tpls`, `apply`, `dirty`, `updateTpl`, `doSaveTpl`; agent demo `SUG` in mode Gemischt); in the overall prototype `Prototyp-02.dc.html` → `P-Analyse-02.dc.html` → `G-Vorlagen.dc.html` (scope "Ein Lauf" only; the two other scopes behave the same).
+**Rejected:** Boards saved with their runs (D2): reopening runs is quick and results already live as saved images. Boards and templates as two concepts (D3): one concept is enough, a template remembers its last runs.
 
 ## Changes to principles.md / tokens.json
 
