@@ -17,32 +17,15 @@ _Working record for the design session; removed at handover._
 | C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
 | D · Experiment | decided | row "Feature D", D5 ✓ |
 | E · Analysis: two runs + project history | decided | row "Feature E", E4 ✓ |
-| F · Detail | running | row "Feature F", F1 and F1+F3 (no choice yet) |
+| F · Detail | decided | row "Feature F", F1+F3 ✓ |
 | G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
 | I · Combining widgets into one image | decided | row "Feature I", I1 ✓ |
 | H · Agent (optional) | open | – |
 
-**Running block F · Detail (one combination: curves, predictions)**
-- Tim's last word: "Ja jetzt passts, weiter mit F" (I incl. footer toggle accepted); asks when F opens:
-  clicking a cell/row in the experiment view, or is that rather an analysis?
-- Proposal (chat): a D row is a group (a combination, averaged over replicates); F = everything about
-  that combination: config, every replicate's values, loss curves (train/val per replicate + mean),
-  predictions vs. actual per channel and window, per channel table. Entry: click a D row.
-  Alternatives: F1 side panel in D (quick look, D stays visible); F2 own tab like a run tab;
-  F3 analysis scope "Eine Kombination" with widgets (curves, prediction) — savable as deliverables.
-  Recommendation F1 + "In Analyse öffnen" (= F3) for saving. Missing data (no curves/predictions in
-  migrated runs) shown as an explained empty state.
-- Tim's last word: F not as an analysis but as its own detail window "um einen Lauf einfach
-  anzuschauen"; maybe the widgets can be moved into an analysis somehow. Build F1, and F1 with F3
-  (= an analysis with only the time-series widgets).
-- On the canvas (D rows in `F-Exp` are now clickable with selection; new widget types in `W-Widget`:
-  curves, forecast, replicates; sample data `f-data.js`):
-  - F1 · detail panel (640 px, right of D): combination chips, metric means ± sd, then Wiederholungen
-    (seed × fold grid), Loss-Kurven (per seed thin, mean thick, best epoch; "je Seed | nur Mittel"),
-    Vorhersage (actual vs. model with min–max band, ETS baseline optional, error panel; region
-    switch), collapsible config. Plain view, no saving.
-  - F1+F3 · same panel as a mini board: tiles with Einstellen / × / blue save icon, "+ Widget" limited
-    to the three time-series widgets, header button "Als Analyse öffnen"; save dialog as in G.
+**Running block:** none. Open: H · Agent (optional); then the overall prototype (one clickable artboard
+with B frame, C, D + F panel, E/G analysis with I saving).
+- Tim's last word: "F1+F3 gefällt mir"; D must keep sidebar and table side by side when the panel is
+  open, table shrinks and scrolls horizontally (fixed on the canvas in `F-Exp`).
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
@@ -358,6 +341,37 @@ flagged; a run still running → values marked "vorläufig"; project without a L
 
 **Rejected:** E1 alone (no project context), E2 as its own view (hard to read; its widgets stay
 optional), E3 alone; widgets laid out as two full experiment screens side by side.
+
+### F · Detail of one combination
+**What:** A detail window to simply look at one combination (a row of the D table = one combination,
+averaged over replicates). Not an analysis board of its own, but built from the same widgets so a
+widget can be saved or moved into an analysis.
+
+**Opening:** click a row in D → the row is marked (`selected-row` + 3 px `accent` bar left) and a panel
+(640 px) opens on the right of D; clicking another row switches the panel; "×" closes it. D keeps its
+structure (sidebar 270 px fixed, table area shrinks and scrolls horizontally, nothing wraps).
+
+**Panel head:** "Kombination", number of cells behind it (and errors), the combination as `axis = value`
+chips, the catalog metrics as mean ± sd; button "Als Analyse öffnen" (opens an analysis board of the run
+with these widgets and this combination as filter; the board itself is G).
+
+**Widgets** (mini board, tiles as in G with Einstellen / × / blue save icon; "+ Widget" offers only these):
+- *Loss-Kurven* (needs `curves`): train_loss and val_loss per epoch; per seed thin (25 % opacity), mean
+  thick; dashed line at the epoch with the lowest mean val_loss; setting "einzeln | nur Mittel"; one
+  fold (the first) to keep it readable.
+- *Vorhersage* (needs `predictions`): actual vs. prediction per day for one channel and the test window
+  of a fold; prediction = mean over seeds with min–max band; optional baseline from another forecaster
+  in the same run (dashed); error panel (%) below with zero line; settings channel, baseline.
+- *Wiederholungen:* seed × fold grid of the primary metric, cell tint by value (darker = worse).
+- Title as key statement ("val_loss am niedrigsten in Epoche 27 von 40", "Region us: MAPE 2,2 %
+  gegenüber 3,4 % bei ETS").
+
+**Edge cases:** run without `curves` / `predictions` (all migrated runs today) → the tile shows
+"Dieser Lauf hat keine Lernkurven gespeichert" / "… keine Vorhersagen" instead of the chart and the
+widget cannot be saved; a combination with errors shows the failed cells as empty grid cells.
+
+**Rejected:** F1 plain panel without saving (Tim prefers the widget tiles); F2 own tab per combination;
+F3 alone as analysis scope (too heavy for a quick look).
 
 ### G · Analysis (one run) and deliverables
 **What:** The "Ein Lauf" scope of the analysis area (E): a board of widgets for one run, laid out like
