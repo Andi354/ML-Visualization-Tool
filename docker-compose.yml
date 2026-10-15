@@ -1,0 +1,15 @@
+# Usage: copy .env.example to .env, set MLVIZ_PROJECT_PATH, run `docker compose up --build`.
+services:
+  mlviz:
+    build: .
+    image: ml-visualization-tool:0.1.0
+    # run as your own user, so exported files do not belong to root
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - "${MLVIZ_PROJECT_PATH:?set MLVIZ_PROJECT_PATH in .env}:/project"
+    environment:
+      LINEAR_API_KEY: "${LINEAR_API_KEY:-}"
+    ports:
+      # only on this machine, not in the network
+      - "127.0.0.1:${MLVIZ_PORT:-8765}:8765"
+    restart: unless-stopped

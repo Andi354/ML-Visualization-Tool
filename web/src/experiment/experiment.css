@@ -1,0 +1,444 @@
+/* Experiment view (feature D) */
+.pane-fill,
+.exp-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.muted-2 {
+  color: var(--text-2);
+}
+.sans {
+  font-family: var(--font-sans);
+}
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.relative {
+  position: relative;
+}
+.crumb-link {
+  color: var(--text-2);
+}
+.crumb-link:hover {
+  background: none;
+  color: var(--text);
+  text-decoration: underline;
+}
+.epoch-chip {
+  padding: 3px 8px;
+  font-size: var(--size-small);
+  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.exp-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+/* sidebar: fixed width, never wraps below the table */
+.exp-sidebar {
+  flex: 0 0 var(--experiment-sidebar);
+  width: var(--experiment-sidebar);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 14px 20px;
+  overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+}
+.small-input {
+  width: 100%;
+  font-size: var(--size-small);
+  padding: 6px 8px;
+  background: var(--bg);
+}
+.dim-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.section-head {
+  display: flex;
+  align-items: center;
+  padding: 0 6px 4px;
+  font-size: var(--size-tiny);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.dim {
+  border-radius: 5px;
+}
+.dim.open {
+  background: #171c27;
+}
+.dim-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px;
+  font-size: var(--size-small);
+  text-align: left;
+}
+.dim-key {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dim-tag {
+  padding: 1px 6px;
+  font-size: var(--size-tiny);
+  white-space: nowrap;
+  color: var(--text-2);
+  background: var(--raised);
+  border-radius: 3px;
+}
+.dim-tag.accent {
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+.dim-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 6px 8px 24px;
+}
+.seg.wide {
+  display: flex;
+  background: var(--bg);
+}
+.seg.wide button {
+  flex: 1;
+  padding: 4px 6px;
+}
+.dim-values {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dim-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--size-small);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.constants {
+  margin-top: auto;
+  background: #0f131b;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+.constants-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  font-weight: 500;
+  font-size: var(--size-small);
+  color: var(--text-2);
+  text-align: left;
+}
+.badge {
+  padding: 1px 6px;
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+  background: var(--raised);
+  border-radius: 3px;
+}
+.constants-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px 12px 12px 28px;
+  border-top: 1px solid var(--line);
+}
+.const-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 8px;
+}
+.const-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--size-small);
+}
+
+/* main */
+.exp-main {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.exp-toolbar {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px var(--gutter);
+  border-bottom: 1px solid var(--line);
+}
+.btn-select {
+  padding: 5px 10px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.count-badge {
+  margin-left: 4px;
+  padding: 1px 5px;
+  font-size: var(--size-small);
+  color: var(--text-2);
+  background: var(--bg);
+  border-radius: 3px;
+}
+.chip-btn {
+  padding: 3px 10px;
+  font-size: var(--size-small);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: 280px;
+  max-height: 520px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: var(--raised);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.pop-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pop-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--size-small);
+  cursor: pointer;
+}
+
+/* overview strip */
+.overview {
+  flex: none;
+  display: flex;
+  gap: 10px;
+  padding: 12px var(--gutter);
+  overflow-x: auto;
+  background: #0f131b;
+  border-bottom: 1px solid var(--line);
+}
+.ov-card {
+  flex: 0 0 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+.ov-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--size-small);
+}
+.ov-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 1px 0;
+  font-size: var(--size-tiny);
+  color: var(--text-2);
+}
+.ov-label {
+  flex: none;
+  width: 64px;
+  text-align: left;
+}
+.ov-plot {
+  position: relative;
+  flex: 1;
+  height: 14px;
+}
+.ov-axis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 7px;
+  height: 1px;
+  background: var(--line);
+}
+.ov-whisker {
+  position: absolute;
+  top: 6px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--series-1);
+  opacity: 0.35;
+}
+.ov-dot {
+  position: absolute;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--series-1);
+}
+.ov-dot.best,
+.hist-bar.best {
+  background: var(--best);
+}
+.ov-val {
+  flex: none;
+  min-width: 48px;
+  text-align: right;
+}
+.ov-val.best {
+  color: var(--best);
+}
+.ov-card.hist {
+  gap: 6px;
+}
+.hist-bars {
+  flex: 1;
+  min-height: 60px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+.hist-bar {
+  flex: 1;
+  background: #4a5568;
+  border-radius: 1px 1px 0 0;
+}
+.hist-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+}
+.best-text {
+  color: var(--best);
+}
+
+/* table */
+.exp-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 var(--gutter) 16px;
+}
+.exp-table {
+  min-width: 100%;
+  border-collapse: collapse;
+}
+.exp-table.stale {
+  opacity: 0.6;
+}
+.exp-table th {
+  position: sticky;
+  background: var(--bg);
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.exp-table .group-row th {
+  top: 0;
+  z-index: 2;
+  padding: 10px var(--cell-padding) 4px;
+  font-size: var(--size-tiny);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.exp-table .col-row th {
+  top: 33px;
+  z-index: 2;
+  padding: 4px var(--cell-padding) 6px;
+  border-bottom: 1px solid var(--line);
+}
+.exp-table .group-sep,
+.exp-table .metric-head:first-of-type {
+  border-left: 0;
+}
+.metric-head button {
+  font: inherit;
+  color: inherit;
+}
+.metric-head button:hover {
+  background: none;
+  color: var(--text);
+}
+.sort-arrow {
+  color: var(--accent);
+}
+.exp-table td {
+  height: var(--row-height);
+  padding: 4px var(--cell-padding);
+  border-bottom: 1px solid #161b26;
+  white-space: nowrap;
+}
+.exp-table tbody tr:hover {
+  background: var(--raised);
+}
+.metric-cell,
+.sd-cell,
+.stat-cell {
+  text-align: left;
+}
+.metric-cell.best {
+  color: var(--best);
+  font-weight: 500;
+}
+.best-tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 5px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 400;
+  border: 1px solid var(--best-line);
+  border-radius: 3px;
+}
+.sd {
+  font-size: var(--size-tiny);
+  font-weight: 400;
+  color: var(--text-3);
+}
+.sd-cell {
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+.stat-cell.error {
+  color: var(--error);
+}

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Bild-Vorschau</title>
+<script src="./support.js"></script>
+<script src="./one-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0D1016}</style>
+</helmet>
+<div style="{{rootSt}}">
+<sc-if value="{{single}}" hint-placeholder-val="{{true}}"><dc-import name="W-Widget" type="{{first.type}}" opts="{{first.opts}}" title="{{title}}" theme="{{theme}}" no-note="{{noNote}}" no-foot="{{noFoot}}" hint-size="100%,440px"></dc-import></sc-if>
+<sc-if value="{{multi}}" hint-placeholder-val="{{false}}">
+<div style="{{cardSt}}">
+<div style="font-size: 16px; font-weight: 600; line-height: 1.35; margin-bottom: 16px;">{{title}}</div>
+<div style="{{gridSt}}">
+<sc-for list="{{parts}}" as="p" hint-placeholder-count="2"><div style="{{p.st}}"><dc-import name="W-Widget" type="{{p.type}}" opts="{{p.opts}}" theme="{{theme}}" part="{{true}}" no-note="{{noNote}}" hint-size="100%,300px"></dc-import></div></sc-for>
+</div>
+<div style="font-size: 11px; margin-top: 16px; font-family: 'IBM Plex Mono', monospace; color: {{muted}}; {{footHide}}">{{foot}}</div>
+</div>
+</sc-if>
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div style="height: 300px; display: flex; align-items: center; justify-content: center; color: #8590A3; border: 1px dashed #3A4458; border-radius: 6px;">Leeres Bild · Widgets hineinziehen oder auswählen</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":900,"height":700},"parts":{"editor":null},"layout":{"editor":null},"title":{"editor":null},"theme":{"editor":null},"noNote":{"editor":null},"noFoot":{"editor":null}}'>
+class Component extends DCLogic {
+renderVals() {
+  const P = this.props || {}, D = window.OneData, parts = (P.parts || []).filter(Boolean), theme = P.theme || 'light', layout = P.layout || 'stack';
+  const light = theme === 'light';
+  const line = light ? '#E3E6EB' : '#262E3E';
+  // layouts: stack = untereinander, side = nebeneinander, big = eins groß oben, zwei klein darunter
+  const cols = layout === 'side' ? 'repeat(' + Math.max(1, parts.length) + ', minmax(0, 1fr))' : layout === 'big' ? 'repeat(2, minmax(0, 1fr))' : 'minmax(0, 1fr)';
+  return {
+    single: parts.length === 1, multi: parts.length > 1, empty: parts.length === 0,
+    first: parts[0] || { type: 'table', opts: {} }, theme, noNote: !!P.noNote, noFoot: !!P.noFoot, footHide: P.noFoot ? 'display: none;' : '',
+    title: P.title || '',
+    parts: parts.map((p, i) => ({ type: p.type, opts: p.opts, st: 'min-width: 0; ' + (layout === 'big' && i === 0 ? 'grid-column: span 2; ' : '') + (i > 0 && layout !== 'side' ? 'padding-top: 18px; border-top: 1px solid ' + line + ';' : '') })),
+    gridSt: 'display: grid; grid-template-columns: ' + cols + '; gap: 18px 24px;',
+    cardSt: 'box-sizing: border-box; background: ' + (light ? '#FFFFFF' : '#131720') + '; color: ' + (light ? '#1A1F29' : '#E4E8EF') + '; border: 1px solid ' + line + '; border-radius: 6px; padding: 18px 20px; font-family: \'IBM Plex Sans\', sans-serif;',
+    muted: light ? '#6B7385' : '#8590A3',
+    foot: D.RUN.id + ' · Epoche ' + D.RUN.epoch + ' · Commit ' + D.RUN.commit,
+    rootSt: 'width: 100%;'
+  };
+}
+}
+</script>
+</body>
+</html>

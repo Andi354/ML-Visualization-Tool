@@ -1,0 +1,124 @@
+"""Feature B (frame) in the browser."""
+
+import re
+
+from playwright.sync_api import expect
+
+from .helpers import folder, open_run
+
+A = folder("TIM-52_best_30", 0)
+B = folder("TIM-52_best_90")
+
+
+def test_icon_bar_shows_project_badge_with_tooltip(page):
+    badge = page.get_by_test_id("project-badge")
+    expect(badge).to_have_text("DB")
+    expect(badge).to_have_attribute("title", "Demo Bench")
+
+
+def test_icon_bar_has_the_two_areas_and_marks_the_active_one(page):
+    expect(page.get_by_test_id("area-runs")).to_have_class(re.compile("active"))
+    expect(page.get_by_test_id("area-analysis")).not_to_have_class(re.compile("active"))
+
+
+def test_frame_dimensions_follow_the_tokens(page):
+    assert page.get_by_test_id("tab-strip").bounding_box()["height"] == 36
+    assert page.locator(".icon-bar").bounding_box()["width"] == 52
+    assert page.locator("body").evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(13, 16, 22)"
+
+
+def test_pinned_tab_shows_the_area_and_has_no_close_button(page):  # also: area label follows the icon
+    pinned = page.get_by_test_id("tab-pinned")
+    expect(pinned).to_have_text("Läufe")
+    assert pinned.locator(".tab-close").count() == 0
+    page.get_by_test_id("area-analysis").click()
+    expect(pinned).to_have_text("Analyse")
+    expect(page.get_by_test_id("analysis-view")).to_be_visible()
+
+
+def test_opening_a_run_creates_a_focused_tab_labelled_without_timestamp(page):
+    open_run(page, A)
+    tab = page.get_by_test_id("tab-run")
+    expect(tab).to_have_count(1)
+    expect(tab).to_have_text("TIM-52_best_30")
+    expect(tab).to_have_attribute("title", A)
+    expect(tab).to_have_class(re.compile("active"))
+    expect(page.get_by_test_id("run-body")).to_be_visible()
+
+
+def test_opening_the_same_run_again_focuses_the_existing_tab(page):
+    open_run(page, A)
+    open_run(page, A)
+    expect(page.get_by_test_id("tab-run")).to_have_count(1)
+    expect(page.get_by_test_id("tab-run")).to_have_class(re.compile("active"))
+
+
+def test_closing_the_active_tab_focuses_the_tab_to_its_left(page):
+    open_run(page, A)
+    open_run(page, B)
+    page.locator(f'[data-testid="tab-run"][data-run="{B}"] [data-testid="tab-close"]').click()
+    expect(page.locator(f'[data-testid="tab-run"][data-run="{A}"]')).to_have_class(re.compile("active"))
+    page.locator(f'[data-testid="tab-run"][data-run="{A}"] [data-testid="tab-close"]').click()
+    expect(page.get_by_test_id("tab-pinned")).to_have_class(re.compile("active"))
+    expect(page.get_by_test_id("runs-view")).to_be_visible()
+    expect(page.get_by_test_id("view-issues")).to_have_attribute("aria-pressed", "true")
+
+
+def test_middle_click_closes_a_run_tab(page):
+    open_run(page, A)
+    page.locator(f'[data-testid="tab-run"][data-run="{A}"]').click(button="middle")
+    expect(page.get_by_test_id("tab-run")).to_have_count(0)
+
+
+def test_switching_area_keeps_run_tabs(page):
+    open_run(page, A)
+    page.get_by_test_id("area-analysis").click()
+    expect(page.get_by_test_id("tab-run")).to_have_count(1)
+    expect(page.get_by_test_id("tab-pinned")).to_have_class(re.compile("active"))
+
+
+def test_open_tabs_and_active_tab_survive_a_reload(page):
+    open_run(page, A)
+    open_run(page, B)
+    page.reload()
+    expect(page.get_by_test_id("tab-run")).to_have_count(2)
+    expect(page.locator(f'[data-testid="tab-run"][data-run="{B}"]')).to_have_class(re.compile("active"))
+
+
+def test_many_tabs_shrink_to_120px_and_the_strip_scrolls(page):
+    page.set_viewport_size({"width": 700, "height": 900})
+    ids = [r["id"] for r in page.evaluate("fetch('/api/runs').then(r => r.json())")]
+    for rid in ids:
+        open_run(page, rid)
+    tabs = page.get_by_test_id("tab-run")
+    assert tabs.count() == len(ids)
+    widths = [tabs.nth(i).bounding_box()["width"] for i in range(tabs.count())]
+    assert min(widths) >= 119.5
+    scrolls = page.get_by_test_id("tab-strip").evaluate("e => e.scrollWidth > e.clientWidth")
+    assert scrolls
+
+
+def test_deleted_run_keeps_its_tab_and_says_so(page):
+    # An init script runs before the app on the next load, after the old page flushed its state.
+    page.add_init_script(
+        """localStorage.setItem('mlviz:v1:Demo Bench:frame',
+            JSON.stringify({area: 'runs', tabs: ['2020-01-01_000000_gone'], active: '2020-01-01_000000_gone', runsView: 'list'}))"""
+    )
+    page.reload()
+    expect(page.get_by_test_id("tab-run")).to_have_count(1)
+    expect(page.get_by_test_id("run-missing")).to_contain_text("Lauf nicht mehr vorhanden")
+    page.get_by_test_id("run-missing").get_by_role("button", name="Tab schließen").click()
+    expect(page.get_by_test_id("tab-run")).to_have_count(0)
+
+
+def test_keyboard_focus_is_visible(page):
+    page.keyboard.press("Tab")
+    outline = page.evaluate("getComputedStyle(document.activeElement).outlineStyle")
+    assert outline == "solid"
+
+
+def test_the_runs_area_remembers_its_view_across_area_switches(page):
+    page.get_by_test_id("view-issues").click()
+    page.get_by_test_id("area-analysis").click()
+    page.get_by_test_id("area-runs").click()
+    expect(page.get_by_test_id("view-issues")).to_have_attribute("aria-pressed", "true")
