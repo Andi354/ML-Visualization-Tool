@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 import json
 
-from . import aggregate, configview, linear, widgets
+from . import aggregate, configview, deliverables, linear, widgets
 from .listing import merkmal_candidates, run_listing
 from .project import Project
 from .runs import get_run, list_runs
@@ -91,6 +91,22 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
             raise HTTPException(404, "unknown widget")
         except LookupError:
             raise HTTPException(404, "run not found")
+
+    @app.get("/api/folders")
+    def api_folders(path: str = "") -> dict:
+        """Sub-folders of a project folder (for choosing the target of a deliverable)."""
+        try:
+            return deliverables.list_dirs(project, path)
+        except deliverables.SaveError as e:
+            raise HTTPException(e.status, e.message)
+
+    @app.post("/api/deliverables")
+    def api_deliverables(payload: dict = Body(...)) -> dict:
+        """Write widget images (base64 PNG) into a project folder; refuses to overwrite by default."""
+        try:
+            return deliverables.save(project, payload, lambda rid: get_run(project, rid))
+        except deliverables.SaveError as e:
+            raise HTTPException(e.status, {"message": e.message, "conflicts": e.detail})
 
     if STATIC.is_dir():
         app.mount("/assets", StaticFiles(directory=STATIC / "assets"), name="assets")

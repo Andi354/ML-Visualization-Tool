@@ -84,6 +84,9 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse }: P
           {run.name}
         </span>
         <span class="grow" />
+        <button class="btn" data-testid="analyse-run" onClick={() => onAnalyse({})}>
+          Analysieren
+        </button>
         {run.epoch && <span class="epoch-chip mono">Epoche {run.epoch}</span>}
       </div>
       <div class="exp-body">

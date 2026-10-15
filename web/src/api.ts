@@ -207,6 +207,8 @@ export interface WidgetRequest {
   run?: string;
   runs?: string[];
   combo?: Record<string, string>;
+  /** Scope of the board: "combination" (detail), "run", "two-runs", "project". */
+  scope?: string;
   settings?: Record<string, string | null>;
 }
 export interface WidgetResult {
@@ -221,8 +223,10 @@ export interface WidgetResult {
   data?: any;
 }
 
-let catalogPromise: Promise<CatalogEntry[]> | null = null;
-export const getCatalog = () => (catalogPromise ??= getJson<CatalogEntry[]>("/api/widgets/catalog"));
+const catalogs = new Map<string, Promise<CatalogEntry[]>>();
+/** The widget catalog of a scope, in the order of its board. */
+export const getCatalog = (scope = "") =>
+  catalogs.get(scope) ?? catalogs.set(scope, getJson<CatalogEntry[]>("/api/widgets/catalog" + (scope ? `?scope=${scope}` : ""))).get(scope)!;
 
 export async function postWidget(key: string, req: WidgetRequest, signal?: AbortSignal): Promise<WidgetResult> {
   const r = await fetch(`/api/widgets/${encodeURIComponent(key)}`, {

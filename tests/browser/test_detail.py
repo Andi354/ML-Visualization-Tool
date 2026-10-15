@@ -81,9 +81,10 @@ def test_als_analyse_oeffnen_opens_the_analysis_with_this_combination(page):
     start(page)
     panel(page).get_by_test_id("open-analysis").click()
     expect(page.get_by_test_id("analysis-view")).to_be_visible()
-    req = page.get_by_test_id("analysis-request")
-    expect(req).to_contain_text(NEW)
-    expect(req).to_contain_text('"forecaster":"rep-net"')
+    expect(page.get_by_test_id("run-select")).to_have_value(NEW)
+    chips = page.get_by_test_id("filter-chip")
+    expect(chips).to_have_count(2)
+    expect(chips.first).to_contain_text("forecaster = rep-net")
 
 
 # --- tiles ---------------------------------------------------------------------------------------------

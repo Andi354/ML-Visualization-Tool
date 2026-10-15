@@ -47,8 +47,18 @@ def widget(defn: Widget):
     return deco
 
 
+#: Order of the widgets in a board of a scope (the catalog and "+ Widget" follow it).
+ORDER = {
+    "combination": ["curves", "forecast", "replicates", "config"],
+    "run": ["compare-table", "per-region", "config", "axis-effect", "stability"],
+}
+
+
 def catalog(scope: str | None = None) -> list[dict]:
-    return [w.to_json() for w, _ in REGISTRY.values() if scope is None or scope in w.scopes]
+    items = [w for w, _ in REGISTRY.values() if scope is None or scope in w.scopes]
+    order = ORDER.get(scope or "", [])
+    items.sort(key=lambda w: order.index(w.key) if w.key in order else len(order))
+    return [w.to_json() for w in items]
 
 
 def seg(key: str, label: str, options: list[tuple[str, str]], default: str) -> dict:

@@ -27,7 +27,7 @@ def block(page, issue):
 
 def test_start_page_is_the_list_view_with_breadcrumb(page):
     expect(page.get_by_test_id("view-list")).to_have_attribute("aria-pressed", "true")
-    expect(page.locator(".crumb")).to_have_text("Demo Bench / Läufe")
+    expect(page.locator('[data-testid="runs-view"] .crumb')).to_have_text("Demo Bench / Läufe")
 
 
 def test_issues_with_a_run_in_the_last_7_days_are_expanded_others_collapsed(page):
@@ -182,8 +182,8 @@ def test_compare_needs_two_ticked_runs_and_opens_the_analysis(page):
     assert page.get_by_test_id("tab-run").count() == 0  # ticking does not open the run
     button.click()
     expect(page.get_by_test_id("analysis-view")).to_be_visible()
-    expect(page.get_by_test_id("compare-runs")).to_contain_text(TIM71)
-    expect(page.get_by_test_id("compare-runs")).to_contain_text(ALONE)
+    state = page.evaluate("JSON.parse(localStorage.getItem('mlviz:v1:Demo Bench:frame'))")
+    assert state["area"] == "analysis" and sorted(state["compare"]) == sorted([TIM71, ALONE])
 
 
 def test_timeline_is_collapsed_by_default_and_opens_with_one_dot_per_run(page):

@@ -317,21 +317,34 @@ def replicates(project, req: dict) -> dict:
         key="config",
         label="Config",
         question="Mit welcher Config wurde diese Kombination gerechnet?",
-        scopes=("combination",),
+        scopes=("combination", "run"),
         settings=[seg("view", "Ansicht", [("blocks", "Blöcke"), ("yaml", "YAML")], "blocks")],
     )
 )
 def config(project, req: dict) -> dict:
+    """The resolved config of a combination. In the scope "one run" it is the best combination
+    (best group mean of the first real metric) within the filter."""
     run = _run(project, req)
-    cfg = run_config(project, run, {k: v for k, v in (req.get("combo") or {}).items() if k in run.axes})
+    combo = {k: v for k, v in (req.get("combo") or {}).items() if k in run.axes}
+    if req.get("scope") == "run":
+        from .runscope import best_combo, real_metrics
+
+        axes = dimension_axes(run)
+        frame = combo_cells(run, combo)
+        metrics = real_metrics(project, run)
+        if metrics and not frame.empty:
+            combo = {**best_combo(run, frame, axes, metrics[0]), **combo}
+    cfg = run_config(project, run, combo)
     diff = sum(b["differs"] for b in cfg["blocks"])
     n_axes = len(cfg["grid"]["axes"])
     title = f"Config: {n_axes} {'Achse' if n_axes == 1 else 'Achsen'} im Grid" + (
         f", {diff} {'Abweichung' if diff == 1 else 'Abweichungen'} von base" if cfg["base_known"] else ""
     )
+    if req.get("scope") == "run" and combo:
+        title = "Beste Config: " + ", ".join(f"{k} = {v}" for k, v in combo.items())
     return {
         "title": title,
         "subtitle": run.name,
         "note": None,
-        "data": {"view": req["settings"]["view"]},
+        "data": {"view": req["settings"]["view"], "combo": combo},
     }

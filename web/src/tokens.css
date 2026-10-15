@@ -51,4 +51,21 @@
   --tab-strip: 36px;
   --detail-panel: 640px;
   --experiment-sidebar: 270px;
+  --best-bg: color-mix(in srgb, var(--best) 14%, transparent);
+}
+.theme-light {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --raised: #F1F3F6;
+  --line: #E3E6EB;
+  --text: #1A1F29;
+  --text-2: #4A5568;
+  --text-3: #6B7385;
+  --best: #0F7A52;
+  --best-bg: #E3F4EC;
+  --series-1: #1A8C8C;
+  --series-5: #7262D9;
+  --series-2: #C47F14;
+  --series-4: #D9607E;
+  color-scheme: light;
 }

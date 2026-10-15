@@ -51,6 +51,8 @@ experiment name is `meta.json: experiment`, else the folder name without the tim
 | `GET /api/runs/{id}/config?combo=` | resolved config for the config view: grid axes and replicates, blocks with entries, YAML lines with markers. `combo` is JSON `{axis: value}` and applies one combination to the resolved config |
 | `GET /api/widgets/catalog?scope=` | the widget catalog: key, label, question, scopes, settings, `requires` |
 | `POST /api/widgets/{key}` | data of one widget: `{run, combo, settings}` -> `{title, subtitle, note, unavailable, options, data}` |
+| `GET /api/folders?path=` | sub-folders of a project folder (no `runs/`, no hidden folders), for the target picker |
+| `POST /api/deliverables` | writes base64 PNGs below a project folder: `{target, files: [{name, data, title}], title, issue, runs, configs, overwrite}`; 409 with the clashing names unless `overwrite` |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
 
 ## Experiment table
@@ -90,6 +92,20 @@ Detail widgets read `curves/` and `predictions/` of the cells of the combination
 `predictions` windows: with an `origin` column the stored window nearest to the requested date is
 plotted, else a `pred_len` slice of the test period; the default is the last window.
 
+## Deliverables
+
+`deliverables.save` writes only below the project folder: never into `runs/`, never into hidden folders,
+no `..`, no absolute paths; file names are reduced to a safe form and must be unique; the data must be a
+PNG. Existing files are not overwritten unless `overwrite` is set. Next to the images it writes a
+`README.md` (title, `Issue: <ID>`, run folders, file list), which is also how a deliverable folder is
+linked to its issue in the run list, and optionally `configs/<run>.yaml` (the resolved config).
+
+The images are rendered in the browser: the widget is laid out at 1200 px in an `ExportCard` (theme
+`light` by default, `dark` optional; `.theme-light` in `tokens.css` carries the export palette),
+rasterized with `html-to-image` at pixel ratio 2 and sent as PNG. The preview in the dialog is the same
+component, so it shows what is saved. Widgets that fetch their own data (config) are given preloaded
+data for export.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.
@@ -98,6 +114,8 @@ plotted, else a `pred_len` slice of the test period; the default is the last win
 - `web/src/experiment/`: experiment view; `model.ts` holds the pure logic (dimension state, chips, columns, formatting).
 - `src/mlviz/configview.py`, `web/src/config/`: config view (feature J).
 - `src/mlviz/widgets/`: catalog and data of the widgets; `web/src/widgets/`: board model, tiles, renderers; `web/src/experiment/DetailPanel.tsx`: detail panel (feature F).
+- `src/mlviz/deliverables.py`, `web/src/analysis/`, `web/src/widgets/ExportCard.tsx`: saving widget images (feature G).
+- `src/mlviz/widgets/runscope.py`: the widgets of one run.
 - `src/mlviz/listing.py`: facts for the run list (counts, best value, Lauf-Merkmal).
 - `src/mlviz/linear.py`: Linear client and local issue links.
 - `web/src/runs/model.ts`: pure logic of the Läufe area (filters, blocks, texts, timeline); components next to it.

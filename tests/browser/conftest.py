@@ -63,6 +63,23 @@ def app_url(demo_project):
 
 
 @pytest.fixture(scope="session")
+def writable(tmp_path_factory):
+    """The app on its own copy of the demo project, for tests that write deliverables."""
+    from mlviz.fixture import make_project
+
+    root = make_project(tmp_path_factory.mktemp("writable"))
+    with serve(root) as url:
+        yield {"url": url, "root": root}
+
+
+@pytest.fixture
+def writable_page(page, writable):
+    _fresh(page, writable["url"])
+    page.writable_root = writable["root"]
+    return page
+
+
+@pytest.fixture(scope="session")
 def empty_url(tmp_path_factory):
     with serve(tmp_path_factory.mktemp("empty")) as url:
         yield url
@@ -99,7 +116,7 @@ def linear_url(demo_project):
         mp.undo()
 
 
-def _fresh(page, url):
+def _fresh(page, url):  # noqa: E302
     page.set_viewport_size({"width": 1440, "height": 900})
     page.goto(url)
     page.evaluate("localStorage.clear()")

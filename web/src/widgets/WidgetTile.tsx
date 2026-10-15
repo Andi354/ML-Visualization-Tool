@@ -1,13 +1,13 @@
 import { useEffect, useState } from "preact/hooks";
 import { getCatalog, NotFound, postWidget, type CatalogEntry, type ProjectInfo, type RunInfo, type SettingDef, type WidgetResult } from "../api";
 import type { BoardWidget } from "./board";
-import { renderWidget } from "./renderers";
+import { renderWidget, type Ctx } from "./renderers";
 
-export function useCatalog(): CatalogEntry[] {
+export function useCatalog(scope = ""): CatalogEntry[] {
   const [cat, setCat] = useState<CatalogEntry[]>([]);
   useEffect(() => {
-    getCatalog().then(setCat).catch(() => {});
-  }, []);
+    getCatalog(scope).then(setCat).catch(() => {});
+  }, [scope]);
   return cat;
 }
 
@@ -20,6 +20,7 @@ interface Props {
   onSettings: (patch: Record<string, string | null>) => void;
   onRemove: () => void;
   onSave?: (result: WidgetResult) => void;
+  scope?: string;
 }
 
 const SaveIcon = () => (
@@ -61,16 +62,43 @@ function Setting({ def, value, options, onChange }: { def: SettingDef; value: st
   );
 }
 
+export interface FigureProps {
+  type: string;
+  result: WidgetResult;
+  ctx: Ctx;
+  /** Key statement; the data's own title when not overridden. */
+  title?: string;
+  /** Show the grey texts: subtitle and note line. */
+  hints?: boolean;
+  /** Footer text (run folder, epoch, commit), or null for none. */
+  footer?: string | null;
+}
+
+/** Title, subtitle, graphic, note and footer of a widget: the tile body and the exported image. */
+export function WidgetFigure({ type, result, ctx, title, hints = true, footer = null }: FigureProps) {
+  return (
+    <figure class="w-figure" data-testid="widget-figure">
+      <figcaption class="w-title" data-testid="widget-title">
+        {title ?? result.title}
+      </figcaption>
+      {hints && result.subtitle && <div class="w-sub small muted">{result.subtitle}</div>}
+      {renderWidget(type, result, ctx)}
+      {hints && result.note && <div class="w-note small muted">{result.note}</div>}
+      {footer && <div class="w-foot tiny mono muted" data-testid="widget-footer">{footer}</div>}
+    </figure>
+  );
+}
+
 /** One tile of a board: header (name, question, Einstellen, ×, save), settings, and the figure. */
-export function WidgetTile({ widget, def, run, project, combo, onSettings, onRemove, onSave }: Props) {
+export function WidgetTile({ widget, def, run, project, combo, onSettings, onRemove, onSave, scope = "combination" }: Props) {
   const [result, setResult] = useState<WidgetResult | null>(null);
   const [error, setError] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const key = JSON.stringify([widget.type, run.id, combo, widget.settings]);
+  const key = JSON.stringify([widget.type, run.id, combo, widget.settings, scope]);
   useEffect(() => {
     const ctl = new AbortController();
     setError(false);
-    postWidget(widget.type, { run: run.id, combo, settings: widget.settings }, ctl.signal)
+    postWidget(widget.type, { run: run.id, combo, scope, settings: widget.settings }, ctl.signal)
       .then(setResult)
       .catch((e) => {
         if (e?.name === "AbortError") return;
@@ -118,12 +146,7 @@ export function WidgetTile({ widget, def, run, project, combo, onSettings, onRem
           </div>
         )}
         {result && !result.unavailable && (
-          <figure class="w-figure">
-            {result.title && <figcaption class="w-title" data-testid="widget-title">{result.title}</figcaption>}
-            {result.subtitle && <div class="w-sub small muted">{result.subtitle}</div>}
-            {renderWidget(widget.type, result, { project, run, combo, settings: widget.settings, onSettings })}
-            {result.note && <div class="w-note small muted">{result.note}</div>}
-          </figure>
+          <WidgetFigure type={widget.type} result={result} ctx={{ project, run, combo, settings: widget.settings, onSettings, scope }} />
         )}
       </div>
     </section>

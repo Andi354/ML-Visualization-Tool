@@ -17,12 +17,12 @@ const DEFAULT = ["curves", "forecast", "replicates", "config"]; // config last
 
 /** Detail of one combination (feature F): head with its facts, and a mini board of widgets. */
 export function DetailPanel({ run, project, row, onClose, onAnalyse }: Props) {
-  const catalog = useCatalog();
+  const catalog = useCatalog("combination");
   const known = catalog.map((c) => c.key);
   const [board, dispatch] = useReducer(boardReducer, null, () => loadBoard(project.name, "combination", DEFAULT, makeBoard("combination", DEFAULT)));
   useEffect(() => saveBoard(project.name, board), [project.name, board]);
   const [menu, setMenu] = useState(false);
-  const own = catalog.filter((c) => c.scopes.includes("combination"));
+  const own = catalog;
   const combo = row.params;
   const entries = Object.entries(combo);
   return (
