@@ -158,7 +158,7 @@ export function RunsView({ project, view, onView, onOpen, onCompare }: Props) {
               class={"btn-primary" + (selected.length >= 2 ? " active" : "")}
               disabled={selected.length < 2}
               data-testid="compare"
-              onClick={() => onCompare(selected.slice(0, 2).map((r) => r.id))}
+              onClick={() => onCompare(selected.map((r) => r.id))}
             >
               {selected.length >= 2 ? `Vergleichen (${selected.length})` : "Vergleichen"}
             </button>

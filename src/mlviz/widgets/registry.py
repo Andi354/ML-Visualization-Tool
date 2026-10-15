@@ -23,6 +23,8 @@ class Widget:
     requires: str | None = None
     #: A widget that can be saved as an image (all but the YAML view of the config).
     exportable: bool = True
+    #: Optional widgets are off in a new board and can be added from the catalog.
+    optional: bool = False
 
     def to_json(self) -> dict:
         return {
@@ -33,6 +35,7 @@ class Widget:
             "settings": self.settings,
             "requires": self.requires,
             "exportable": self.exportable,
+            "optional": self.optional,
         }
 
 
@@ -51,6 +54,11 @@ def widget(defn: Widget):
 ORDER = {
     "combination": ["curves", "forecast", "replicates", "config"],
     "run": ["compare-table", "per-region", "config", "axis-effect", "stability"],
+    "two-runs": [
+        "config-diff", "who-wins", "best-config", "all-combos", "regions-ab", "scope-errors",
+        "param-effect", "rank-stability", "rank-jumps",
+    ],
+    "project": ["project-best", "param-map"],
 }
 
 

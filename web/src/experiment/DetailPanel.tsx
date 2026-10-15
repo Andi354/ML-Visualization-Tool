@@ -71,7 +71,7 @@ export function DetailPanel({ run, project, row, onClose, onAnalyse }: Props) {
             def={catalog.find((c) => c.key === w.type)}
             run={run}
             project={project}
-            combo={combo}
+            req={{ scope: "combination", run: run.id, combo }}
             onSettings={(patch) => dispatch({ type: "settings", id: w.id, patch })}
             onRemove={() => dispatch({ type: "remove", id: w.id })}
           />

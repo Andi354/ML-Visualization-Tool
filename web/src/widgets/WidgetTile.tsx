@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
-import { getCatalog, NotFound, postWidget, type CatalogEntry, type ProjectInfo, type RunInfo, type SettingDef, type WidgetResult } from "../api";
+import { getCatalog, NotFound, postWidget, type CatalogEntry, type ProjectInfo, type RunInfo, type SettingDef, type WidgetRequest, type WidgetResult } from "../api";
 import type { BoardWidget } from "./board";
 import { renderWidget, type Ctx } from "./renderers";
 
@@ -14,13 +14,16 @@ export function useCatalog(scope = ""): CatalogEntry[] {
 interface Props {
   widget: BoardWidget;
   def: CatalogEntry | undefined;
+  /** The run of the board (or run A); some widgets need it for their own requests. */
   run: RunInfo;
   project: ProjectInfo;
-  combo: Record<string, string>;
+  /** What the board is about: scope, run(s), combination as filter, scope parameters. */
+  req: WidgetRequest;
   onSettings: (patch: Record<string, string | null>) => void;
   onRemove: () => void;
   onSave?: (result: WidgetResult) => void;
-  scope?: string;
+  /** Click on a run in a project widget (toggles it for the map) and the current selection. */
+  selection?: { runs: string[] | null; toggle: (id: string, current: string[]) => void };
 }
 
 const SaveIcon = () => (
@@ -90,15 +93,15 @@ export function WidgetFigure({ type, result, ctx, title, hints = true, footer = 
 }
 
 /** One tile of a board: header (name, question, Einstellen, ×, save), settings, and the figure. */
-export function WidgetTile({ widget, def, run, project, combo, onSettings, onRemove, onSave, scope = "combination" }: Props) {
+export function WidgetTile({ widget, def, run, project, req, onSettings, onRemove, onSave, selection }: Props) {
   const [result, setResult] = useState<WidgetResult | null>(null);
   const [error, setError] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const key = JSON.stringify([widget.type, run.id, combo, widget.settings, scope]);
+  const key = JSON.stringify([widget.type, req, widget.settings]);
   useEffect(() => {
     const ctl = new AbortController();
     setError(false);
-    postWidget(widget.type, { run: run.id, combo, scope, settings: widget.settings }, ctl.signal)
+    postWidget(widget.type, { ...req, settings: widget.settings }, ctl.signal)
       .then(setResult)
       .catch((e) => {
         if (e?.name === "AbortError") return;
@@ -146,7 +149,7 @@ export function WidgetTile({ widget, def, run, project, combo, onSettings, onRem
           </div>
         )}
         {result && !result.unavailable && (
-          <WidgetFigure type={widget.type} result={result} ctx={{ project, run, combo, settings: widget.settings, onSettings, scope }} />
+          <WidgetFigure type={widget.type} result={result} ctx={{ project, run, combo: req.combo ?? {}, settings: widget.settings, onSettings, scope: req.scope, selection }} />
         )}
       </div>
     </section>

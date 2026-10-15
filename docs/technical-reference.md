@@ -92,6 +92,20 @@ Detail widgets read `curves/` and `predictions/` of the cells of the combination
 `predictions` windows: with an `origin` column the stored window nearest to the requested date is
 plotted, else a `pred_len` slice of the test period; the default is the last window.
 
+## Two runs and project history
+
+Widgets of the scope `two-runs` take `runs: [A, B]` (A = series 1, B = series 5). Combinations are matched
+by the axes both runs vary (`shared`); a combination is the group mean over replicates and over the axes
+that are not shared. Comparison metric: the first `real` metric of the catalogue. Rank 1 is the best by the
+metric's direction. Spearman's rho is the Pearson correlation of the average ranks (no SciPy). Scaled
+metrics are left out of "Wer gewinnt wo?" when the runs have different forecasters. "Wirkung je
+Parameter" calls an effect a flip when the sign differs and both effects are above 1.5 %.
+
+Widgets of the scope `project` take `runs` (the runs picked for the parameter map; empty = finished runs
+of the current epoch that vary an axis) and `params.color_by` (a Lauf-Merkmal key or `none`). The current
+epoch is the last entry of `epochs.yaml`; runs of older epochs are hollow and left out of the lines.
+Optional widgets (`optional: true` in the catalog) are off in a new board.
+
 ## Deliverables
 
 `deliverables.save` writes only below the project folder: never into `runs/`, never into hidden folders,
@@ -115,6 +129,7 @@ data for export.
 - `src/mlviz/configview.py`, `web/src/config/`: config view (feature J).
 - `src/mlviz/widgets/`: catalog and data of the widgets; `web/src/widgets/`: board model, tiles, renderers; `web/src/experiment/DetailPanel.tsx`: detail panel (feature F).
 - `src/mlviz/deliverables.py`, `web/src/analysis/`, `web/src/widgets/ExportCard.tsx`: saving widget images (feature G).
+- `src/mlviz/widgets/compare.py`, `project.py`: widgets of two runs and of the project; `web/src/widgets/renderers-compare.tsx`, `web/src/views/AnalysisView.tsx`, `web/src/analysis/BoardPage.tsx`: their boards.
 - `src/mlviz/widgets/runscope.py`: the widgets of one run.
 - `src/mlviz/listing.py`: facts for the run list (counts, best value, Lauf-Merkmal).
 - `src/mlviz/linear.py`: Linear client and local issue links.

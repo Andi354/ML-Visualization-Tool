@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { getConfig, getJson, postWidget, type CatalogEntry, type ConfigInfo, type IssueInfo, type ProjectInfo, type RunInfo, type WidgetResult } from "../api";
+import { getConfig, getJson, postWidget, type CatalogEntry, type ConfigInfo, type IssueInfo, type ProjectInfo, type RunInfo, type WidgetRequest, type WidgetResult } from "../api";
 import type { BoardWidget } from "../widgets/board";
 import { EXPORT_WIDTH, ExportCard, footerFor, type Part, type Theme } from "../widgets/ExportCard";
 import { rasterize, settle } from "../widgets/rasterize";
@@ -23,9 +23,17 @@ interface Loaded {
 
 interface Props {
   project: ProjectInfo;
+  /** What the board is about (scope, run(s), filter, parameters). */
+  req: WidgetRequest;
+  /** The primary run of the board (config view, export footer). */
   run: RunInfo;
-  scope: string;
-  combo: Record<string, string>;
+  /** Runs named in the footer of an image. */
+  footerRuns: RunInfo[];
+  /** Footer text when it is not the list of runs (project boards). */
+  footerText?: string;
+  /** Folder title and issue offered by default. */
+  defaultTitle: string;
+  defaultIssue: string | null;
   widgets: BoardWidget[];
   catalog: CatalogEntry[];
   /** Widgets ticked when the dialog opens: none from the header button, one from a tile. */
@@ -38,19 +46,21 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 export const defaultName = (index: number, type: string) => `${pad2(index + 1)}_${type}.png`;
 const day = (iso: string) => iso.slice(0, 10);
 
-async function load(w: BoardWidget, run: RunInfo, scope: string, combo: Record<string, string>): Promise<Loaded> {
-  const result = await postWidget(w.type, { run: run.id, combo, scope, settings: w.settings });
+async function load(w: BoardWidget, req: WidgetRequest): Promise<Loaded> {
+  const result = await postWidget(w.type, { ...req, settings: w.settings });
   let configData: ConfigInfo | undefined;
-  if (w.type === "config" && !result.unavailable) {
-    const c = (result.data?.combo as Record<string, string> | undefined) ?? combo;
-    configData = await getConfig(run.id, c);
+  if (w.type === "config" && !result.unavailable && req.run) {
+    const c = (result.data?.combo as Record<string, string> | undefined) ?? req.combo ?? {};
+    configData = await getConfig(req.run, c);
   }
   return { result, configData };
 }
 
 /** "Als Deliverable speichern": checklist of the board's widgets, preview of the focused image,
  *  names, background, target folder; writes one PNG per selected image. */
-export function SaveDialog({ project, run, scope, combo, widgets, catalog, initial, onClose, onSaved }: Props) {
+export function SaveDialog({ project, req, run, footerRuns, footerText, defaultTitle, defaultIssue, widgets, catalog, initial, onClose, onSaved }: Props) {
+  const scope = req.scope ?? "run";
+  const combo = req.combo ?? {};
   const [images, setImages] = useState<Image[]>(() =>
     widgets.map((w, i) => ({ id: w.id, widgetId: w.id, name: defaultName(i, w.type), nameEdited: false, title: null, hints: true, footer: true })),
   );
@@ -60,8 +70,8 @@ export function SaveDialog({ project, run, scope, combo, widgets, catalog, initi
   const [theme, setTheme] = useState<Theme>("light");
   const [withConfigs, setWithConfigs] = useState(false);
   const [base, setBase] = useState(project.paths.deliverables ?? "deliverables");
-  const [folderTitle, setFolderTitle] = useState(run.name);
-  const [issue, setIssue] = useState<string>(run.issue ?? "");
+  const [folderTitle, setFolderTitle] = useState(defaultTitle);
+  const [issue, setIssue] = useState<string>(defaultIssue ?? "");
   const [issues, setIssues] = useState<string[]>([]);
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -70,7 +80,7 @@ export function SaveDialog({ project, run, scope, combo, widgets, catalog, initi
   useEffect(() => {
     let alive = true;
     widgets.forEach((w) =>
-      load(w, run, scope, combo)
+      load(w, req)
         .then((l) => alive && setLoaded((prev) => ({ ...prev, [w.id]: l })))
         .catch(() => {}),
     );
@@ -115,7 +125,7 @@ export function SaveDialog({ project, run, scope, combo, widgets, catalog, initi
         host.style.cssText = "position:fixed;left:-20000px;top:0";
         document.body.append(host);
         render(
-          <ExportCard parts={[part]} theme={theme} footer={img.footer ? footerFor([run]) : null} run={run} project={project} combo={combo} scope={scope} />,
+          <ExportCard parts={[part]} theme={theme} footer={img.footer ? (footerText ?? footerFor(footerRuns)) : null} run={run} project={project} combo={combo} scope={scope} />,
           host,
         );
         await settle();
@@ -127,7 +137,7 @@ export function SaveDialog({ project, run, scope, combo, widgets, catalog, initi
       const r = await fetch("/api/deliverables", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ target, files, title: folderTitle, issue: issue || null, runs: [run.id], configs: withConfigs ? [run.id] : [], overwrite }),
+        body: JSON.stringify({ target, files, title: folderTitle, issue: issue || null, runs: footerRuns.map((r) => r.id), configs: withConfigs ? footerRuns.map((r) => r.id) : [], overwrite }),
       });
       if (r.status === 409) {
         const body = await r.json();
@@ -253,7 +263,7 @@ export function SaveDialog({ project, run, scope, combo, widgets, catalog, initi
                 <span class="small muted">Issue</span>
                 <select class="select" data-testid="issue-select" value={issue} onChange={(e) => setIssue((e.target as HTMLSelectElement).value)}>
                   <option value="">keins</option>
-                  {[...new Set([...(run.issue ? [run.issue] : []), ...issues])].map((i) => (
+                  {[...new Set([...(defaultIssue ? [defaultIssue] : []), ...issues])].map((i) => (
                     <option key={i} value={i}>
                       {i}
                     </option>
@@ -288,7 +298,7 @@ export function SaveDialog({ project, run, scope, combo, widgets, catalog, initi
               {part && focused && focusedWidget ? (
                 <div class="preview-scale" style={{ transform: `scale(${scale})`, width: `${EXPORT_WIDTH}px` }}>
                   <div ref={card}>
-                    <ExportCard parts={[part]} theme={theme} footer={focused.footer ? footerFor([run]) : null} run={run} project={project} combo={combo} scope={scope} />
+                    <ExportCard parts={[part]} theme={theme} footer={focused.footer ? (footerText ?? footerFor(footerRuns)) : null} run={run} project={project} combo={combo} scope={scope} />
                   </div>
                 </div>
               ) : (

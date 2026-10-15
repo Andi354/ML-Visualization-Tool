@@ -4,6 +4,7 @@ import { ConfigBlocks, ConfigView, Legend as ConfigLegend, type ConfigMode } fro
 import { formatMetric } from "../experiment/model";
 import { formatNumber } from "../format";
 import { bandPath, centredStart, linePath, linear, niceTicks, pad, shortDate, spread } from "./charts";
+import { AllCombos, BestConfig, ConfigDiff, ParamEffect, ParamMap, ProjectBest, RankJumps, RankStability, RegionsAB, ScopeErrors, WhoWins } from "./renderers-compare";
 
 export interface Ctx {
   project: ProjectInfo;
@@ -15,6 +16,7 @@ export interface Ctx {
   configData?: ConfigInfo;
   /** Scope of the board; "run" boards show the whole config blocks open. */
   scope?: string;
+  selection?: { runs: string[] | null; toggle: (id: string, current: string[]) => void };
 }
 
 const W = 600;
@@ -424,6 +426,28 @@ export function renderWidget(type: string, result: WidgetResult, ctx: Ctx) {
       return <ForecastChart data={d} onWindow={(w) => ctx.onSettings({ window: w })} />;
     case "replicates":
       return <ReplicatesGrid data={d} project={ctx.project} />;
+    case "config-diff":
+      return <ConfigDiff data={d} />;
+    case "who-wins":
+      return <WhoWins data={d} />;
+    case "best-config":
+      return <BestConfig data={d} />;
+    case "all-combos":
+      return <AllCombos data={d} />;
+    case "regions-ab":
+      return <RegionsAB data={d} />;
+    case "scope-errors":
+      return <ScopeErrors data={d} />;
+    case "param-effect":
+      return <ParamEffect data={d} />;
+    case "rank-stability":
+      return <RankStability data={d} />;
+    case "rank-jumps":
+      return <RankJumps data={d} />;
+    case "project-best":
+      return <ProjectBest data={d} ctx={ctx} />;
+    case "param-map":
+      return <ParamMap data={d} />;
     case "compare-table":
       return <CompareTable data={d} />;
     case "per-region":

@@ -39,7 +39,9 @@ def test_the_area_opens_with_all_one_run_widgets_in_catalog_order(page):
     order = board(page).get_by_test_id("widget-tile").evaluate_all("els => els.map(e => e.dataset.widget)")
     assert order == KEYS
     expect(page.get_by_test_id("widgets-menu")).to_have_text("Widgets · 5 von 5")
-    expect(page.locator('[data-testid="analysis-view"] .crumb')).to_have_text("Analyse / Ein Lauf")
+    expect(page.locator('[data-testid="analysis-view"] .crumb')).to_have_text("Analyse /")
+    expect(page.get_by_test_id("analysis-view-run")).to_have_attribute("aria-pressed", "true")
+    expect(page.get_by_test_id("analysis-view-run")).to_have_text("Ein Lauf")
 
 
 def test_tile_header_has_name_question_settings_remove_and_a_small_save_button(page):

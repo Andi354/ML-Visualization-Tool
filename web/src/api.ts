@@ -202,6 +202,7 @@ export interface CatalogEntry {
   settings: SettingDef[];
   requires: string | null;
   exportable: boolean;
+  optional: boolean;
 }
 export interface WidgetRequest {
   run?: string;
@@ -209,6 +210,8 @@ export interface WidgetRequest {
   combo?: Record<string, string>;
   /** Scope of the board: "combination" (detail), "run", "two-runs", "project". */
   scope?: string;
+  /** Scope parameters set in the board header (project: `color_by`). */
+  params?: Record<string, string>;
   settings?: Record<string, string | null>;
 }
 export interface WidgetResult {

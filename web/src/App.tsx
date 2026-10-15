@@ -68,6 +68,7 @@ function Frame({ project }: { project: ProjectInfo }) {
                 onBack={() => dispatch({ type: "focus-pinned" })}
                 onClose={() => dispatch({ type: "close-run", run })}
                 onAnalyse={(combo) => dispatch({ type: "open-analysis", run, combo })}
+                onCompareWith={(other) => dispatch({ type: "open-compare", runs: [run, other] })}
               />
             </div>
           ))}
