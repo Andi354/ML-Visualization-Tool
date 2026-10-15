@@ -9,5 +9,6 @@ import "./tokens.css";
 import "./styles.css";
 import "./runs/runs.css";
 import "./experiment/experiment.css";
+import "./config/config.css";
 
 render(<App />, document.getElementById("app")!);

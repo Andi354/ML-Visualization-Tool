@@ -48,6 +48,7 @@ experiment name is `meta.json: experiment`, else the folder name without the tim
 | `GET /api/runs/{id}` | one run (404 when gone) |
 | `GET /api/runs/{id}/dims` | sidebar: dimensions (axes with more than one value, replicates, channel) with value counts and section, constants of the resolved config |
 | `POST /api/runs/{id}/table` | group table. Body: `dims` (`{dim: {mode: split\|agg, sel: [values]}}`), `sort` (`metric`, `stat` mean/min/max/n, `dir`), `limit` (default 200, max 1000), `overview` |
+| `GET /api/runs/{id}/config?combo=` | resolved config for the config view: grid axes and replicates, blocks with entries, YAML lines with markers. `combo` is JSON `{axis: value}` and applies one combination to the resolved config |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
 
 ## Experiment table
@@ -61,12 +62,22 @@ Channel "je Kanal" and a channel selection read `channels.parquet`; a selection 
 averages the selected channels per cell first. The overview cards use mean and sd over the cells with
 that value under the current filters; the histogram counts the group means.
 
+## Config view
+
+`configview.run_config` takes the resolved `config.yaml` and, for a combination, sets the swept keys
+to the combination's values (the value of a label is found by its position in the grid order, which
+equals the order in `sweep:`). The base config is the merge of the `base:` files of the run's source
+config (`meta.json: config`); migrated runs have none, so nothing is marked as differing from base. An
+entry differs when the base has the key with another value. The frontend (`web/src/config/`) renders
+the same data as "Blöcke" or "YAML"; the choice is stored per project.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.
 - `src/mlviz/runs.py`: `Run` (lazy, cached by mtime), `list_runs`, `get_run`. Run ids never leave `runs/`.
 - `src/mlviz/aggregate.py`: dimensions, constants and group table of one run (feature D).
 - `web/src/experiment/`: experiment view; `model.ts` holds the pure logic (dimension state, chips, columns, formatting).
+- `src/mlviz/configview.py`, `web/src/config/`: config view (feature J).
 - `src/mlviz/listing.py`: facts for the run list (counts, best value, Lauf-Merkmal).
 - `src/mlviz/linear.py`: Linear client and local issue links.
 - `web/src/runs/model.ts`: pure logic of the Läufe area (filters, blocks, texts, timeline); components next to it.

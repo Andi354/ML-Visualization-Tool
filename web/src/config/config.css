@@ -1,0 +1,215 @@
+/* Config view (feature J) */
+.cfg {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.cfg-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cfg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.cfg-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cfg-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.cfg-swatch.accent {
+  background: var(--accent);
+}
+.cfg-swatch.amber {
+  background: var(--warn);
+}
+.cfg-swatch.dashed {
+  background: none;
+  border: 1px dashed var(--text-3);
+  border-radius: 2px;
+}
+.amber {
+  color: var(--warn);
+}
+
+.cfg-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-panel);
+}
+.cfg-grid-title {
+  font-size: var(--size-small);
+  font-weight: 500;
+  color: var(--accent);
+}
+.cfg-axis {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cfg-axis-key {
+  flex: 0 0 150px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.cfg-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cfg-chip {
+  padding: 1px 7px;
+  font-size: 11px;
+  color: var(--text-2);
+  background: var(--raised);
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+.cfg-chip.current {
+  font-weight: 600;
+  color: var(--text);
+  background: var(--accent-bg);
+  border-color: var(--accent-line);
+}
+.cfg-chip.dashed {
+  background: none;
+  border: 1px dashed var(--line);
+}
+.cfg-reps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+
+.cfg-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cfg-block {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.cfg-block-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+}
+.cfg-entries {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  gap: 3px 14px;
+  padding: 4px 12px 12px;
+  font-size: 11px;
+}
+.cfg-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cfg-value.swept {
+  font-weight: 600;
+  color: var(--accent);
+}
+.cfg-value.differs {
+  color: var(--warn);
+}
+.cfg-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.cfg-yaml {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cfg-grid-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.cfg-yaml-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cfg-lines {
+  font-size: 11px;
+  background: #0f131b;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: 6px 0;
+  overflow-x: auto;
+}
+.cfg-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 18px;
+  padding: 0 12px 0 0;
+  border-left: 3px solid transparent;
+  white-space: nowrap;
+}
+.cfg-line.swept {
+  background: var(--accent-bg);
+  border-left-color: var(--accent);
+}
+.cfg-line.replicate {
+  border-left: 3px dashed var(--text-3);
+}
+.cfg-line.differs .cfg-text {
+  color: var(--warn);
+}
+.cfg-ln {
+  flex: none;
+  width: 32px;
+  text-align: right;
+  color: var(--text-3);
+  user-select: none;
+}
+.cfg-fold {
+  font: inherit;
+  color: var(--text);
+  font-weight: 500;
+}
+.cfg-fold:hover {
+  background: none;
+  text-decoration: underline;
+}
+.cfg-note {
+  font-size: 10px;
+  color: var(--text-3);
+}
+.cfg-note.amber {
+  color: var(--warn);
+}

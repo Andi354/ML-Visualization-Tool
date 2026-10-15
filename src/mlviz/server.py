@@ -9,7 +9,9 @@ from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import aggregate, linear
+import json
+
+from . import aggregate, configview, linear
 from .listing import merkmal_candidates, run_listing
 from .project import Project
 from .runs import get_run, list_runs
@@ -61,6 +63,19 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     def api_table(run_id: str, query: dict = Body(default_factory=dict)) -> dict:
         """Group table under the given averaging, filters and sorting."""
         return aggregate.run_table(_run_or_404(run_id), project, query)
+
+    @app.get("/api/runs/{run_id}/config")
+    def api_config(run_id: str, combo: str | None = None) -> dict:
+        """Resolved config for the config view; `combo` (JSON `{axis: value}`) selects a combination."""
+        chosen: dict[str, str] = {}
+        if combo:
+            try:
+                parsed = json.loads(combo)
+            except ValueError:
+                raise HTTPException(400, "combo must be JSON")
+            if isinstance(parsed, dict):
+                chosen = {str(k): str(v) for k, v in parsed.items()}
+        return configview.run_config(project, _run_or_404(run_id), chosen)
 
     if STATIC.is_dir():
         app.mount("/assets", StaticFiles(directory=STATIC / "assets"), name="assets")

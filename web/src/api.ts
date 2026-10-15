@@ -144,3 +144,44 @@ export async function postTable(id: string, query: Partial<TableQuery>, signal?:
   if (!r.ok) throw new Error(`table: ${r.status}`);
   return r.json();
 }
+
+// --- config view (feature J) ----------------------------------------------------------------
+export interface ConfigAxis {
+  key: string;
+  paired: boolean;
+  members: string[];
+  values: { label: string; display: string }[];
+  current: string | null;
+}
+export interface ConfigEntry {
+  key: string;
+  value: string;
+  swept: boolean;
+  values: string[];
+  base: string | null;
+  differs: boolean;
+}
+export interface ConfigLine {
+  n: number;
+  indent: number;
+  text: string;
+  block: string;
+  kind: "block" | "entry";
+  swept?: boolean;
+  replicate?: boolean;
+  differs?: boolean;
+  note?: string | null;
+  base?: string | null;
+}
+export interface ConfigInfo {
+  base_known: boolean;
+  grid: { axes: ConfigAxis[]; replicates: { key: string; values: string[] }[] };
+  blocks: { name: string; entries: ConfigEntry[]; differs: number }[];
+  lines: ConfigLine[];
+  yaml: string;
+}
+
+export const getConfig = (runId: string, combo?: Record<string, string>) =>
+  getJson<ConfigInfo>(
+    `/api/runs/${encodeURIComponent(runId)}/config` + (combo ? `?combo=${encodeURIComponent(JSON.stringify(combo))}` : ""),
+  );
