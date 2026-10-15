@@ -10,11 +10,14 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 | A · Agent panel | decided |
 | B · Voice | moved to a later update (not included) |
 | C · Tool control | decided |
-| D · Analysis by agent | open |
+| D · Analysis by agent | running |
 | E · Widget format | open |
 | F · Agent connection | open |
 
-Running block: none. Notes from Tim for later
+Running block: D · Analysis by agent. Tim: no boards bound to runs; own templates (scope + widgets
+with order and settings, no runs) built up over time and applicable to any run. On the canvas: D1 ·
+Vorlagen (G1 board + template menu, save as template, update when changed, agent demo in mode
+Gemischt). Waiting for Tim's word. Notes from Tim for later
 blocks: F: subscription via `claude -p` is fine (personal tool; a published version would use an API
 key). Whether chats show up in claude.ai does not matter.
 
