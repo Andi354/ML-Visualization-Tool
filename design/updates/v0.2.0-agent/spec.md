@@ -1,23 +1,10 @@
 # v0.2.0 · Agent
 
 Issue: TIM-88 · Canvas: https://claude.ai/artifact/5XSVMrDJk2PpQS9sGqWd8f, page "v0.2 · Agent"
-Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
-
-## State
-
-| Block | Status |
-|---|---|
-| A · Agent panel | decided |
-| B · Voice | moved to a later update (not included) |
-| C · Tool control | decided |
-| D · Analysis by agent | decided |
-| E · Widget format | decided |
-| F · Agent connection | decided |
-
-Running block: none. All blocks decided; next: final check, then handover.
+Prototype: prototype/Prototyp-02.dc.html (see prototype/README.md) · Builds on: v0.1.0 (and the v0.1.1 format fix, see External data)
 
 ## Goal
-The agent can operate the tool on Tim's behalf, by text or voice.
+Tim can use the whole tool through an agent in a chat window: open runs, set views, build analyses from templates and own widgets, with every action visible and undoable and the token cost in view.
 
 ## Features
 
@@ -59,7 +46,7 @@ line; actions awaiting confirmation appear as a confirmation card. Every execute
 | Search (read only) | find runs by date, issue, run feature (e.g. `pred_len`) and grid axes; read results, cells, config of a run | read |
 | Navigate | open a run as tab, focus or close a tab, switch Läufe view (Liste / Issues), open Analyse with a scope (Ein Lauf / Zwei Läufe / Projektverlauf) and its runs | nav |
 | View settings | in a run tab: filters, grouping, columns, sort; open the detail of a combination | nav |
-| Change analysis | add, remove, configure widgets on a board (feature D) | change |
+| Change analysis | add, remove, configure, move, resize widgets; save or update templates; keep own widgets (D, E) | change (exceptions: applying a template and creating or changing a widget draft are nav) |
 | Save | save widget images or configs as files (as the v0.1 save dialog does) | change |
 
 **Modes:**
@@ -191,13 +178,50 @@ is, whether its prompt cache is still warm, and warns before a message would re-
 **Rejected:** Summarise-and-start-new-chat as compaction: summarising reads the whole chat again, so it saves nothing once the cache is cold; Tim prefers manual compaction in Claude Code over extra machinery.
 
 ## Changes to principles.md / tokens.json
+- `principles.md` (done in this handover): Frame — the agent window is the exception that floats above
+  the content; Widgets — board includes width and order, templates, own widgets as descriptions; new
+  section "Agent" (same actions as the UI, visible and undoable, no hidden token cost).
+- `tokens.json`: none. Colours in the prototype map to existing tokens: send / Ausführen buttons and
+  the active mode → `accent` (the prototype's `#2F5BD3` is a placeholder, use `accent` with dark text as
+  in v0.1 buttons); stop button and context > 90 % → `error`; confirmation cards, cold cache, context
+  70–90 % → `warn`, `warn-bg`, `warn-line`; executed actions, warm cache, context < 70 % → `best`,
+  `best-line`; drafts of own widgets → `series[4]` (`#8C7CF0`); window shadow and surfaces → `surface`,
+  `raised`, `line`.
+
+## External data
+- Run data as in v0.1 (`runs/<ts>_<config>/`, Parquet `cells`, `channels`, `curves`, `predictions`,
+  `meta.json`, `project.yaml`). A fix v0.1.1 adapting the tool to the real repnet-bench format is in
+  progress in parallel. The source names of feature E (`cells`, `channels`, `curves`, `predictions`,
+  `runs`) are logical datasets the tool provides; if v0.1.1 changes the underlying files, the datasets
+  keep these names and map to whatever v0.1.1 reads.
+- Claude Code headless (`claude -p`), documented at code.claude.com (headless, cli-reference, mcp,
+  prompt-caching, statusline, costs). Facts used: `session_id` in the init event and in json output;
+  `--resume <id>` continues; `-p` sessions do not appear in the interactive resume picker; usage objects
+  carry `input_tokens`, `cache_creation_input_tokens`, `cache_read_input_tokens`, `output_tokens` (take
+  output from the `result` message); prompt-cache TTL is 1 h on a subscription and 5 min with an API key;
+  `ANTHROPIC_API_KEY`, if set, takes precedence over the subscription in `-p` mode; `--mcp-config` takes
+  a file or inline JSON and can be passed per call.
 
 ## Out of scope
 - Code widgets (Python) and a code escape hatch for own widgets; later update if needed.
 - Free drag-and-drop layout and widths other than half / full.
 - Voice input (feature B, later update); only the disabled microphone button is in v0.2.
 
+## Prototype notes
+- Agent answers are placeholders; nothing is sent anywhere. Streaming is simulated by a short delay.
+- The overall prototype shows the agent's actions only as sample lines in the first chat; the full
+  confirm / undo flow per mode is in `C1-Direkt`, `C2-Gemischt`, `C3-Bestaetigen`, templates by the
+  agent in `D1-Vorlagen`, own widgets in `E1-Eigene`.
+- Templates, width and order are shown only in "Ein Lauf"; "Zwei Läufe" and "Projektverlauf" behave the
+  same.
+- Own widgets are drawn by a hand-written SVG in `E1-Eigene`; the save dialog shows no preview for them.
+  The real tool draws them with Vega-Lite everywhere, including the save preview.
+- Setup check, error states, API-key warning and the "Abo" line are only described, not prototyped.
+- Changed elements glow only in `D1-Vorlagen` and `E1-Eigene`; the tool does it for every agent action.
+- The prototype's button blue `#2F5BD3` is not a token; see Changes to tokens.
+
 ## Open
+- Vega-Lite theme: if a Vega-Lite feature cannot be themed to the tokens, then restrict own widgets to the marks that can (bar, line, point, area, rect, text, tick) and tell the agent so in the MCP tool description.
 - `/compact` in `claude -p --resume` mode: if it works, show the menu entry; if not, hide it and offer "Session-ID kopieren".
 - Rate-limit usage in stream-json: if present, show the "Abo" line; if not, omit it.
 - Cache hit across `claude -p --resume` calls: if the usage shows no `cache_read_input_tokens` despite a warm cache, treat the cache as cold after every call (chip always "Cache abgelaufen" after TTL 0) and tell Tim.

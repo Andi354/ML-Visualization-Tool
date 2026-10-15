@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>E1 · Eigene Widgets</title>
+<script src="./support.js"></script>
+<script src="./one-data.js"></script>
+<script src="./g-shared.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1016}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,a:focus-visible{outline:2px solid #6E9BF5;outline-offset:1px}
+.card{background:#131720;border:1px solid #262E3E;border-radius:6px;padding:14px 16px;box-sizing:border-box;min-width:0}
+.ct{font-weight:600;font-size:13px;margin:0 0 2px}
+.cs{font-size:12px;color:#8590A3;margin:0 0 12px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.chip{font:400 12px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:3px;border:1px solid #262E3E;background:#1A2030;color:#A1AABB;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 100%; height: {{rootH}}; box-sizing: border-box; position: relative; display: flex; flex-direction: column; background: #0D1016; color: #E4E8EF; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden;">
+<div style="flex-shrink: 0; min-height: 52px; box-sizing: border-box; padding: 8px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-bottom: 1px solid #262E3E; position: relative;">
+<span>Analyse</span><span style="color: #8590A3;">/</span><span style="color: #A1AABB;">Ein Lauf</span>
+<span class="mono" style="margin-left: 12px; color: #A1AABB;">{{runName}}</span>
+<span style="flex: 1;"></span>
+<button onClick="{{toggleAdd}}" style="font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 4px; padding: 6px 12px; border: 1px solid #262E3E; background: #131720; color: #E4E8EF;">+ Widget</button>
+<button onClick="{{openDlg}}" style="font: 500 13px 'IBM Plex Sans', sans-serif; color: #0D1016; background: #6E9BF5; border: 0; border-radius: 4px; padding: 7px 14px; cursor: pointer;">Als Deliverable speichern</button>
+<sc-if value="{{add}}" hint-placeholder-val="{{false}}">
+<div role="menu" style="position: absolute; right: 200px; top: 50px; z-index: 5; width: 360px; background: #131720; border: 1px solid #2C4572; border-radius: 6px; padding: 6px; box-shadow: 0 12px 32px rgba(0,0,0,0.5);">
+<div style="font-size: 11px; color: #8590A3; padding: 4px 10px;">Katalog</div><sc-for list="{{catalog}}" as="c" hint-placeholder-count="5"><button onClick="{{c.add}}" style="width: 100%; text-align: left; display: flex; flex-direction: column; gap: 2px; background: none; border: 0; border-radius: 4px; padding: 8px 10px; cursor: pointer; color: #E4E8EF;"><span style="font-size: 13px;">{{c.label}}</span><span style="font-size: 12px; color: #8590A3;">{{c.q}}</span></button></sc-for>
+<div style="font-size: 11px; color: #8590A3; padding: 8px 10px 4px; border-top: 1px solid #262E3E; margin-top: 4px;">Eigene</div>
+<sc-if value="{{noOwn}}"><div style="font-size: 12px; color: #6B7385; padding: 4px 10px 8px;">Noch keine. Beschreib dem Agenten ein Widget, und behalte es.</div></sc-if>
+<sc-for list="{{ownCat}}" as="c" hint-placeholder-count="1"><button onClick="{{c.add}}" style="width: 100%; text-align: left; display: flex; flex-direction: column; gap: 2px; background: none; border: 0; border-radius: 4px; padding: 8px 10px; cursor: pointer; color: #E4E8EF;"><span style="font-size: 13px;">{{c.label}} <span style="font-size: 11px; color: #8C7CF0;">eigen</span></span><span style="font-size: 12px; color: #8590A3;">{{c.q}}</span></button></sc-for>
+</div>
+</sc-if>
+</div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 18px 28px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-content: start;">
+<sc-if value="{{hasDraft}}" hint-placeholder-val="{{false}}">
+<div style="{{draftWrapSt}}">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8590A3;"><span style="padding: 1px 7px; border-radius: 3px; border: 1px dashed #8C7CF0; color: #B9AEF7; font-size: 11px;">Entwurf · vom Agenten</span><span style="color: #A1AABB; font-weight: 500;">{{draft.title}}</span><span style="flex: 1;"></span>
+<span style="display: flex; align-items: center; gap: 6px;">Breite<span style="display: flex; padding: 2px; gap: 2px; background: #0D1016; border: 1px solid #262E3E; border-radius: 5px;"><sc-for list="{{draftWidths}}" as="i" hint-placeholder-count="2"><button style="{{i.st}}" onClick="{{i.on}}">{{i.label}}</button></sc-for></span></span><button onClick="{{toggleSpec}}" style="{{specBtnSt}}">Beschreibung</button><button onClick="{{discard}}" style="font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 4px; padding: 3px 9px; border: 1px solid #262E3E; background: transparent; color: #A1AABB;">Verwerfen</button><button onClick="{{keepManual}}" style="font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 4px; padding: 3px 10px; border: 0; background: #8C7CF0; color: #0D1016;">Behalten</button></div>
+<div style="{{draftRowSt}}"><div style="{{draftBoxSt}}">
+<sc-if value="{{showSpec}}" hint-placeholder-val="{{false}}"><pre style="margin: 0; font: 400 11px/1.5 'IBM Plex Mono', monospace; color: #C9D3E3; background: #0D1016; border: 1px solid #262E3E; border-radius: 4px; padding: 10px 12px; white-space: pre-wrap; max-height: 360px; overflow: auto;">{{draftSpec}}</pre></sc-if>
+<sc-if value="{{hideSpec}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8590A3;">{{draft.sub}}<span style="flex: 1;"></span><sc-for list="{{draft.legend}}" as="l" hint-placeholder-count="2"><span style="display: inline-flex; align-items: center; gap: 5px;"><span style="{{l.dot}}"></span>{{l.label}}</span></sc-for></div>
+<svg viewBox="0 0 560 300" style="width: 100%; height: 300px;">
+<sc-for list="{{draft.grid}}" as="g" hint-placeholder-count="4"><line x1="44" x2="550" y1="{{g.y}}" y2="{{g.y}}" stroke="#262E3E" stroke-width="1"></line><text x="38" y="{{g.ty}}" fill="#8590A3" font-size="11" text-anchor="end" font-family="IBM Plex Mono">{{g.label}}</text></sc-for>
+<sc-for list="{{draft.bars}}" as="b" hint-placeholder-count="8"><rect x="{{b.x}}" y="{{b.y}}" width="{{b.w}}" height="{{b.h}}" fill="{{b.fill}}" rx="2"></rect><text x="{{b.cx}}" y="{{b.ty}}" fill="#C9D3E3" font-size="10" text-anchor="middle" font-family="IBM Plex Mono">{{b.val}}</text></sc-for>
+<sc-for list="{{draft.xl}}" as="x" hint-placeholder-count="4"><text x="{{x.x}}" y="290" fill="#A1AABB" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">{{x.label}}</text></sc-for>
+</svg>
+</sc-if>
+</div>
+<sc-if value="{{draftHalf}}" hint-placeholder-val="{{true}}"><div style="position: absolute; right: 0; top: 0; bottom: 0; width: calc(25% - 4px); display: flex; align-items: center; justify-content: center; color: #4A5265; font-size: 11px; text-align: center;">Platz für das<br>Nachbar-Widget</div><div style="position: absolute; left: 0; top: 0; bottom: 0; width: calc(25% - 4px); display: flex; align-items: center; justify-content: center; color: #4A5265; font-size: 11px; text-align: center;">halbe Breite,<br>wie später im Board</div></sc-if>
+</div>
+</div>
+</sc-if>
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+<div style="{{t.wrapSt}}">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8590A3;"><span style="color: #A1AABB; font-weight: 500;">{{t.label}}</span><span>· {{t.q}}</span><span style="flex: 1;"></span>
+<button onClick="{{t.up}}" title="Nach vorn schieben" aria-label="Nach vorn" style="{{t.mvSt}}">↑</button><button onClick="{{t.down}}" title="Nach hinten schieben" aria-label="Nach hinten" style="{{t.mvSt}}">↓</button><button onClick="{{t.toggle}}" style="{{t.setBtn}}">Einstellen</button><button onClick="{{t.remove}}" aria-label="Widget entfernen" style="background: none; border: 0; color: #8590A3; cursor: pointer; font-size: 15px;">×</button><button onClick="{{t.saveOne}}" title="Als Deliverable speichern" aria-label="Dieses Widget als Deliverable speichern" style="width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 4px; background: #6E9BF5; color: #0D1016; cursor: pointer;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2.5 2.5h8.5l2.5 2.5v8.5h-11z"/><path d="M5 2.5v3.5h5.5V2.5"/><rect x="5" y="9" width="6" height="4.5"/></svg></button></div>
+<sc-if value="{{t.open}}" hint-placeholder-val="{{false}}"><div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 8px 10px; background: #131720; border: 1px solid #2C4572; border-radius: 6px;">
+<sc-for list="{{t.ctrls}}" as="g" hint-placeholder-count="2"><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8590A3;">{{g.label}}<span style="display: flex; padding: 2px; gap: 2px; background: #0D1016; border: 1px solid #262E3E; border-radius: 5px;"><sc-for list="{{g.items}}" as="i" hint-placeholder-count="3"><button style="{{i.st}}" onClick="{{i.on}}">{{i.label}}</button></sc-for></span></span></sc-for>
+<sc-if value="{{t.noCtrl}}"><span style="font-size: 12px; color: #8590A3;">Keine Einstellungen für dieses Widget</span></sc-if>
+</div></sc-if>
+<sc-if value="{{t.isStd}}" hint-placeholder-val="{{true}}"><dc-import name="W-Widget" type="{{t.type}}" opts="{{t.opts}}" theme="dark" hint-size="100%,420px"></dc-import></sc-if>
+<sc-if value="{{t.isOwn}}" hint-placeholder-val="{{false}}"><div style="border: 1px solid #262E3E; border-radius: 6px; background: #131720; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8590A3;">{{t.c.sub}}<span style="flex: 1;"></span><sc-for list="{{t.c.legend}}" as="l" hint-placeholder-count="2"><span style="display: inline-flex; align-items: center; gap: 5px;"><span style="{{l.dot}}"></span>{{l.label}}</span></sc-for></div>
+<svg viewBox="0 0 560 300" style="width: 100%; height: 300px;">
+<sc-for list="{{t.c.grid}}" as="g" hint-placeholder-count="4"><line x1="44" x2="550" y1="{{g.y}}" y2="{{g.y}}" stroke="#262E3E" stroke-width="1"></line><text x="38" y="{{g.ty}}" fill="#8590A3" font-size="11" text-anchor="end" font-family="IBM Plex Mono">{{g.label}}</text></sc-for>
+<sc-for list="{{t.c.bars}}" as="b" hint-placeholder-count="8"><rect x="{{b.x}}" y="{{b.y}}" width="{{b.w}}" height="{{b.h}}" fill="{{b.fill}}" rx="2"></rect><text x="{{b.cx}}" y="{{b.ty}}" fill="#C9D3E3" font-size="10" text-anchor="middle" font-family="IBM Plex Mono">{{b.val}}</text></sc-for>
+<sc-for list="{{t.c.xl}}" as="x" hint-placeholder-count="4"><text x="{{x.x}}" y="290" fill="#A1AABB" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">{{x.label}}</text></sc-for>
+</svg></div></sc-if>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{dlg}}" hint-placeholder-val="{{false}}">
+<div onClick="{{closeDlg}}" style="position: absolute; inset: 0; background: rgba(6, 8, 12, 0.65);"></div>
+<div role="dialog" aria-label="Als Deliverable speichern" style="position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 1180px; height: 800px; box-sizing: border-box; background: #131720; border: 1px solid #262E3E; border-radius: 8px; box-shadow: 0 16px 48px rgba(0,0,0,0.55); display: grid; grid-template-columns: 300px minmax(0, 1fr); overflow: hidden;">
+<div style="border-right: 1px solid #262E3E; padding: 18px; display: flex; flex-direction: column; gap: 14px; overflow: auto;">
+<div style="font-size: 15px; font-weight: 600;">Als Deliverable speichern</div>
+<div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 12px; color: #8590A3;">Widgets · ein Widget = ein Bild</span>
+<sc-for list="{{pick}}" as="p" hint-placeholder-count="4"><div style="{{p.rowSt}}" onClick="{{p.focus}}"><input type="checkbox" checked="{{p.on}}" onChange="{{p.toggle}}" style="accent-color: #6E9BF5;"><span style="flex: 1; min-width: 0;">{{p.label}}</span><input value="{{p.file}}" onInput="{{p.onName}}" disabled="{{p.off}}" aria-label="Dateiname" class="mono" style="width: 130px; font-size: 11px; color: #E4E8EF; background: #0D1016; border: 1px solid #262E3E; border-radius: 3px; padding: 3px 5px;"></div></sc-for></div>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 12px; color: #8590A3;">Hintergrund</span><div style="display: flex; padding: 2px; gap: 2px; background: #0D1016; border: 1px solid #262E3E; border-radius: 5px; align-self: flex-start;"><sc-for list="{{themes}}" as="t" hint-placeholder-count="2"><button style="{{t.st}}" onClick="{{t.on}}">{{t.label}}</button></sc-for></div></div>
+<label style="display: flex; gap: 10px; align-items: center; cursor: pointer;"><input type="checkbox" checked="{{withCfg}}" onChange="{{toggleCfg}}" style="accent-color: #6E9BF5;"><span>Configs des Laufs mitspeichern</span></label>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #0D1016; border: 1px solid #262E3E; border-radius: 4px;"><span class="mono" style="font-size: 12px; word-break: break-all;">{{path}}</span><span style="font-size: 12px; color: #8590A3;">{{fileList}} · verknüpft mit TIM-52</span></div>
+<span style="flex: 1;"></span>
+<div style="display: flex; gap: 8px;"><button onClick="{{closeDlg}}" style="font: 500 13px 'IBM Plex Sans', sans-serif; color: #A1AABB; background: none; border: 1px solid #262E3E; border-radius: 4px; padding: 7px 14px; cursor: pointer;">Abbrechen</button><button onClick="{{save}}" disabled="{{noSave}}" style="{{saveSt}} flex: 1; font: 500 13px 'IBM Plex Sans', sans-serif; color: #0D1016; background: #6E9BF5; border: 0; border-radius: 4px; padding: 7px 14px; cursor: pointer;">{{saveLabel}}</button></div>
+</div>
+<div style="padding: 18px 24px; overflow: auto; background: {{previewBg}};">
+<div style="font-size: 12px; color: #8590A3; margin-bottom: 10px;">Vorschau · so wird {{previewName}} gespeichert</div>
+<dc-import name="W-Widget" type="{{prev.type}}" opts="{{prev.opts}}" title="{{prev.title}}" theme="{{theme}}" hint-size="100%,460px"></dc-import>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{saved}}" hint-placeholder-val="{{false}}"><div style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 16px; background: #11221B; border: 1px solid #245A45; border-radius: 6px; color: #5FD4A0; font-size: 12px; display: flex; gap: 10px; align-items: center;"><span>Gespeichert: {{savedText}}</span><button onClick="{{hideSaved}}" style="background: none; border: 0; color: #8590A3; cursor: pointer;">×</button></div></sc-if>
+<section aria-label="Agent" style="position: absolute; right: 24px; bottom: 24px; width: 400px; height: 500px; z-index: 20; display: flex; flex-direction: column; background: rgba(19,23,32,.97); border: 1px solid #2C3547; border-radius: 10px; box-shadow: 0 18px 50px rgba(0,0,0,.55);">
+<header style="height: 38px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid #262E3E; background: #161B26; border-radius: 10px 10px 0 0;"><svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="#6E9BF5" stroke-width="1.6"><path d="M9 2.5l1.4 3.6 3.6 1.4-3.6 1.4L9 12.5 7.6 8.9 4 7.5l3.6-1.4z"/></svg><span style="font-weight: 600;">Widget bauen</span><span style="color: #8590A3;">▾</span><span style="flex: 1;"></span><span style="color: #8590A3; font-size: 15px;">+ – ×</span></header>
+<div style="flex-shrink: 0; padding: 7px 12px; border-bottom: 1px solid #1E2533; font-size: 11px; color: #8590A3;">sieht <span style="padding: 2px 8px; border-radius: 10px; background: #192640; border: 1px solid #2C4572; color: #C9D3E3; font-family: 'IBM Plex Mono', monospace;">Analyse · Ein Lauf · {{runShort}}</span></div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 9px;">
+<sc-if value="{{chatEmpty}}"><div style="color: #8590A3; line-height: 1.5; font-size: 12px;">Probier einen der Vorschläge unten. Modus: ⏵ Gemischt, also Entwürfe erscheinen sofort auf dem Board, Behalten mit Bestätigung.</div></sc-if>
+<sc-for list="{{chat}}" as="m" hint-placeholder-count="3">
+<sc-if value="{{m.isUser}}"><div style="align-self: flex-end; max-width: 85%; background: #192640; border: 1px solid #2C4572; border-radius: 10px 10px 2px 10px; padding: 7px 10px; line-height: 1.45;">{{m.t}}</div></sc-if>
+<sc-if value="{{m.isAgent}}"><div style="max-width: 94%; line-height: 1.5;">{{m.t}}</div></sc-if>
+<sc-if value="{{m.isDone}}"><div style="display: flex; align-items: center; gap: 8px; font-size: 12px; border: 1px solid #23402F; background: rgba(63,182,139,.06); border-radius: 6px; padding: 6px 9px;"><span style="color: #3FB68B;">✓</span><span style="flex: 1; color: #C9D3E3;">{{m.t}}</span><button onClick="{{m.undo}}" style="background: none; border: 0; color: #6E9BF5; cursor: pointer; font-size: 12px;">Rückgängig</button></div></sc-if>
+<sc-if value="{{m.isPending}}"><div style="border: 1px solid #6E5A2A; background: rgba(196,127,20,.08); border-radius: 8px; padding: 9px 10px; display: flex; flex-direction: column; gap: 8px;"><div><span style="color: #E0A43A; font-size: 11px; text-transform: uppercase; letter-spacing: .04em;">Bestätigen</span> {{m.t}}</div><div style="display: flex; gap: 6px;"><button onClick="{{m.ok}}" style="padding: 5px 12px; border-radius: 5px; border: 0; background: #2F5BD3; color: #fff; cursor: pointer; font-size: 12px;">Ausführen</button><button onClick="{{m.no}}" style="padding: 5px 12px; border-radius: 5px; border: 1px solid #2C3547; background: none; color: #A1AABB; cursor: pointer; font-size: 12px;">Ablehnen</button></div></div></sc-if>
+</sc-for>
+</div>
+<div style="flex-shrink: 0; padding: 8px 10px 10px; border-top: 1px solid #262E3E; display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; flex-wrap: wrap; gap: 5px;"><sc-for list="{{sugg}}" as="g" hint-placeholder-count="2"><button onClick="{{g.on}}" style="font: 400 12px 'IBM Plex Sans', sans-serif; text-align: left; color: #C9D3E3; background: #161B26; border: 1px solid #2C3547; border-radius: 12px; padding: 4px 10px; cursor: pointer;">„{{g.t}}“</button></sc-for></div>
+<div style="display: flex; align-items: center; gap: 6px; border: 1px solid #2C3547; background: #1A2030; border-radius: 8px; padding: 6px 6px 6px 10px;"><span style="flex: 1; color: #6B7385;">Frag oder sag dem Agenten, was er tun soll …</span><span style="width: 28px; height: 28px; border-radius: 6px; background: #2F5BD3; color: #fff; display: flex; align-items: center; justify-content: center;">↑</span></div>
+<div style="font-size: 11px; color: #6E9BF5;">⏵ Gemischt ▾ <span style="color: #8590A3;">fragt bei Änderungen und Speichern</span></div>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900},"embedded":{"editor":null},"view":{"editor":null}}'>
+class Component extends DCLogic {
+renderVals() {
+  const G = window.GShared, D = window.OneData;
+  const st = this.state || {};
+  const set = (p) => this.setState(p);
+  // save dialog (shared by G1–G3): list = [{id, type, opts, title, label}]
+  const saveVals = (list, preselect) => {
+    const sel = st.sel || preselect || {}, theme = st.theme || 'light';
+    const chosen = list.filter((w) => sel[w.id]);
+    const focus = list.find((w) => w.id === st.focus) || chosen[0] || list[0];
+    const names = st.names || {};
+    const fname = (w, i) => names[w.id] || String(i + 1).padStart(2, '0') + '_' + w.type + '.png';
+    const files = chosen.map(fname).concat(st.withCfg === false || !chosen.length ? [] : ['configs/']);
+    const path = 'deliverables/2026-10-14 ' + (st.dTitle || 'TIM-52 Modellvergleich') + '/';
+    return {
+    rootH: (this.props || {}).embedded ? '100%' : '900px',
+      dlg: !!st.dlg, closeDlg: () => set({ dlg: false }),
+      pick: list.map((w, i) => ({
+        label: w.label, on: !!sel[w.id], off: !sel[w.id], file: sel[w.id] ? fname(w, chosen.indexOf(w)) : '–', onName: (e) => set({ names: Object.assign({}, names, { [w.id]: e.target.value }) }),
+        toggle: () => set({ sel: Object.assign({}, sel, { [w.id]: !sel[w.id] }) }), focus: () => set({ focus: w.id }),
+        rowSt: 'display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 4px; cursor: pointer; border: 1px solid ' + (focus && focus.id === w.id ? '#2C4572' : 'transparent') + '; background: ' + (focus && focus.id === w.id ? '#192640' : 'transparent') + ';'
+      })),
+      themes: [['light', 'hell, für Folien'], ['dark', 'dunkel']].map(([k, l]) => ({ label: l, st: window.GShared.seg(theme === k), on: () => set({ theme: k }) })),
+      theme, previewBg: theme === 'light' ? '#E9ECF1' : '#0D1016',
+      prev: focus ? { type: focus.type, opts: focus.opts, title: focus.title || '' } : { type: 'table', opts: {}, title: '' },
+      previewName: focus ? '„' + focus.label + '“' : '',
+      withCfg: st.withCfg !== false, toggleCfg: () => set({ withCfg: st.withCfg === false }),
+      path, fileList: files.join(', '),
+      saveLabel: chosen.length === 0 ? 'Widgets auswählen' : chosen.length === 1 ? '1 Bild speichern' : chosen.length + ' Bilder speichern',
+      noSave: chosen.length === 0, saveSt: chosen.length ? '' : 'opacity: 0.45; cursor: default;',
+      save: () => { if (chosen.length) set({ dlg: false, saved: true, savedText: path + ' · ' + files.join(', ') }); },
+      saved: !!st.saved, savedText: st.savedText || '', hideSaved: () => set({ saved: false })
+    };
+  };
+  // E1: agent-written widgets as declarative specs (Vega-Lite-like), rendered by the tool
+  const SER = { '30': '#1FA3A3', '90': '#8C7CF0' };
+  const chart = (spec) => {
+    const chs = D.DIMS[3].values.slice();
+    const val = (ch, h) => D.stat(Object.assign({ forecaster: spec.model, pred_len: h }, spec.features ? { features: spec.features } : {}), 'mape', ch).mean;
+    if (spec.sort) chs.sort((x, y) => (val(x, '30') + val(x, '90')) - (val(y, '30') + val(y, '90')));
+    const max = Math.ceil(Math.max.apply(null, chs.map((c) => Math.max(val(c, '30'), val(c, '90')))) + 0.5);
+    const Y = (v) => 270 - v / max * 240, gw = 506 / chs.length, bw = 34;
+    const bars = [];
+    chs.forEach((c, i) => ['30', '90'].forEach((h, j) => { const v = val(c, h), x = 44 + gw * i + gw / 2 - bw - 2 + j * (bw + 4);
+      bars.push({ x: x.toFixed(1), y: Y(v).toFixed(1), w: bw, h: (270 - Y(v)).toFixed(1), fill: SER[h], cx: (x + bw / 2).toFixed(1), ty: (Y(v) - 5).toFixed(1), val: D.fmt(v, 2) }); }));
+    const grid = []; for (let k = 0; k <= max; k += max > 6 ? 2 : 1) grid.push({ y: Y(k).toFixed(1), ty: (Y(k) + 4).toFixed(1), label: String(k) });
+    return { bars, grid, xl: chs.map((c, i) => ({ x: (44 + gw * i + gw / 2).toFixed(1), label: c.replace('region_', 'Region ') })),
+      legend: ['30', '90'].map((h) => ({ label: 'pred_len ' + h, dot: 'width: 9px; height: 9px; border-radius: 2px; background: ' + SER[h] + ';' })),
+      sub: 'MAPE (%) · ' + spec.model + (spec.features ? ' · ' + (spec.features === 'M' ? 'multivariat' : 'univariat') : ' · mittel über multi/uni') + ' · Mittel über 5 Seeds × 4 Folds' + (spec.sort ? ' · sortiert' : '') };
+  };
+  const specJson = (spec, name) => JSON.stringify({
+    name: name || undefined, title: spec.title, scope: 'one',
+    data: { source: 'channels', filter: Object.assign({ forecaster: '{{param.model}}' }, spec.features ? { features: spec.features } : {}) },
+    params: [{ name: 'model', label: 'Modell', options: ['REP-Net', 'SARIMA', 'ETS'], default: 'REP-Net' }],
+    mark: 'bar',
+    encoding: { x: Object.assign({ field: 'channel', title: 'Region' }, spec.sort ? { sort: 'y' } : {}), xOffset: { field: 'pred_len' }, y: { aggregate: 'mean', field: 'mape', title: 'MAPE (%)' }, color: { field: 'pred_len' } }
+  }, null, 2);
+  const steps = st.steps || [];
+  const has = (k) => steps.indexOf(k) >= 0;
+  const own = st.own || [];
+  const draft = has('s1') && !has('kept') && !has('discarded') ? { width: st.dw || 'half', title: has('s2') ? 'MAPE je Region · pred_len 30 vs. 90 · multivariat' : 'MAPE je Region · pred_len 30 vs. 90', model: 'REP-Net', features: has('s2') ? 'M' : null, sort: has('s2') } : null;
+  const keep = (name) => { const sp = Object.assign({}, draft); const w = { id: 'o' + Date.now(), name, spec: sp, q: 'MAPE je Region, pred_len 30 und 90 nebeneinander' };
+    set({ steps: steps.concat('kept'), own: own.concat(w), tiles: [{ id: w.id, own: w.id, type: 'own', width: sp.width, opts: { model: 'REP-Net' } }].concat(tiles), flash: Date.now(), add: false }); };
+  const SUG = [
+    { k: 's1', t: 'Zeig mir MAPE je Region als Balken, pred_len 30 und 90 nebeneinander' },
+    { k: 's2', t: 'Nur multivariat, und sortier die Regionen nach Fehler', need: 's1' },
+    { k: 's3', t: 'Behalt das als „Regionen pred_len“', need: 's2' }
+  ];
+  const chat = [];
+  if (has('s1')) chat.push({ isUser: true, t: SUG[0].t }, { isDone: true, t: 'Entwurf erstellt · MAPE je Region · pred_len 30 vs. 90', undo: () => set({ steps: [] }) }, { isAgent: true, t: 'Der Entwurf steht oben auf dem Board. Modell ist als Einstellung wählbar (REP-Net, SARIMA, ETS).' });
+  if (has('s2')) chat.push({ isUser: true, t: SUG[1].t }, { isDone: true, t: 'Entwurf geändert · nur multivariat, sortiert nach Fehler', undo: () => set({ steps: ['s1'] }) });
+  if (has('s3')) {
+    chat.push({ isUser: true, t: SUG[2].t });
+    if (has('kept')) chat.push({ isDone: true, t: 'Widget behalten · Regionen pred_len (Katalog → Eigene)', undo: () => set({ steps: ['s1', 's2'], own: own.slice(0, -1), tiles: tiles.filter((t) => t.type !== 'own') }) }, { isAgent: true, t: 'Steht jetzt unter „+ Widget → Eigene“ und lässt sich in Vorlagen verwenden.' });
+    else if (has('discarded')) chat.push({ isAgent: true, t: 'Entwurf verworfen.' });
+    else chat.push({ isPending: true, t: 'Eigenes Widget „Regionen pred_len“ im Katalog speichern', ok: () => keep('Regionen pred_len'), no: () => set({ steps: steps.concat('s3no') }) });
+  }
+  const tiles = st.tiles || G.CAT.slice(0, 2).map((c, i) => ({ id: 'w' + i, type: c.key, opts: Object.assign({}, c.opts) }));
+  const upd = (id, patch) => set({ tiles: tiles.map((t) => t.id === id ? Object.assign({}, t, patch) : t) });
+  const list = tiles.map((t) => ({ id: t.id, type: t.type, opts: t.opts, label: t.type === 'own' ? ((own.find((w) => w.id === t.own) || {}).name || 'Eigenes Widget') : G.byKey(t.type).label }));
+  const fresh = st.flash && Date.now() - st.flash < 1600;
+  if (st.flash && !this._ft) this._ft = setTimeout(() => { this._ft = null; this.setState({ flash: 0 }); }, 1600);
+  const ownById = (id) => own.find((w) => w.id === id);
+  return Object.assign({
+    runShort: D.RUN.id.replace(/^\d{4}-\d{2}-\d{2}_\d{4,6}_/, ''),
+    hasDraft: !!draft, draft: draft ? Object.assign({ title: draft.title }, chart(draft)) : { title: '', bars: [], grid: [], xl: [], legend: [], sub: '' },
+    draftSpec: draft ? specJson(draft) : '', showSpec: !!st.spec, hideSpec: !st.spec, toggleSpec: () => set({ spec: !st.spec }),
+    specBtnSt: "font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 4px; padding: 3px 9px; border: 1px solid " + (st.spec ? '#2C4572' : '#262E3E') + '; background: ' + (st.spec ? '#192640' : 'transparent') + '; color: #A1AABB;',
+    draftWrapSt: 'grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; border-radius: 8px; box-shadow: 0 0 0 2px rgba(140,124,240,.35);',
+    draftHalf: !!draft && draft.width === 'half',
+    draftWidths: [['half', 'Halb'], ['full', 'Ganz']].map(([k, l]) => ({ label: l, st: G.seg((draft || {}).width === k), on: () => set({ dw: k }) })),
+    draftRowSt: 'position: relative; border: 1px dashed #2C3547; border-radius: 8px; padding: 10px; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(140,124,240,.035) 8px 16px);',
+    draftBoxSt: 'width: ' + (draft && draft.width === 'full' ? '100%' : 'calc(50% - 8px)') + '; margin: 0 auto; box-sizing: border-box; border: 1.5px dashed #5B4FA8; border-radius: 6px; background: #131720; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;',
+    discard: () => set({ steps: steps.concat('discarded') }), keepManual: () => keep(draft && draft.features ? 'Regionen pred_len' : 'MAPE je Region'),
+    noOwn: own.length === 0,
+    ownCat: own.map((w) => ({ label: w.name, q: w.q, add: () => set({ add: false, tiles: tiles.concat({ id: 'w' + Date.now(), own: w.id, type: 'own', opts: { model: 'REP-Net' } }) }) })),
+    chat, chatEmpty: chat.length === 0,
+    sugg: SUG.filter((g) => !has(g.k) && (!g.need || has(g.need)) && !has('kept') && !has('discarded')).map((g) => ({ t: g.t, on: () => set({ steps: steps.concat(g.k) }) })),
+    runName: D.RUN.id, add: !!st.add, toggleAdd: () => set({ add: !st.add }),
+    catalog: G.CAT.map((c) => ({ label: c.label, q: c.q, add: () => set({ add: false, tiles: tiles.concat({ id: 'w' + Date.now(), type: c.key, opts: Object.assign({}, c.opts) }) }) })),
+    openDlg: () => set({ dlg: true, add: false, sel: {} }),
+    tiles: tiles.map((t) => {
+      const ow = t.type === 'own' ? ownById(t.own) : null;
+      const c = ow ? { label: ow.name, q: ow.q } : G.byKey(t.type);
+      const wid = t.width || (t.type === 'table' ? 'full' : 'half');
+      const widthCtrl = { label: 'Breite', items: [['half', 'Halb'], ['full', 'Ganz']].map(([k, l]) => ({ label: l, st: G.seg(wid === k), on: () => upd(t.id, { width: k }) })) };
+      const ctrls0 = ow ? [{ label: 'Modell', items: ['REP-Net', 'SARIMA', 'ETS'].map((m) => ({ label: m, st: G.seg(t.opts.model === m), on: () => upd(t.id, { opts: { model: m } }) })) }]
+        : G.controls(t.type, t.opts, (p) => upd(t.id, { opts: Object.assign({}, t.opts, p) }));
+      const ctrls = ctrls0.concat(widthCtrl);
+      return {
+        type: t.type, opts: t.opts, label: c.label, q: c.q, open: !!t.open, ctrls, noCtrl: ctrls.length === 0,
+        wrapSt: 'display: flex; flex-direction: column; gap: 6px; min-width: 0;' + (wid === 'full' ? ' grid-column: 1 / -1;' : '') + (ow && st.flash && Date.now() - st.flash < 1600 ? ' border-radius: 8px; box-shadow: 0 0 0 2px rgba(140,124,240,.7);' : ''),
+        isStd: !ow, isOwn: !!ow, c: ow ? chart(Object.assign({}, ow.spec, { model: t.opts.model })) : { bars: [], grid: [], xl: [], legend: [], sub: '' },
+        label: ow ? c.label + '  · eigen' : c.label,
+        setBtn: "font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 4px; padding: 3px 9px; border: 1px solid " + (t.open ? '#2C4572' : '#262E3E') + '; background: ' + (t.open ? '#192640' : 'transparent') + '; color: #A1AABB;',
+        saveOne: () => set({ dlg: true, add: false, sel: { [t.id]: true }, focus: t.id }),
+        up: () => { const i = tiles.indexOf(t); if (i > 0) { const a = tiles.slice(); a.splice(i - 1, 0, a.splice(i, 1)[0]); set({ tiles: a }); } },
+        down: () => { const i = tiles.indexOf(t); if (i < tiles.length - 1) { const a = tiles.slice(); a.splice(i + 1, 0, a.splice(i, 1)[0]); set({ tiles: a }); } },
+        mvSt: 'width: 22px; height: 22px; padding: 0; border: 1px solid #262E3E; border-radius: 4px; background: transparent; color: #A1AABB; cursor: pointer; font-size: 12px;',
+        toggle: () => upd(t.id, { open: !t.open }), remove: () => set({ tiles: tiles.filter((x) => x.id !== t.id) })
+      };
+    })
+  }, saveVals(list));
+}
+}
+</script>
+</body>
+</html>

@@ -36,8 +36,10 @@ Tokens live in `tokens.json`; this file says how to use them.
 ## Widgets
 - Analysis (E, G) and detail (F) are built from widgets; a widget answers one question, declares its
   scope (one combination, one run, two runs, all runs) and has a few settings.
-- A board is a description (scope, runs, widgets with settings) that the tool renders; the agent will
-  create boards the same way.
+- A board is a description (scope, runs, widgets with settings, width half / full, order) that the
+  tool renders; Tim and the agent create boards the same way. A template is a board without runs.
+- Own widgets are descriptions too (Vega-Lite), never code; the tool's theme draws them, so they look
+  like built-in widgets.
 - Every widget can be saved as an image: title = key statement from the data (editable), grey hints
   (subtitle, note) and footer (run, epoch, commit) can be switched off. Exports default to the light
   export palette.
@@ -45,4 +47,13 @@ Tokens live in `tokens.json`; this file says how to use them.
 ## Frame
 - Icon bar left for the areas, tabs on top for open runs, one tool instance per project.
 - Panels open beside the content and shrink it; layouts never wrap below each other (wide tables
-  scroll horizontally).
+  scroll horizontally). Exception: the agent window floats above the content (movable, minimisable)
+  so no view loses width.
+
+## Agent
+- The agent uses the same actions as the interface, through the tool's own tools; it has no other way
+  to change anything.
+- Every action of the agent is visible in the chat and can be undone; the mode (Direkt, Gemischt,
+  Bestätigen) decides what needs confirmation, the tool enforces it.
+- No hidden token cost: context and cache state are always visible, and a message that would re-read a
+  large cold chat is held back before anything is sent. The tool never calls the agent on its own.
