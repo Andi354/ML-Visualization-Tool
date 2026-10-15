@@ -44,6 +44,10 @@ _Working record for the design session; removed at handover._
   - J4 · YAML: chips "Im Grid" on top, then the config as YAML with line numbers, foldable blocks
     ("Alles zuklappen"), swept lines tinted with an `accent` bar and the other grid values as note,
     base differences amber with "base: …", replicate lines marked; "YAML kopieren".
+- Tim's last word: likes both; asks whether two views are too much effort and how it fits the detail.
+- Proposal (chat, awaiting OK): one Config widget with a switch "Blöcke | YAML" (same data, two
+  renderers, choice remembered); in F as the last tile, blocks collapsed by default, grid box always
+  open; Blöcke view also replaces G's "Beste Config" widget for images (YAML is not exported as image).
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
