@@ -5,7 +5,9 @@ export const AREA_LABEL: Record<Area, string> = { runs: "Läufe", analysis: "Ana
 
 /** Label of a run tab: the run folder name without the timestamp. */
 export function tabLabel(folder: string): string {
-  return folder.replace(/_(\d{8}[-_T]?\d{6}|\d{4}-\d{2}-\d{2}[_T]\d{2}[-:]?\d{2}[-:]?\d{2})$/, "");
+  const ts = "(?:\\d{4}-\\d{2}-\\d{2}[_T]\\d{4,6}|\\d{8}[-_T]?\\d{6})";
+  const stripped = folder.replace(new RegExp(`^${ts}_`), "");
+  return stripped !== folder ? stripped : folder.replace(new RegExp(`_${ts}$`), "");
 }
 
 interface Props {

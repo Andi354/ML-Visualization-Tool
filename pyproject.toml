@@ -33,3 +33,4 @@ packages = ["src/mlviz"]
 testpaths = ["tests"]
 markers = ["browser: Playwright tests (headless Chromium)"]
 addopts = "-m 'not browser'"
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient`:DeprecationWarning"]

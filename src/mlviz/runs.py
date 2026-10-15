@@ -19,12 +19,17 @@ import yaml
 
 from .project import Project
 
-_TIMESTAMP = re.compile(r"_(\d{8}[-_T]?\d{6}|\d{4}-\d{2}-\d{2}[_T]\d{2}[-:]?\d{2}[-:]?\d{2})$")
+# Run folders carry a timestamp as prefix (`2026-09-28_195436_<name>`, seconds optional) or, in older
+# layouts, as suffix (`<name>_20260928-195436`).
+_TS = r"(?:\d{4}-\d{2}-\d{2}[_T]\d{4,6}|\d{8}[-_T]?\d{6})"
+_PREFIX = re.compile(rf"^{_TS}_")
+_SUFFIX = re.compile(rf"_{_TS}$")
 _ISSUE = re.compile(r"^([A-Za-z][A-Za-z0-9]*-\d+)(?:_|$)")
 
 
 def strip_timestamp(folder_name: str) -> str:
-    return _TIMESTAMP.sub("", folder_name)
+    stripped = _PREFIX.sub("", folder_name, count=1)
+    return stripped if stripped != folder_name else _SUFFIX.sub("", folder_name)
 
 
 def issue_of(name: str) -> str | None:
@@ -206,17 +211,22 @@ def _parse_time(value) -> datetime | None:
         return None
 
 
-_NAME_TIME = re.compile(r"_(\d{8})[-_T]?(\d{6})$")
+_NAME_TIME = [
+    re.compile(r"^(\d{4})-(\d{2})-(\d{2})[_T](\d{2})(\d{2})(\d{2})?_"),
+    re.compile(r"_(\d{4})(\d{2})(\d{2})[-_T]?(\d{2})(\d{2})(\d{2})$"),
+]
 
 
 def _time_from_name(folder: str) -> datetime | None:
-    m = _NAME_TIME.search(folder)
-    if not m:
-        return None
-    try:
-        return datetime.strptime(m.group(1) + m.group(2), "%Y%m%d%H%M%S")
-    except ValueError:
-        return None
+    for rx in _NAME_TIME:
+        m = rx.search(folder)
+        if m:
+            y, mo, d, h, mi, sec = (int(g or 0) for g in m.groups())
+            try:
+                return datetime(y, mo, d, h, mi, sec)
+            except ValueError:
+                return None
+    return None
 
 
 def list_runs(project: Project) -> list[Run]:

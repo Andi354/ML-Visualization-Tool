@@ -50,6 +50,11 @@ describe("frame reducer (feature B)", () => {
     expect(s.runsView).toBe("issues");
   });
 
+  it("Vergleichen opens the analysis area with the ticked runs and keeps the tabs", () => {
+    const s = frameReducer(open(initialFrame, "a"), { type: "open-compare", runs: ["x", "y"] });
+    expect(s).toMatchObject({ area: "analysis", active: null, compare: ["x", "y"], tabs: ["a"] });
+  });
+
   it("focusing or closing an unknown run changes nothing", () => {
     const s = open(initialFrame, "a");
     expect(frameReducer(s, { type: "focus-run", run: "x" })).toBe(s);
@@ -80,7 +85,10 @@ describe("frame persistence (per project, browser storage)", () => {
 });
 
 describe("tab label", () => {
-  it("is the run folder name without the timestamp", () => {
+  it("is the run folder name without the timestamp, prefix or suffix", () => {
+    expect(tabLabel("2026-09-25_164000_TIM-45_g6_combined")).toBe("TIM-45_g6_combined");
+    expect(tabLabel("2026-09-25_1640_TIM-45_g6_combined")).toBe("TIM-45_g6_combined");
     expect(tabLabel("TIM-45_g6_combined_20260925-164000")).toBe("TIM-45_g6_combined");
+    expect(tabLabel("plain")).toBe("plain");
   });
 });

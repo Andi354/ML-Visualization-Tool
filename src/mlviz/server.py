@@ -9,6 +9,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from . import linear
+from .listing import merkmal_candidates, run_listing
 from .project import Project
 from .runs import get_run, list_runs
 
@@ -23,11 +25,19 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
 
     @app.get("/api/project")
     def api_project() -> dict:
-        return project.to_json()
+        return {**project.to_json(), "linear": bool(linear.api_key())}
 
     @app.get("/api/runs")
     def api_runs() -> list[dict]:
-        return [r.info() for r in list_runs(project)]
+        runs = list_runs(project)
+        candidates = merkmal_candidates(runs)
+        return [run_listing(project, r, candidates) for r in runs]
+
+    @app.get("/api/issues")
+    def api_issues() -> dict:
+        """Title, status and links per issue ID found in the runs (titles only with a Linear key)."""
+        ids = sorted({r.issue for r in list_runs(project) if r.issue})
+        return linear.issues_payload(project, ids)
 
     @app.get("/api/runs/{run_id}")
     def api_run(run_id: str) -> dict:

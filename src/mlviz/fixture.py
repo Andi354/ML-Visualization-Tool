@@ -44,7 +44,14 @@ PROJECT = {
         {"key": "test_mae_missing", "label": "MAE skaliert", "direction": "min", "family": "scaled"},
         {"key": "test_rmse_missing", "label": "RMSE skaliert", "direction": "min", "family": "scaled"},
         {"key": "test_mape_missing", "label": "MAPE skaliert", "direction": "min", "family": "scaled"},
-        {"key": "test_mape", "label": "MAPE", "direction": "min", "family": "real"},
+        {
+            "key": "test_mape",
+            "label": "MAPE",
+            "direction": "min",
+            "family": "real",
+            "unit": "%",
+            "scale": 100,
+        },
         {"key": "test_mae", "label": "MAE", "direction": "min", "family": "real"},
         {"key": "test_mse", "label": "MSE", "direction": "min", "family": "real"},
         {"key": "test_rmse", "label": "RMSE", "direction": "min", "family": "real"},
@@ -230,7 +237,7 @@ RUNS = [
 
 
 def run_folder(r: dict) -> str:
-    return f"{r['experiment']}_{r['ts']:%Y%m%d-%H%M%S}"
+    return f"{r['ts']:%Y-%m-%d_%H%M%S}_{r['experiment']}"
 
 
 def _metrics(r: dict, combo: dict, rep: dict, channel: str | None = None) -> dict[str, float]:
@@ -244,7 +251,7 @@ def _metrics(r: dict, combo: dict, rep: dict, channel: str | None = None) -> dic
             e *= 0.08
         eff += e
     pred_len = r["config"]["data"]["pred_len"]
-    noise = _unit(r["experiment"], key, tuple(sorted(rep.items())), channel) * 0.04
+    noise = _unit(run_folder(r), key, tuple(sorted(rep.items())), channel) * 0.04
     ch = 0.0 if channel is None else _unit(channel, key) * 0.05 + CHANNELS.index(channel) * 0.04
     mse = 0.8 * (1 + eff) * (1 + 0.004 * pred_len) * (1 + noise) * (1 + ch)
     mape = 0.025 * math.sqrt(mse / 0.8) * (1 + 0.003 * pred_len)

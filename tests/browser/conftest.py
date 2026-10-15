@@ -1,5 +1,6 @@
 """Fixtures for the browser tests: the real app on a free port, served from the demo project."""
 
+import contextlib
 import glob
 import os
 import socket
@@ -37,27 +38,86 @@ def _free_port() -> int:
         return s.getsockname()[1]
 
 
-@pytest.fixture(scope="session")
-def app_url(demo_project):
+@contextlib.contextmanager
+def serve(project_root):
     assert (STATIC / "index.html").exists(), "run `npm run build` in web/ first"
     port = _free_port()
-    server = uvicorn.Server(uvicorn.Config(create_app(demo_project), port=port, log_level="warning"))
+    server = uvicorn.Server(uvicorn.Config(create_app(project_root), port=port, log_level="warning"))
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
     for _ in range(100):
         if server.started:
             break
         time.sleep(0.05)
-    yield f"http://127.0.0.1:{port}"
-    server.should_exit = True
-    thread.join(timeout=5)
+    try:
+        yield f"http://127.0.0.1:{port}"
+    finally:
+        server.should_exit = True
+        thread.join(timeout=5)
 
 
-@pytest.fixture
-def page(page, app_url):
+@pytest.fixture(scope="session")
+def app_url(demo_project):
+    with serve(demo_project) as url:
+        yield url
+
+
+@pytest.fixture(scope="session")
+def empty_url(tmp_path_factory):
+    with serve(tmp_path_factory.mktemp("empty")) as url:
+        yield url
+
+
+@pytest.fixture(scope="session")
+def linear_url(demo_project):
+    """The app with a (fake) Linear key: issue titles and status come from a stub."""
+    from mlviz import linear
+
+    titles = {
+        "TIM-52": ("Beste Config zusammenführen", "In Progress", "started"),
+        "TIM-45": ("G6 kombiniert testen", "In Review", "started"),
+        "TIM-83": ("Läuft gerade", "Todo", "unstarted"),
+        "TIM-71": ("Beispiel", "Done", "completed"),
+        "TIM-39": ("Grid mit Lücken", "Todo", "unstarted"),
+        "TIM-30": ("Baselines", "Done", "completed"),
+    }
+
+    def fake(ids, key, client=None):
+        return {
+            i: {"title": t, "status": s, "status_type": ty, "url": f"https://linear.example/{i}"}
+            for i, (t, s, ty) in titles.items()
+            if i in ids
+        }
+
+    mp = pytest.MonkeyPatch()
+    mp.setenv("LINEAR_API_KEY", "fake")
+    mp.setattr(linear, "fetch_linear", fake)
+    try:
+        with serve(demo_project) as url:
+            yield url
+    finally:
+        mp.undo()
+
+
+def _fresh(page, url):
     page.set_viewport_size({"width": 1440, "height": 900})
-    page.goto(app_url)
+    page.goto(url)
     page.evaluate("localStorage.clear()")
     page.reload()
     page.get_by_test_id("project-badge").wait_for()
     return page
+
+
+@pytest.fixture
+def page(page, app_url):
+    return _fresh(page, app_url)
+
+
+@pytest.fixture
+def empty_page(page, empty_url):
+    return _fresh(page, empty_url)
+
+
+@pytest.fixture
+def linear_page(page, linear_url):
+    return _fresh(page, linear_url)

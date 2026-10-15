@@ -11,6 +11,8 @@ export interface FrameState {
   /** Run folder name of the focused run tab, or null when the pinned tab is focused. */
   active: string | null;
   runsView: RunsView;
+  /** Runs ticked in Läufe for "Vergleichen" (at most two are compared in v0.1). */
+  compare: string[];
 }
 
 export type FrameAction =
@@ -19,9 +21,10 @@ export type FrameAction =
   | { type: "focus-run"; run: string }
   | { type: "focus-pinned" }
   | { type: "close-run"; run: string }
-  | { type: "set-runs-view"; view: RunsView };
+  | { type: "set-runs-view"; view: RunsView }
+  | { type: "open-compare"; runs: string[] };
 
-export const initialFrame: FrameState = { area: "runs", tabs: [], active: null, runsView: "list" };
+export const initialFrame: FrameState = { area: "runs", tabs: [], active: null, runsView: "list", compare: [] };
 
 export function frameReducer(s: FrameState, a: FrameAction): FrameState {
   switch (a.type) {
@@ -43,6 +46,8 @@ export function frameReducer(s: FrameState, a: FrameAction): FrameState {
     }
     case "set-runs-view":
       return { ...s, runsView: a.view };
+    case "open-compare":
+      return { ...s, area: "analysis", active: null, compare: a.runs };
   }
 }
 
@@ -53,7 +58,8 @@ function validate(v: unknown): FrameState | null {
   const area: Area = o.area === "analysis" ? "analysis" : "runs";
   const runsView: RunsView = o.runsView === "issues" ? "issues" : "list";
   const active = typeof o.active === "string" && tabs.includes(o.active) ? o.active : null;
-  return { area, tabs: [...new Set(tabs)], active, runsView };
+  const compare = Array.isArray(o.compare) ? o.compare.filter((t): t is string => typeof t === "string") : [];
+  return { area, tabs: [...new Set(tabs)], active, runsView, compare };
 }
 
 export const loadFrame = (project: string): FrameState =>

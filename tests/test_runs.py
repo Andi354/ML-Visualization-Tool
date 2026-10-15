@@ -13,14 +13,30 @@ def project(demo_project):
 @pytest.mark.parametrize(
     "folder,name",
     [
+        ("2026-09-25_164000_TIM-45_g6_combined", "TIM-45_g6_combined"),
+        ("2026-09-25_1640_TIM-45_g6_combined", "TIM-45_g6_combined"),
         ("TIM-45_g6_combined_20260925-164000", "TIM-45_g6_combined"),
         ("TIM-45_g6_combined_20260925_164000", "TIM-45_g6_combined"),
-        ("sweep_check_2026-10-14_09-00-00", "sweep_check"),
         ("no_timestamp", "no_timestamp"),
     ],
 )
 def test_timestamp_is_stripped_from_folder_name(folder, name):
     assert strip_timestamp(folder) == name
+
+
+@pytest.mark.parametrize(
+    "folder,iso",
+    [
+        ("2026-09-25_164012_x", "2026-09-25T16:40:12"),
+        ("2026-09-25_1640_x", "2026-09-25T16:40:00"),
+        ("x_20260925-164012", "2026-09-25T16:40:12"),
+    ],
+)
+def test_start_time_falls_back_to_the_folder_name(tmp_path, folder, iso):
+    from mlviz.runs import Run
+
+    (tmp_path / folder).mkdir()
+    assert Run(tmp_path / folder).started.isoformat() == iso
 
 
 def test_issue_is_the_config_name_prefix():

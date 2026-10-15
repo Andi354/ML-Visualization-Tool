@@ -28,9 +28,20 @@ class Metric:
     label: str
     direction: str = "min"
     family: str = "real"
+    #: Optional display: the stored value is multiplied by `scale` and shown with `unit`
+    #: (e.g. a MAPE stored as a share, `scale: 100`, `unit: "%"`).
+    unit: str = ""
+    scale: float = 1.0
 
     def to_json(self) -> dict:
-        return {"key": self.key, "label": self.label, "direction": self.direction, "family": self.family}
+        return {
+            "key": self.key,
+            "label": self.label,
+            "direction": self.direction,
+            "family": self.family,
+            "unit": self.unit,
+            "scale": self.scale,
+        }
 
 
 @dataclass
@@ -64,6 +75,8 @@ class Project:
                 label=str(m.get("label") or m["key"]),
                 direction=str(m.get("direction", "min")),
                 family=str(m.get("family", "real")),
+                unit=str(m.get("unit", "")),
+                scale=float(m.get("scale", 1.0)),
             )
             for m in (raw.get("metrics") or [])
             if isinstance(m, dict) and "key" in m

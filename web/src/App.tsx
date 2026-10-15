@@ -46,12 +46,18 @@ function Frame({ project }: { project: ProjectInfo }) {
           onClose={(run) => dispatch({ type: "close-run", run })}
         />
         <div class="content">
-          <div class="pane" hidden={frame.active !== null}>
-            {frame.area === "runs" ? (
-              <RunsView onOpen={(run) => dispatch({ type: "open-run", run })} />
-            ) : (
-              <AnalysisView />
-            )}
+          {/* Both areas stay mounted, so a search or filter in Läufe survives an area switch. */}
+          <div class="pane" hidden={frame.active !== null || frame.area !== "runs"}>
+            <RunsView
+              project={project}
+              view={frame.runsView}
+              onView={(view) => dispatch({ type: "set-runs-view", view })}
+              onOpen={(run) => dispatch({ type: "open-run", run })}
+              onCompare={(runs) => dispatch({ type: "open-compare", runs })}
+            />
+          </div>
+          <div class="pane" hidden={frame.active !== null || frame.area !== "analysis"}>
+            <AnalysisView compare={frame.compare} />
           </div>
           {/* Every open run stays mounted, so filters, sorting and scroll survive tab switches. */}
           {frame.tabs.map((run) => (
