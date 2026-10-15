@@ -14,10 +14,9 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 | E · Widget format | running |
 | F · Agent connection | open |
 
-Running block: E · Widget format. Tim: agent should create widgets without code changes if possible,
-asks whether a widget builder screen is needed. Proposed in chat: E1 declarative spec (Vega-Lite) over
-named datasets, E2 Python code widgets, E3 declarative + code escape hatch; no builder screen, draft tile
-on the board instead. None built yet. Notes from Tim for later
+Running block: E · Widget format. Tim agreed to E1 (declarative spec, no builder screen) as direction.
+On the canvas: E1 · Eigene Widgets (draft tile from the agent, refine, Beschreibung = JSON, keep →
+catalog section "Eigene", parameter "Modell"). Waiting for Tim's word. Notes from Tim for later
 blocks: F: subscription via `claude -p` is fine (personal tool; a published version would use an API
 key). Whether chats show up in claude.ai does not matter.
 
