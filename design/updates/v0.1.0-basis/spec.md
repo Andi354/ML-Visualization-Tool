@@ -20,7 +20,7 @@ _Working record for the design session; removed at handover._
 | F · Detail | decided | row "Feature F", F1+F3 ✓ |
 | G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
 | I · Combining widgets into one image | decided | row "Feature I", I1 ✓ |
-| J · Config view (compact, whole config) | open (proposed) | – |
+| J · Config view (compact, whole config) | running | building J1, J4 |
 | H · Agent (optional) | open | – |
 
 **Running block:** F follow-ups + J proposal (chat). Then H · Agent (optional) or the overall prototype
@@ -31,10 +31,11 @@ _Working record for the design session; removed at handover._
   highlighted; maybe a compact format for a whole config as its own feature (new row), small enough
   for the detail panel.
 - Done in spec: "Vergleichen mit" = another combination of the run differing in one axis, default none.
-- Proposed (chat): window = fold (test period) switch + zoom by range on a small overview strip;
-  horizon-step view only if predictions store the forecast origin (to check in the data format).
-  J alternatives: J1 grouped by config block, collapsible, swept first; J2 dense two-column table with
-  search; J3 "only non-default" vs base config with "alle zeigen"; J4 YAML view with highlights.
+- Tim on the window: fine, find out when testing. Context: forecast horizon mostly 30 days, test set
+  3 quarters; the Christmas window is probably just the last 30 days of the test set. So with
+  eval-all-windows there are many 30-day windows over the test period → window choice = window start
+  within the test period (+ fold), overview strip of the test period with the window marked.
+- J: build J1 (by config block, swept first) and J4 (YAML view with highlights).
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
