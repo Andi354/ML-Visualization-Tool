@@ -20,34 +20,12 @@ _Working record for the design session; removed at handover._
 | F · Detail | decided | row "Feature F", F1+F3 ✓ |
 | G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
 | I · Combining widgets into one image | decided | row "Feature I", I1 ✓ |
-| J · Config view (compact, whole config) | running | row "Feature J", J1, J4 (no choice yet) |
+| J · Config view (compact, whole config) | decided | row "Feature J", J1 + J4 as two views ✓ |
 | H · Agent (optional) | open | – |
 
-**Running block:** F follow-ups + J proposal (chat). Then H · Agent (optional) or the overall prototype
-(Tim to decide).
-- Tim's last word (F): generalise the forecast widget — the ETS baseline is project- and run-specific;
-  make the comparison selectable (here or in the analysis with other forecasters). Make the forecast
-  window adjustable — what is possible? Config in the detail: show all entries, swept ones first and
-  highlighted; maybe a compact format for a whole config as its own feature (new row), small enough
-  for the detail panel.
-- Done in spec: "Vergleichen mit" = another combination of the run differing in one axis, default none.
-- Tim on the window: fine, find out when testing. Context: forecast horizon mostly 30 days, test set
-  3 quarters; the Christmas window is probably just the last 30 days of the test set. So with
-  eval-all-windows there are many 30-day windows over the test period → window choice = window start
-  within the test period (+ fold), overview strip of the test period with the window marked.
-- J: build J1 (by config block, swept first) and J4 (YAML view with highlights).
-- J on the canvas (panel width 680 px, sample `cfg-data.js` with data/model/train/replicates/run):
-  - J1 · by block: box "Im Grid variiert" on top (each axis with all its values, this combination's
-    value marked; paired axis lr_epochs as one row; replicates below a dashed rule), then one
-    collapsible box per config block with key/value pairs in two column pairs; swept values `accent`,
-    entries differing from base.yaml with an amber dot (tooltip "base.yaml: …").
-  - J4 · YAML: chips "Im Grid" on top, then the config as YAML with line numbers, foldable blocks
-    ("Alles zuklappen"), swept lines tinted with an `accent` bar and the other grid values as note,
-    base differences amber with "base: …", replicate lines marked; "YAML kopieren".
-- Tim's last word: likes both; asks whether two views are too much effort and how it fits the detail.
-- Proposal (chat, awaiting OK): one Config widget with a switch "Blöcke | YAML" (same data, two
-  renderers, choice remembered); in F as the last tile, blocks collapsed by default, grid box always
-  open; Blöcke view also replaces G's "Beste Config" widget for images (YAML is not exported as image).
+**Running block:** none. Open: H · Agent (optional) or the overall prototype (Tim to decide).
+- Tim's last word: "Ja passt, baue nach" — J as one widget with "Blöcke | YAML"; F rebuilt on the canvas
+  (F13): Config tile, forecast "Vergleichen mit", window via overview strip.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
@@ -384,9 +362,16 @@ with these widgets and this combination as filter; the board itself is G).
 - *Vorhersage* (needs `predictions`): actual vs. prediction per day for one channel and the test window
   of a fold; prediction = mean over seeds with min–max band; error panel (%) below with zero line.
   Settings: channel; "Vergleichen mit" = none (default) or another combination of the same run that
-  differs in one axis (e.g. `forecaster = ETS` when the run has a forecaster axis), drawn dashed; no
-  project-specific baseline is built in. Window: see Open (proposal pending).
+  differs in one axis (e.g. `forecaster = ETS` when the run has a forecaster axis), drawn dashed in
+  series 5, its MAPE in the title; no project-specific baseline is built in.
+  Window: the plot shows one forecast window of `pred_len` days (default: the last window of the test
+  period). Below the plot an overview strip shows the actual series of the whole test period (e.g. 3
+  quarters) with the window marked; clicking the strip centres the window there. If `predictions`
+  stores several windows per date (epoch eval-all-windows), the window is the stored window starting
+  nearest to the click; how origins are stored is checked when the first runs with predictions exist.
 - *Wiederholungen:* seed × fold grid of the primary metric, cell tint by value (darker = worse).
+- *Config:* the whole resolved config of the combination in the config view (J), switch "Blöcke | YAML"
+  in the tile settings; last tile; grid box open, blocks folded by default.
 - Title as key statement ("val_loss am niedrigsten in Epoche 27 von 40", "Region us: MAPE 2,2 %
   gegenüber 3,4 % bei ETS").
 
@@ -464,6 +449,32 @@ comparison table on top and the best config below. One widget = one image stays 
 
 **Rejected:** I2 drag one widget onto another (hard to discover, no fallback without drag); I3 layout
 templates with slots (an extra step for the common single case).
+
+### J · Config view
+**What:** One way to show a whole resolved config compactly (fits the 640 px detail panel), with two
+views on the same data: resolved config, which entries are swept in this run (with all their values),
+which are replicates, and which differ from `configs/base.yaml`. Used as the Config tile in F and, in
+the "Blöcke" view, as the config widget in the analysis (replaces "Beste Config" in G; saved as image).
+
+**Legend** (both views): `accent` = swept in the grid; amber dot / amber value = differs from base.yaml
+(tooltip or note "base: …"); dashed = replicates.
+
+**View "Blöcke" (default):**
+- Box "Im Grid variiert · n Achsen" on top (`accent` left border): one row per axis with all its values
+  as small chips, the combination's value highlighted (`accent-bg`, `accent-line`, bold); paired axes
+  (list of dicts, e.g. `lr_epochs`) as one row with values "5e-4 · 20"; below a dashed rule the
+  replicate keys with their value lists.
+- Then one collapsible box per config block (`data`, `model`, `train`, `run`, … in config order) with
+  "n Einträge" and "k abweichend von base"; content as key/value pairs in two column pairs, mono 11 px;
+  swept values `accent` bold.
+
+**View "YAML":** chips "Im Grid" with the combination's values on top; then the config as YAML with line
+numbers; top-level blocks foldable ("Alles zuklappen | aufklappen"); swept lines tinted with an
+`accent` bar and the other grid values as right-aligned note; base differences amber with "base: …";
+replicate lines marked; button "YAML kopieren". Not exported as image.
+
+**Behaviour:** the chosen view is remembered per project; in the detail panel the grid box / chips are
+always visible and the blocks start folded.
 
 ## Changes to principles.md / tokens.json
 - Create both: colours and their meanings from feature A.
