@@ -19,7 +19,7 @@ _Working record for the design session; removed at handover._
 | E · Analysis: two runs + project history | decided | row "Feature E", E4 ✓ |
 | F · Detail | open | – |
 | G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
-| I · Combining widgets into one deliverable | running | row "Feature I", I1–I3 (no choice yet) |
+| I · Combining widgets into one deliverable | running | row "Feature I", I1 favoured, selection fix to confirm |
 | H · Agent (optional) | open | – |
 
 **Running block I · Combining widgets into one deliverable**
@@ -37,6 +37,11 @@ _Working record for the design session; removed at handover._
   - I3 · layout templates: images list (+ Neues Bild), layout tiles (Ein Widget, Übereinander,
     Nebeneinander, Groß + 2 klein), slots filled by click or drag from the widget palette.
   - All: editable file name per image, editable title (default from the widget or "A und B").
+- Tim's last word: "I1 an sich" — but the button said "5 Bilder speichern" while he had marked only 2:
+  marking (for combining) and saving were two different things and everything was saved by default.
+- Fix on the canvas (I1): one checkbox per image = selection; it decides what is saved ("n Bilder
+  speichern") and what "Zu einem Bild" merges; nothing preselected, save disabled until something
+  is selected. Same rule proposed for the G save dialog. Awaiting Tim's OK to mark I1 decided.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
