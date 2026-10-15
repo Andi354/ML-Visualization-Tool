@@ -185,3 +185,53 @@ export const getConfig = (runId: string, combo?: Record<string, string>) =>
   getJson<ConfigInfo>(
     `/api/runs/${encodeURIComponent(runId)}/config` + (combo ? `?combo=${encodeURIComponent(JSON.stringify(combo))}` : ""),
   );
+
+// --- widgets (features F, E, G) ----------------------------------------------------------------
+export interface SettingDef {
+  key: string;
+  label: string;
+  type: "seg" | "select";
+  options?: { value: string; label: string }[];
+  default: string | null;
+}
+export interface CatalogEntry {
+  key: string;
+  label: string;
+  question: string;
+  scopes: string[];
+  settings: SettingDef[];
+  requires: string | null;
+  exportable: boolean;
+}
+export interface WidgetRequest {
+  run?: string;
+  runs?: string[];
+  combo?: Record<string, string>;
+  settings?: Record<string, string | null>;
+}
+export interface WidgetResult {
+  key: string;
+  exportable: boolean;
+  title?: string;
+  subtitle?: string | null;
+  note?: string | null;
+  unavailable?: string;
+  options?: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: any;
+}
+
+let catalogPromise: Promise<CatalogEntry[]> | null = null;
+export const getCatalog = () => (catalogPromise ??= getJson<CatalogEntry[]>("/api/widgets/catalog"));
+
+export async function postWidget(key: string, req: WidgetRequest, signal?: AbortSignal): Promise<WidgetResult> {
+  const r = await fetch(`/api/widgets/${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(req),
+    signal,
+  });
+  if (r.status === 404) throw new NotFound(key);
+  if (!r.ok) throw new Error(`widget ${key}: ${r.status}`);
+  return r.json();
+}

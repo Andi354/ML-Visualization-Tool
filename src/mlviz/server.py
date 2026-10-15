@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 import json
 
-from . import aggregate, configview, linear
+from . import aggregate, configview, linear, widgets
 from .listing import merkmal_candidates, run_listing
 from .project import Project
 from .runs import get_run, list_runs
@@ -76,6 +76,21 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
             if isinstance(parsed, dict):
                 chosen = {str(k): str(v) for k, v in parsed.items()}
         return configview.run_config(project, _run_or_404(run_id), chosen)
+
+    @app.get("/api/widgets/catalog")
+    def api_widget_catalog(scope: str | None = None) -> list[dict]:
+        """The widget catalog: key, label, question, scopes, settings."""
+        return widgets.catalog(scope)
+
+    @app.post("/api/widgets/{key}")
+    def api_widget(key: str, request: dict = Body(default_factory=dict)) -> dict:
+        """Data of one widget for a scope: `{run, combo, settings}` (more scopes follow)."""
+        try:
+            return widgets.compute(project, key, request)
+        except KeyError:
+            raise HTTPException(404, "unknown widget")
+        except LookupError:
+            raise HTTPException(404, "run not found")
 
     if STATIC.is_dir():
         app.mount("/assets", StaticFiles(directory=STATIC / "assets"), name="assets")

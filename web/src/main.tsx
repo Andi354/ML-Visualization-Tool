@@ -10,5 +10,6 @@ import "./styles.css";
 import "./runs/runs.css";
 import "./experiment/experiment.css";
 import "./config/config.css";
+import "./widgets/widgets.css";
 
 render(<App />, document.getElementById("app")!);

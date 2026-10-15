@@ -1,4 +1,4 @@
-import type { Metric, TableResult } from "../api";
+import type { Metric, TableResult, TableRow } from "../api";
 import { formatInt } from "../format";
 import { formatMetric, formatSd, nextSort, type Columns, type Sort } from "./model";
 
@@ -10,9 +10,11 @@ interface Props {
   sort: Sort;
   onSort: (s: Sort) => void;
   stale: boolean;
+  selectedKey: string | null;
+  onRow: (row: TableRow) => void;
 }
 
-export function Table({ result, metrics, visible, columns, sort, onSort, stale }: Props) {
+export function Table({ result, metrics, visible, columns, sort, onSort, stale, selectedKey, onRow }: Props) {
   const def = (k: string) => metrics.find((m) => m.key === k);
   const sortMetric = result.sort.metric;
   const sortDef = sortMetric ? def(sortMetric) : undefined;
@@ -66,7 +68,14 @@ export function Table({ result, metrics, visible, columns, sort, onSort, stale }
       </thead>
       <tbody class="mono">
         {result.rows.map((r) => (
-          <tr key={r.key} data-testid="exp-row" data-key={r.key}>
+          <tr
+            key={r.key}
+            data-testid="exp-row"
+            data-key={r.key}
+            class={selectedKey === r.key ? "selected" : ""}
+            aria-selected={selectedKey === r.key}
+            onClick={() => onRow(r)}
+          >
             {result.params.map((p) => (
               <td key={p} class="param-cell">
                 {r.params[p]}

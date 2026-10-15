@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { getDims, NotFound, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type TableResult } from "../api";
+import { getDims, NotFound, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type TableResult, type TableRow } from "../api";
+import { DetailPanel } from "./DetailPanel";
 import { Overview } from "./Overview";
 import { Sidebar } from "./Sidebar";
 import { Table } from "./Table";
@@ -22,10 +23,11 @@ interface Props {
   project: ProjectInfo;
   onBack: () => void;
   onMissing: () => void;
+  onAnalyse: (combo: Record<string, string>) => void;
 }
 
 /** View of one run (feature D): sidebar of dimensions, toolbar, overview strip and group table. */
-export function ExperimentView({ run, project, onBack, onMissing }: Props) {
+export function ExperimentView({ run, project, onBack, onMissing, onAnalyse }: Props) {
   const [info, setInfo] = useState<DimsInfo | null>(null);
   const [state, setState] = useState<DimState>({});
   const [sort, setSort] = useState<Sort>({ metric: null, stat: "mean", dir: null });
@@ -34,6 +36,7 @@ export function ExperimentView({ run, project, onBack, onMissing }: Props) {
   const [result, setResult] = useState<TableResult | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<TableRow | null>(null);
   const seq = useRef(0);
 
   useEffect(() => {
@@ -131,6 +134,8 @@ export function ExperimentView({ run, project, onBack, onMissing }: Props) {
                   sort={sort}
                   onSort={setSort}
                   stale={loading}
+                  selectedKey={selected?.key ?? null}
+                  onRow={setSelected}
                 />
                 {result.rows.length === 0 && (
                   <div class="empty" data-testid="exp-empty">
@@ -141,6 +146,9 @@ export function ExperimentView({ run, project, onBack, onMissing }: Props) {
             )}
           </div>
         </main>
+        {selected && (
+          <DetailPanel run={run} project={project} row={selected} onClose={() => setSelected(null)} onAnalyse={onAnalyse} />
+        )}
       </div>
     </div>
   );

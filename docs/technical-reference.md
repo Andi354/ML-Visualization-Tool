@@ -49,6 +49,8 @@ experiment name is `meta.json: experiment`, else the folder name without the tim
 | `GET /api/runs/{id}/dims` | sidebar: dimensions (axes with more than one value, replicates, channel) with value counts and section, constants of the resolved config |
 | `POST /api/runs/{id}/table` | group table. Body: `dims` (`{dim: {mode: split\|agg, sel: [values]}}`), `sort` (`metric`, `stat` mean/min/max/n, `dir`), `limit` (default 200, max 1000), `overview` |
 | `GET /api/runs/{id}/config?combo=` | resolved config for the config view: grid axes and replicates, blocks with entries, YAML lines with markers. `combo` is JSON `{axis: value}` and applies one combination to the resolved config |
+| `GET /api/widgets/catalog?scope=` | the widget catalog: key, label, question, scopes, settings, `requires` |
+| `POST /api/widgets/{key}` | data of one widget: `{run, combo, settings}` -> `{title, subtitle, note, unavailable, options, data}` |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
 
 ## Experiment table
@@ -71,6 +73,23 @@ config (`meta.json: config`); migrated runs have none, so nothing is marked as d
 entry differs when the base has the key with another value. The frontend (`web/src/config/`) renders
 the same data as "Blöcke" or "YAML"; the choice is stored per project.
 
+## Widgets and boards
+
+A *widget* answers one question for a scope (`combination`, `run`, `two-runs`, `project`). The catalog
+(`widgets/registry.py`) lists key, label, question, scopes, settings (defaults) and what the run must
+provide (`curves`, `predictions`). Each widget function returns the data, a key-statement title
+generated from it, a subtitle (what is compared) and a note; a widget that cannot be drawn returns
+`unavailable` with the reason instead of data and cannot be saved. Dynamic setting options (channels,
+combinations to compare with) come back in `options`. Numbers in titles use the German format.
+
+A *board* (`web/src/widgets/board.ts`) is a description `{scope, widgets: [{id, type, settings}]}`; the
+tool only renders it. The selection of widgets is stored per project and scope. The detail panel (F)
+is a board of scope `combination`; `WidgetTile` is the tile with header, settings and figure.
+
+Detail widgets read `curves/` and `predictions/` of the cells of the combination (the first fold only).
+`predictions` windows: with an `origin` column the stored window nearest to the requested date is
+plotted, else a `pred_len` slice of the test period; the default is the last window.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.
@@ -78,6 +97,7 @@ the same data as "Blöcke" or "YAML"; the choice is stored per project.
 - `src/mlviz/aggregate.py`: dimensions, constants and group table of one run (feature D).
 - `web/src/experiment/`: experiment view; `model.ts` holds the pure logic (dimension state, chips, columns, formatting).
 - `src/mlviz/configview.py`, `web/src/config/`: config view (feature J).
+- `src/mlviz/widgets/`: catalog and data of the widgets; `web/src/widgets/`: board model, tiles, renderers; `web/src/experiment/DetailPanel.tsx`: detail panel (feature F).
 - `src/mlviz/listing.py`: facts for the run list (counts, best value, Lauf-Merkmal).
 - `src/mlviz/linear.py`: Linear client and local issue links.
 - `web/src/runs/model.ts`: pure logic of the Läufe area (filters, blocks, texts, timeline); components next to it.
