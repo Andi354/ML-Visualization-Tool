@@ -9,15 +9,12 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 |---|---|
 | A · Agent panel | decided |
 | B · Voice | moved to a later update (not included) |
-| C · Tool control | running |
+| C · Tool control | decided |
 | D · Analysis by agent | open |
 | E · Widget format | open |
 | F · Agent connection | open |
 
-Running block: C · Tool control. Tim: like Claude Code, all three as modes switchable in the chat,
-undo everywhere. On the canvas: C1 Direkt, C2 Gemischt, C3 Bestätigen (same example chat per mode,
-mode switch bottom left). Open: default mode, whether the mode is per chat or global, tool list
-(proposed in chat: search, navigate, view settings, change analysis, save). Notes from Tim for later
+Running block: none. Notes from Tim for later
 blocks: F: subscription via `claude -p` is fine (personal tool; a published version would use an API
 key). Whether chats show up in claude.ai does not matter.
 
@@ -51,6 +48,44 @@ microphone button. Minimised, it shrinks to a capsule in the bottom right corner
 
 One chat in the tool is one Claude Code session: the tool stores per chat its title, last activity
 and `session_id`; a new message continues it with `claude -p --resume <session_id>` (see F).
+
+### C · Tool control
+**What:** The agent operates the tool through a fixed set of tools. How freely it acts is set by a mode,
+as in Claude Code: Direkt, Gemischt, Bestätigen. Every action it takes appears in the chat as an action
+line; actions awaiting confirmation appear as a confirmation card. Every executed action can be undone.
+
+**Tools** (each maps to existing v0.1 state, e.g. the frame actions in `web/src/state/frame.ts`):
+
+| Group | Tools | Kind |
+|---|---|---|
+| Search (read only) | find runs by date, issue, run feature (e.g. `pred_len`) and grid axes; read results, cells, config of a run | read |
+| Navigate | open a run as tab, focus or close a tab, switch Läufe view (Liste / Issues), open Analyse with a scope (Ein Lauf / Zwei Läufe / Projektverlauf) and its runs | nav |
+| View settings | in a run tab: filters, grouping, columns, sort; open the detail of a combination | nav |
+| Change analysis | add, remove, configure widgets on a board (feature D) | change |
+| Save | save widget images or configs as files (as the v0.1 save dialog does) | change |
+
+**Modes:**
+
+| Mode | read | nav | change |
+|---|---|---|---|
+| ⏵⏵ Direkt | immediate | immediate | immediate |
+| ⏵ Gemischt (default) | immediate | immediate | confirmation |
+| ⏸ Bestätigen | immediate | confirmation | confirmation |
+
+**Behaviour:**
+- Click the mode button below the input ("⏵ Gemischt ▾") → a menu lists the three modes with one sentence each; click one → it applies from the next action on.
+- Press Shift+Tab while the input has focus → the mode cycles Direkt → Gemischt → Bestätigen → Direkt.
+- The mode is stored per project and applies to all chats; a new project starts with Gemischt.
+- The agent runs an immediate action → the tool changes at once, the chat shows an action line "✓ <what happened>" with "Rückgängig", and the changed element (new tab, set filter, changed widget) briefly glows (about 1.5 s).
+- The agent runs an action that needs confirmation → the chat shows a card "Bestätigen · <what it will do>" with details (e.g. the target file path) and the buttons "Ausführen" (for saving: "Speichern") and "Ablehnen"; nothing changes before the click. Enter while the card is the last item executes it.
+- Click "Ausführen" → the action runs and the card turns into an action line with "Rückgängig".
+- Click "Ablehnen" → the card turns into "✕ Abgelehnt · <action>"; the agent is told and continues without it.
+- Click "Rückgängig" → the action is reverted (tab closed, filter removed, widget restored, saved file deleted) and the line shows "↶ <reverted>" with "Wiederholen".
+- A request matches several runs → the agent asks back with clickable run cards (run name, date, state, varied axes); click one → it continues with that run.
+- A confirmation card is open and Tim types a new message → the card is rejected and the new message is handled.
+**Edge cases:** Undo of a save whose file was changed or moved since → the line says "Datei wurde inzwischen geändert, nicht gelöscht" and nothing is deleted. Undo is offered only for actions of the current tool session; after a reload the lines stay but without "Rückgängig".
+**In the prototype:** `C1-Direkt.dc.html`, `C2-Gemischt.dc.html`, `C3-Bestaetigen.dc.html` (same example per mode: `MODES`, `ACTIONS` with `kind` 'nav' | 'change', `stateOf`); in `Prototyp-02.dc.html` the mode switch (`agentMode2`, `MODES`) and undo on action lines.
+**Rejected:** A single fixed behaviour (only direct, only confirm or only mixed); Tim wants all three as modes like Claude Code.
 
 ## Changes to principles.md / tokens.json
 
