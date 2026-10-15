@@ -15,8 +15,9 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 | F · Agent connection | open |
 
 Running block: E · Widget format. Tim agreed to E1 (declarative spec, no builder screen) as direction.
-On the canvas: E1 · Eigene Widgets (draft tile from the agent, refine, Beschreibung = JSON, keep →
-catalog section "Eigene", parameter "Modell"). Waiting for Tim's word. Notes from Tim for later
+On the canvas: E1 · Eigene Widgets. Tim: widget width must be settable (half / full row) for every
+widget, and the draft must already show its later width — E1 updated: draft centered in its own row at
+its width, "Breite Halb | Ganz" in every tile's settings and in the draft header. Waiting for Tim's word. Notes from Tim for later
 blocks: F: subscription via `claude -p` is fine (personal tool; a published version would use an API
 key). Whether chats show up in claude.ai does not matter.
 
