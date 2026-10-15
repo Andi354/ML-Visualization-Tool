@@ -20,12 +20,21 @@ _Working record for the design session; removed at handover._
 | F · Detail | decided | row "Feature F", F1+F3 ✓ |
 | G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
 | I · Combining widgets into one image | decided | row "Feature I", I1 ✓ |
+| J · Config view (compact, whole config) | open (proposed) | – |
 | H · Agent (optional) | open | – |
 
-**Running block:** none. Open: H · Agent (optional); then the overall prototype (one clickable artboard
-with B frame, C, D + F panel, E/G analysis with I saving).
-- Tim's last word: "F1+F3 gefällt mir"; D must keep sidebar and table side by side when the panel is
-  open, table shrinks and scrolls horizontally (fixed on the canvas in `F-Exp`).
+**Running block:** F follow-ups + J proposal (chat). Then H · Agent (optional) or the overall prototype
+(Tim to decide).
+- Tim's last word (F): generalise the forecast widget — the ETS baseline is project- and run-specific;
+  make the comparison selectable (here or in the analysis with other forecasters). Make the forecast
+  window adjustable — what is possible? Config in the detail: show all entries, swept ones first and
+  highlighted; maybe a compact format for a whole config as its own feature (new row), small enough
+  for the detail panel.
+- Done in spec: "Vergleichen mit" = another combination of the run differing in one axis, default none.
+- Proposed (chat): window = fold (test period) switch + zoom by range on a small overview strip;
+  horizon-step view only if predictions store the forecast origin (to check in the data format).
+  J alternatives: J1 grouped by config block, collapsible, swept first; J2 dense two-column table with
+  search; J3 "only non-default" vs base config with "alle zeigen"; J4 YAML view with highlights.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
@@ -360,8 +369,10 @@ with these widgets and this combination as filter; the board itself is G).
   thick; dashed line at the epoch with the lowest mean val_loss; setting "einzeln | nur Mittel"; one
   fold (the first) to keep it readable.
 - *Vorhersage* (needs `predictions`): actual vs. prediction per day for one channel and the test window
-  of a fold; prediction = mean over seeds with min–max band; optional baseline from another forecaster
-  in the same run (dashed); error panel (%) below with zero line; settings channel, baseline.
+  of a fold; prediction = mean over seeds with min–max band; error panel (%) below with zero line.
+  Settings: channel; "Vergleichen mit" = none (default) or another combination of the same run that
+  differs in one axis (e.g. `forecaster = ETS` when the run has a forecaster axis), drawn dashed; no
+  project-specific baseline is built in. Window: see Open (proposal pending).
 - *Wiederholungen:* seed × fold grid of the primary metric, cell tint by value (darker = worse).
 - Title as key statement ("val_loss am niedrigsten in Epoche 27 von 40", "Region us: MAPE 2,2 %
   gegenüber 3,4 % bei ETS").
