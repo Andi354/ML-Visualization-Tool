@@ -17,15 +17,21 @@ _Working record for the design session; removed at handover._
 | C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
 | D · Experiment | decided | row "Feature D", D5 ✓ |
 | E · Analysis: two runs + project history | decided | row "Feature E", E4 ✓ |
-| F · Detail | open | – |
+| F · Detail | running | brainstorm in chat |
 | G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
 | I · Combining widgets into one image | decided | row "Feature I", I1 ✓ |
 | H · Agent (optional) | open | – |
 
-**Running block:** none. Open: F · Detail (curves, predictions), H · Agent; then the overall prototype.
-- Tim's last word: "Ja passt" (I1); G gets a small blue save icon per widget, rightmost in the tile
-  header, preselecting that widget (done on the canvas in G1, together with editable file names and
-  nothing preselected).
+**Running block F · Detail (one combination: curves, predictions)**
+- Tim's last word: "Ja jetzt passts, weiter mit F" (I incl. footer toggle accepted); asks when F opens:
+  clicking a cell/row in the experiment view, or is that rather an analysis?
+- Proposal (chat): a D row is a group (a combination, averaged over replicates); F = everything about
+  that combination: config, every replicate's values, loss curves (train/val per replicate + mean),
+  predictions vs. actual per channel and window, per channel table. Entry: click a D row.
+  Alternatives: F1 side panel in D (quick look, D stays visible); F2 own tab like a run tab;
+  F3 analysis scope "Eine Kombination" with widgets (curves, prediction) — savable as deliverables.
+  Recommendation F1 + "In Analyse öffnen" (= F3) for saving. Missing data (no curves/predictions in
+  migrated runs) shown as an explained empty state.
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
