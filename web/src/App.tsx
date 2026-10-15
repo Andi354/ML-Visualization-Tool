@@ -1,0 +1,66 @@
+import { useEffect, useReducer, useRef, useState } from "preact/hooks";
+import { getProject, type ProjectInfo } from "./api";
+import { IconBar } from "./frame/IconBar";
+import { TabStrip } from "./frame/TabStrip";
+import { frameReducer, initialFrame, loadFrame, saveFrame } from "./state/frame";
+import { AnalysisView } from "./views/AnalysisView";
+import { RunsView } from "./views/RunsView";
+import { RunTab } from "./views/RunTab";
+
+export function App() {
+  const [project, setProject] = useState<ProjectInfo | null>(null);
+  useEffect(() => {
+    getProject().then(setProject);
+  }, []);
+  if (!project) return <div class="placeholder" />;
+  return <Frame project={project} />;
+}
+
+function Frame({ project }: { project: ProjectInfo }) {
+  const [frame, dispatch] = useReducer(frameReducer, project.name, (name) => loadFrame(name) ?? initialFrame);
+  const latest = useRef(frame);
+  latest.current = frame;
+  useEffect(() => saveFrame(project.name, frame), [project.name, frame]);
+  // Effects run after paint; flush on leaving so a quick reload cannot lose the last click.
+  useEffect(() => {
+    const flush = () => saveFrame(project.name, latest.current);
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, [project.name]);
+
+  return (
+    <div class="app">
+      <IconBar
+        short={project.short}
+        projectName={project.name}
+        area={frame.area}
+        onSelect={(area) => dispatch({ type: "select-area", area })}
+      />
+      <div class="main">
+        <TabStrip
+          area={frame.area}
+          tabs={frame.tabs}
+          active={frame.active}
+          onFocusPinned={() => dispatch({ type: "focus-pinned" })}
+          onFocus={(run) => dispatch({ type: "focus-run", run })}
+          onClose={(run) => dispatch({ type: "close-run", run })}
+        />
+        <div class="content">
+          <div class="pane" hidden={frame.active !== null}>
+            {frame.area === "runs" ? (
+              <RunsView onOpen={(run) => dispatch({ type: "open-run", run })} />
+            ) : (
+              <AnalysisView />
+            )}
+          </div>
+          {/* Every open run stays mounted, so filters, sorting and scroll survive tab switches. */}
+          {frame.tabs.map((run) => (
+            <div class="pane" key={run} hidden={frame.active !== run}>
+              <RunTab runId={run} onClose={() => dispatch({ type: "close-run", run })} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

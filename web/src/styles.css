@@ -1,0 +1,198 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--size-base);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* States that views do not define themselves (spec "Defaults"): hover raised, focus 2px accent,
+   disabled text-3, loading muted placeholder rows. */
+button:hover:not(:disabled) {
+  background: var(--raised);
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+button:disabled,
+[aria-disabled="true"] {
+  color: var(--text-3);
+  cursor: default;
+}
+.loading-row {
+  height: var(--row-height);
+  margin: 4px 0;
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  opacity: 0.5;
+}
+
+/* Frame (feature B) */
+.app {
+  display: grid;
+  grid-template-columns: var(--icon-bar) minmax(0, 1fr);
+  height: 100%;
+}
+
+.icon-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+}
+
+.project-badge {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--text);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+}
+.icon-btn.active,
+.icon-btn.active:hover {
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-color: var(--accent-line);
+}
+.icon-bar-bottom {
+  margin-top: auto;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tab-strip {
+  flex: none;
+  display: flex;
+  height: var(--tab-strip);
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: thin;
+}
+
+.tab {
+  flex: 0 1 200px;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  color: var(--text-3);
+  border-top: 2px solid transparent;
+  border-radius: 0;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tab.pinned {
+  flex: none;
+  min-width: 0;
+  padding: 0 16px;
+}
+.tab.active,
+.tab.active:hover {
+  color: var(--text);
+  background: var(--bg);
+  border-top-color: var(--accent);
+}
+.tab:hover:not(.active) {
+  background: var(--raised);
+}
+.tab-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+.tab-close {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  border-radius: var(--radius-control);
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.pane {
+  height: 100%;
+}
+.pane[hidden] {
+  display: none;
+}
+
+.placeholder,
+.notice {
+  padding: var(--gutter);
+  color: var(--text-2);
+}
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.btn {
+  height: 28px;
+  padding: 0 12px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}

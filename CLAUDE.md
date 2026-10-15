@@ -7,6 +7,23 @@ First case: repnet-bench (REP-Net on Snowflake VM usage data).
 
 Language: chat and Linear in German, code and docs in English.
 
+## Commands
+
+- `make setup`: Python venv (`.venv`, uv) and `npm ci` in `web/`
+- `make test`: unit tests (`pytest`, `vitest`)
+- `make test-browser`: builds the frontend, then browser tests (Playwright, headless Chromium)
+- `make wheel`: builds `dist/ml_visualization_tool-<version>-py3-none-any.whl` (committed, one file, the previous build is removed)
+- `docker compose up --build`: runs the tool for the project in `MLVIZ_PROJECT_PATH` (see `.env.example`)
+- `.venv/bin/mlviz demo <dir>`: writes a synthetic demo project
+
+## Layout
+
+- `src/mlviz/`: backend (FastAPI), reads `runs/`; `web/`: frontend (Vite, Preact, TypeScript)
+- `tests/`: pytest (`tests/browser/` = Playwright); `web/tests/`: vitest
+- `docs/technical-reference.md`: what the tool reads from a project and how the code is organised
+- `design/`: principles, tokens, `updates/v<version>-<shortname>/` (spec, prototype)
+- Version: `pyproject.toml` (and `src/mlviz/__init__.py`)
+
 # Skills
 
 > Diese Sektion bündelt projektspezifische Konfiguration für Skills, die sie
@@ -25,4 +42,4 @@ Dieser Abschnitt gehört zum Skill `job-linear` und wird von ihm gelesen.
 
 Dieser Abschnitt gehört zum Skill `sw-cycle` und wird von ihm gelesen.
 
-- Version: steht in `VERSION`, bis ein Paket-Manifest (z.B. `pyproject.toml`) existiert; danach dort.
+- Version: steht in `VERSION`, bis ein Paket-Manifest (z.B. `pyproject.toml`) existiert; danach dort. Seit v0.1.0 in `pyproject.toml`.
