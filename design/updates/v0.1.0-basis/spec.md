@@ -401,8 +401,10 @@ comparison table on top and the best config below. One widget = one image stays 
 - File name of a group: `NN_<type>+<type>.png`, editable like every file name.
 - Checkbox "Hinweise einblenden" above the preview, per image: shows or hides the small grey texts of
   every graphic — the subtitle under the title (what is compared, fixed values, replicates) and the
-  note line ("niedriger = besser · …"); title and footer stay. Default on for single images, off for
+  note line ("niedriger = besser · …"); the title stays. Default on for single images, off for
   combined ones (Tim, 15.10.).
+- Checkbox "Fußzeile einblenden" next to it, per image: shows or hides the footer (run folder, epoch,
+  commit); default on.
 - The preview on the right always shows the focused image exactly as it will be saved.
 
 **Rejected:** I2 drag one widget onto another (hard to discover, no fallback without drag); I3 layout
