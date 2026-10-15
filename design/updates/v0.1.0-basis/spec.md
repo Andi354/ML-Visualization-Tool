@@ -19,29 +19,13 @@ _Working record for the design session; removed at handover._
 | E · Analysis: two runs + project history | decided | row "Feature E", E4 ✓ |
 | F · Detail | open | – |
 | G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
-| I · Combining widgets into one deliverable | running | row "Feature I", I1 favoured, selection fix to confirm |
+| I · Combining widgets into one image | decided | row "Feature I", I1 ✓ |
 | H · Agent (optional) | open | – |
 
-**Running block I · Combining widgets into one deliverable**
-- Tim's last word: G1 best ("einheitliches Format zu den Vergleichen"). His model-comparison deliverable
-  had results on top and the REP-Net config below; one image per widget is fine and the usual case, but
-  combining should be possible, maybe drag and drop in "Als Deliverable speichern"; own feature, not
-  too complicated.
-- Tim (15.10.): file names everywhere with a default but editable (added to G); build I1, I2, I3.
-- Alternatives on the canvas, all as variants of the save dialog; combined image = one title, parts
-  with their subtitles, one footer (component `I-Preview`, W-Widget `part` mode; model `i-shared.js`):
-  - I1 · combine in the list: mark widgets → "Zu einem Bild"; group box with layout übereinander |
-    nebeneinander, order ↑↓, "lösen", "Trennen".
-  - I2 · drag onto another: drag a widget row onto another image to group; drop zone to detach;
-    same layout/order controls.
-  - I3 · layout templates: images list (+ Neues Bild), layout tiles (Ein Widget, Übereinander,
-    Nebeneinander, Groß + 2 klein), slots filled by click or drag from the widget palette.
-  - All: editable file name per image, editable title (default from the widget or "A und B").
-- Tim's last word: "I1 an sich" — but the button said "5 Bilder speichern" while he had marked only 2:
-  marking (for combining) and saving were two different things and everything was saved by default.
-- Fix on the canvas (I1): one checkbox per image = selection; it decides what is saved ("n Bilder
-  speichern") and what "Zu einem Bild" merges; nothing preselected, save disabled until something
-  is selected. Same rule proposed for the G save dialog. Awaiting Tim's OK to mark I1 decided.
+**Running block:** none. Open: F · Detail (curves, predictions), H · Agent; then the overall prototype.
+- Tim's last word: "Ja passt" (I1); G gets a small blue save icon per widget, rightmost in the tile
+  header, preselecting that widget (done on the canvas in G1, together with editable file names and
+  nothing preselected).
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
@@ -377,8 +361,10 @@ or from the Analyse area.
   sorted, with the best value named.
 - *Stabilität:* per row value every replicate as a dot, mean tick, ±1 sd band; note that deterministic
   models only vary over folds.
-- Settings per tile via "Einstellen" (segmented controls), "×" removes a tile, "+ Widget" adds one
-  from the catalog (same widget type may appear several times with different settings).
+- Tile header, left to right: widget name and its question; "Einstellen" (segmented controls), "×"
+  removes the tile, and rightmost a small save button (26 px, `accent` fill, floppy-disk icon, no
+  text, tooltip "Als Deliverable speichern") that opens the save dialog with only this widget
+  selected. "+ Widget" adds one from the catalog (same type may appear several times).
 
 **Widget as image (all scopes, E and G):** title = key statement, generated from the data ("REP-Net ist
 in 3 von 4 Spalten am besten", "multivariat ist in 2 von 4 Regionen besser"), overridable; subtitle =
@@ -387,7 +373,9 @@ Spalte"); footer = run folder, epoch, commit. Widgets render in the app theme; e
 light theme by default (for slides) or dark.
 
 **Saving ("Als Deliverable speichern", replaces the E4 dialog):** large dialog: left a checklist of the
-board's widgets (one widget = one image, file `NN_<widget>.png`), background light/dark, "Configs des
+board's widgets (one widget = one image, file `NN_<widget>.png`); nothing is preselected when opened
+from the header button, only that widget when opened from a tile's save button; the save button reads
+"Widgets auswählen" and is disabled while nothing is selected; background light/dark, "Configs des
 Laufs mitspeichern", target `deliverables/<date> <title>/` and linked issue; right a large preview of the
 focused widget exactly as exported; every file name has a default and is editable (Tim, 15.10.);
 button "n Bilder speichern"; afterwards a toast with the path.
@@ -395,6 +383,26 @@ Combining several widgets into one image: block I.
 
 **Rejected:** G2 widget builder (extra step; settings live on the tile), G3 deliverable-first page
 (duplicates the board; its per-widget title editing is kept inside the save preview).
+
+### I · Combining widgets into one image
+**What:** In the save dialog (G) several selected images can be merged into one image, e.g. the
+comparison table on top and the best config below. One widget = one image stays the default.
+
+**Behaviour:**
+- One checkbox per image (a group has one checkbox). The selection decides both what is saved ("n
+  Bilder speichern") and what "Zu einem Bild" merges; enabled from two selected images.
+- "Zu einem Bild" merges the selected images in list order into one group placed where the first
+  one was; the new group stays selected and focused.
+- A group is shown as one box (left border `accent`, label "1 Bild · n Widgets") with a layout switch
+  "übereinander | nebeneinander", per member ↑ ↓ to reorder and "lösen" (member becomes its own image
+  right after the group), and "Trennen" (all members become single images).
+- Combined image: one title (default "A und B" from the widget names, editable), each part with its own
+  subtitle and note, parts separated by a rule (stacked) or a gutter (side by side), one footer.
+- File name of a group: `NN_<type>+<type>.png`, editable like every file name.
+- The preview on the right always shows the focused image exactly as it will be saved.
+
+**Rejected:** I2 drag one widget onto another (hard to discover, no fallback without drag); I3 layout
+templates with slots (an extra step for the common single case).
 
 ## Changes to principles.md / tokens.json
 - Create both: colours and their meanings from feature A.
