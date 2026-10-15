@@ -62,7 +62,12 @@ function Frame({ project }: { project: ProjectInfo }) {
           {/* Every open run stays mounted, so filters, sorting and scroll survive tab switches. */}
           {frame.tabs.map((run) => (
             <div class="pane" key={run} hidden={frame.active !== run}>
-              <RunTab runId={run} onClose={() => dispatch({ type: "close-run", run })} />
+              <RunTab
+                runId={run}
+                project={project}
+                onBack={() => dispatch({ type: "focus-pinned" })}
+                onClose={() => dispatch({ type: "close-run", run })}
+              />
             </div>
           ))}
         </div>

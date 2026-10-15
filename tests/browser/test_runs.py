@@ -105,8 +105,8 @@ def test_cell_progress_and_errors(page):
 
 
 def test_best_value_with_metric_and_horizon_provisional_while_running(page):
-    expect(row(page, TIM83).locator(".best .note")).to_have_text("MAPE · pred_len 30 · vorläufig")
-    expect(row(page, TIM71).locator(".best .note")).to_have_text("MAPE · pred_len 30")
+    expect(row(page, TIM83).locator(".run-best .note")).to_have_text("MAPE · pred_len 30 · vorläufig")
+    expect(row(page, TIM71).locator(".run-best .note")).to_have_text("MAPE · pred_len 30")
     expect(row(page, TIM71).locator(".best-value")).to_have_text(re.compile(r"^\d,\d\d %$"))
 
 

@@ -48,3 +48,16 @@ def test_issues_endpoint_without_key(client, monkeypatch):
 
 def test_unknown_api_path_is_404(client):
     assert client.get("/api/nope").status_code == 404
+
+
+def test_dims_and_table_endpoints(client):
+    rid = run_folder(RUNS[3])
+    dims = client.get(f"/api/runs/{rid}/dims").json()
+    assert dims["sections"][0] == "model"
+    t = client.post(f"/api/runs/{rid}/table", json={"dims": {"forecaster": {"mode": "agg"}}}).json()
+    assert t["groups"] == 1 and t["params"] == []
+
+
+def test_table_of_a_deleted_run_is_404(client):
+    assert client.post("/api/runs/2020-01-01_000000_gone/table", json={}).status_code == 404
+    assert client.get("/api/runs/2020-01-01_000000_gone/dims").status_code == 404

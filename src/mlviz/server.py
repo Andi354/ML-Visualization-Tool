@@ -5,11 +5,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import linear
+from . import aggregate, linear
 from .listing import merkmal_candidates, run_listing
 from .project import Project
 from .runs import get_run, list_runs
@@ -45,6 +45,22 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
         if run is None:
             raise HTTPException(404, "run not found")
         return run.info()
+
+    def _run_or_404(run_id: str):
+        run = get_run(project, run_id)
+        if run is None:
+            raise HTTPException(404, "run not found")
+        return run
+
+    @app.get("/api/runs/{run_id}/dims")
+    def api_dims(run_id: str) -> dict:
+        """Dimensions (axes, replicates, channels) with value counts, and the constant parameters."""
+        return aggregate.run_dims(_run_or_404(run_id))
+
+    @app.post("/api/runs/{run_id}/table")
+    def api_table(run_id: str, query: dict = Body(default_factory=dict)) -> dict:
+        """Group table under the given averaging, filters and sorting."""
+        return aggregate.run_table(_run_or_404(run_id), project, query)
 
     if STATIC.is_dir():
         app.mount("/assets", StaticFiles(directory=STATIC / "assets"), name="assets")

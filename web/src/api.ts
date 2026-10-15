@@ -67,3 +67,80 @@ export const getProject = () => getJson<ProjectInfo>("/api/project");
 export const getRuns = () => getJson<RunRow[]>("/api/runs");
 export const getIssues = () => getJson<Record<string, IssueInfo>>("/api/issues");
 export const getRun = (id: string) => getJson<RunInfo>(`/api/runs/${encodeURIComponent(id)}`);
+
+// --- experiment view (feature D) -------------------------------------------------------------
+export interface DimValue {
+  value: string;
+  n: number;
+}
+export interface Dim {
+  key: string;
+  kind: "axis" | "replicate" | "channel";
+  section: string;
+  values: DimValue[];
+}
+export interface DimsInfo {
+  dims: Dim[];
+  sections: string[];
+  constants: { block: string; rows: { key: string; value: string }[] }[];
+  cells: number;
+  errors: number;
+  primary_metric: string | null;
+}
+
+export interface DimQuery {
+  mode: "split" | "agg";
+  sel: string[];
+}
+export interface TableQuery {
+  dims: Record<string, DimQuery>;
+  sort: { metric: string | null; stat: "mean" | "min" | "max" | "n"; dir: "asc" | "desc" | null };
+  limit?: number;
+  overview?: boolean;
+}
+export interface MetricStats {
+  mean: number | null;
+  std: number | null;
+  min: number | null;
+  max: number | null;
+}
+export interface TableRow {
+  key: string;
+  params: Record<string, string>;
+  n: number;
+  errors: number;
+  metrics: Record<string, MetricStats>;
+}
+export interface OverviewCard {
+  key: string;
+  kind: "axis" | "channel";
+  spread: number | null;
+  best_value: string | null;
+  values: { value: string; mean: number | null; std: number | null; n: number }[];
+}
+export interface TableResult {
+  params: string[];
+  metrics: string[];
+  sort: { metric: string | null; stat: string; dir: "asc" | "desc" };
+  groups: number;
+  cells: number;
+  shown: number;
+  best: { key: string | null; value: number | null; metric: string | null };
+  rows: TableRow[];
+  histogram: { counts: number[]; lo: number | null; hi: number | null; best_bin: number | null };
+  overview?: { cards: OverviewCard[]; metric?: string };
+}
+
+export const getDims = (id: string) => getJson<DimsInfo>(`/api/runs/${encodeURIComponent(id)}/dims`);
+
+export async function postTable(id: string, query: Partial<TableQuery>, signal?: AbortSignal): Promise<TableResult> {
+  const r = await fetch(`/api/runs/${encodeURIComponent(id)}/table`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(query),
+    signal,
+  });
+  if (r.status === 404) throw new NotFound(id);
+  if (!r.ok) throw new Error(`table: ${r.status}`);
+  return r.json();
+}

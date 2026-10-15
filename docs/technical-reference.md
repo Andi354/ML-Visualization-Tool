@@ -46,12 +46,27 @@ experiment name is `meta.json: experiment`, else the folder name without the tim
 | `GET /api/project` | project info, metric catalogue, epochs, `now`, `linear` (key present) |
 | `GET /api/runs` | all runs, newest first, with counts, best value, Lauf-Merkmal |
 | `GET /api/runs/{id}` | one run (404 when gone) |
+| `GET /api/runs/{id}/dims` | sidebar: dimensions (axes with more than one value, replicates, channel) with value counts and section, constants of the resolved config |
+| `POST /api/runs/{id}/table` | group table. Body: `dims` (`{dim: {mode: split\|agg, sel: [values]}}`), `sort` (`metric`, `stat` mean/min/max/n, `dir`), `limit` (default 200, max 1000), `overview` |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
+
+## Experiment table
+
+`aggregate.run_table` builds the group table: groups are the combinations of the *split* dimensions
+(axes split by default, replicates and channel averaged by default); metrics are mean, sd (n-1), min and
+max over the successful cells of a group, `n` counts only those, `errors` the failed cells. A group
+with only failed cells stays in the table with empty metrics and sorts last in both directions. Sorting
+and the best value (by the metric's `direction`) run over all groups before the first 200 are returned.
+Channel "je Kanal" and a channel selection read `channels.parquet`; a selection without splitting
+averages the selected channels per cell first. The overview cards use mean and sd over the cells with
+that value under the current filters; the histogram counts the group means.
 
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.
 - `src/mlviz/runs.py`: `Run` (lazy, cached by mtime), `list_runs`, `get_run`. Run ids never leave `runs/`.
+- `src/mlviz/aggregate.py`: dimensions, constants and group table of one run (feature D).
+- `web/src/experiment/`: experiment view; `model.ts` holds the pure logic (dimension state, chips, columns, formatting).
 - `src/mlviz/listing.py`: facts for the run list (counts, best value, Lauf-Merkmal).
 - `src/mlviz/linear.py`: Linear client and local issue links.
 - `web/src/runs/model.ts`: pure logic of the Läufe area (filters, blocks, texts, timeline); components next to it.

@@ -31,7 +31,7 @@ export function CellBar({ run }: { run: RunRow }) {
 export function Best({ run }: { run: RunRow }) {
   const b = bestText(run);
   return (
-    <span class="best">
+    <span class="run-best">
       <span class={"mono best-value" + (run.running ? " provisional" : "")}>{b.value}</span>
       <span class="note">{b.note}</span>
     </span>

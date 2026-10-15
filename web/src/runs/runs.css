@@ -358,7 +358,7 @@ input[type="checkbox"] {
 .cell-text.has-errors {
   color: var(--error);
 }
-.best {
+.run-best {
   display: flex;
   flex-direction: column;
   text-align: right;
@@ -369,7 +369,7 @@ input[type="checkbox"] {
 .best-value.provisional {
   color: var(--text-2);
 }
-.best .note {
+.run-best .note {
   font-size: var(--size-tiny);
   color: var(--text-3);
 }

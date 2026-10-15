@@ -1,17 +1,20 @@
 import { useEffect, useState } from "preact/hooks";
-import { getRun, NotFound, type RunInfo } from "../api";
-import { tabLabel } from "../frame/TabStrip";
+import { getRun, NotFound, type ProjectInfo, type RunInfo } from "../api";
+import { ExperimentView } from "../experiment/ExperimentView";
 
 interface Props {
   runId: string;
+  project: ProjectInfo;
+  onBack: () => void;
   onClose: () => void;
 }
 
 type Load = { state: "loading" } | { state: "missing" } | { state: "ok"; run: RunInfo };
 
-/** Content of one run tab. The experiment view (feature D) replaces the placeholder body. */
-export function RunTab({ runId, onClose }: Props) {
+/** Content of one run tab: the experiment view of the run, or a note when the run is gone. */
+export function RunTab({ runId, project, onBack, onClose }: Props) {
   const [load, setLoad] = useState<Load>({ state: "loading" });
+  const [gone, setGone] = useState(false);
   useEffect(() => {
     let alive = true;
     getRun(runId)
@@ -22,7 +25,7 @@ export function RunTab({ runId, onClose }: Props) {
     };
   }, [runId]);
 
-  if (load.state === "missing")
+  if (load.state === "missing" || gone)
     return (
       <div class="notice" data-testid="run-missing">
         <span>Lauf nicht mehr vorhanden</span>
@@ -39,8 +42,8 @@ export function RunTab({ runId, onClose }: Props) {
       </div>
     );
   return (
-    <div class="placeholder" data-testid="run-body">
-      <span class="mono">{tabLabel(load.run.id)}</span>
+    <div class="pane-fill" data-testid="run-body">
+      <ExperimentView run={load.run} project={project} onBack={onBack} onMissing={() => setGone(true)} />
     </div>
   );
 }
