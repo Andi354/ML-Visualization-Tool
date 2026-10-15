@@ -18,39 +18,18 @@ _Working record for the design session; removed at handover._
 | D · Experiment | decided | row "Feature D", D5 ✓ |
 | E · Analysis: two runs + project history | decided | row "Feature E", E4 ✓ |
 | F · Detail | open | – |
-| G · Analysis: one run + saving deliverables | running | row "Feature G", G1–G3 (no choice yet) |
+| G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
+| I · Combining widgets into one deliverable | running | brainstorm in chat |
 | H · Agent (optional) | open | – |
 
-**Running block G · Analysis for one run + saving deliverables**
-- From E (Tim): a deliverable is a widget, not the whole board. "Als Deliverable speichern" needs a
-  preview and a choice of which widgets are saved. Default format image; several widgets may be
-  combined into one image. Deliverables today: images + the configs they were built from; Tim wants
-  one image that shows exactly what is needed (supervisor meetings).
-- Tim on widget tech: most widgets are not Plotly charts (tables, verdicts, chips) → widget format
-  decided in H.
-- Tim's examples (14.10.): (1) model comparison table: forecasters (REP-Net, SARIMA, ETS, ETS damped,
-  Prophet, sNaive) × pred_len 30/90 × MAPE/Commitment Cost, best per column green, plus the winner's
-  config with per-pred_len differences; forecasters are trained inside one run (axis). (2) forecast
-  plot for one region and window with holidays + error panel — project-specific, later as an
-  agent-built project widget. (3) per-region table multivariate vs univariate + best combo per scope.
-  (4) per-region grouped bars. (5) dataset CV folds — dataset analysis, later. Look may be simpler and
-  nicer than the examples; one format per kind of graphic.
-- Derived generic widgets for one run: comparison table (rows = one dimension, column groups = another
-  dimension or Lauf-Merkmal, columns = metrics, best per column); per channel (table | bars, series =
-  values of one dimension); best config card (with differences); effect per axis; stability over
-  replicates; forecast plot only where predictions exist (F). Each widget = one deliverable image with
-  editable key-statement title, automatic subtitle (run, metric, pred_len, replicates) and footer.
-- Later concepts: project-specific widgets (e.g. holiday plot) living in the project; dataset analysis.
-- Alternatives on the canvas (Tim: "Ja, bitte bauen"); shared widget component `W-Widget` (types
-  table, channel, config, effect, stability; dark/light), catalog + controls in `g-shared.js`, sample
-  run in `one-data.js` (TIM-52 model comparison: forecaster × pred_len × features, 4 regions):
-  - G1 · board: tiles in two columns, per tile "Einstellen" (rows/column groups, series, table|bars)
-    and remove; "+ Widget" from the catalog.
-  - G2 · builder: left type → settings → key statement; right live preview; "Zum Board hinzufügen".
-  - G3 · deliverable first: widgets stacked as export-ready cards on the chosen background, editable
-    title, "Bild speichern" per card, select several → "Ausgewählte speichern".
-  - Save dialog (all): widget checklist (one widget = one image, file names), background light
-    (for slides) or dark, configs yes/no, path + linked issue, large preview of the focused widget.
+**Running block I · Combining widgets into one deliverable**
+- Tim's last word: G1 best ("einheitliches Format zu den Vergleichen"). His model-comparison deliverable
+  had results on top and the REP-Net config below; one image per widget is fine and the usual case, but
+  combining should be possible, maybe drag and drop in "Als Deliverable speichern"; own feature, not
+  too complicated.
+- Alternatives offered (chat): I1 combine in the save list (select → "Zu einem Bild", order by drag,
+  stacked); I2 drop a widget onto another to group; I3 layout slots (1, 2 stacked, 2 side by side);
+  I4 attach on the board ("unter Tabelle anhängen"). Recommendation I1 (+ side-by-side option).
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
@@ -366,6 +345,43 @@ flagged; a run still running → values marked "vorläufig"; project without a L
 
 **Rejected:** E1 alone (no project context), E2 as its own view (hard to read; its widgets stay
 optional), E3 alone; widgets laid out as two full experiment screens side by side.
+
+### G · Analysis (one run) and deliverables
+**What:** The "Ein Lauf" scope of the analysis area (E): a board of widgets for one run, laid out like
+E (tiles in two columns), plus saving widgets as deliverables. Opened from a run tab ("Analysieren")
+or from the Analyse area.
+
+**Widgets "Ein Lauf"** (catalog; all default on, order as listed):
+- *Vergleichstabelle:* rows = values of one dimension (default the axis named `forecaster` if present,
+  else the first axis), column groups = values of a second dimension or "keine", columns = metrics of
+  the catalog's real family; other dimensions fixed to their best value (shown in the subtitle),
+  replicates averaged; best value per column in `best` on `best` background tint; the first row bold
+  when it is the project's own model (from `project.yaml`, deferred: else no bold row).
+- *Je Region:* rows = channels, series = values of one dimension; format "Tabelle" (best per row
+  highlighted) or "Balken" (grouped bars, value labels, series colours).
+- *Beste Config:* the resolved config of the best combination as key/value grid in two column pairs;
+  entries that differ between values of a column-group dimension written "a (30) / b (90)" in bold.
+- *Wirkung je Achse:* per axis the spread between best and worst value mean relative to the run mean,
+  sorted, with the best value named.
+- *Stabilität:* per row value every replicate as a dot, mean tick, ±1 sd band; note that deterministic
+  models only vary over folds.
+- Settings per tile via "Einstellen" (segmented controls), "×" removes a tile, "+ Widget" adds one
+  from the catalog (same widget type may appear several times with different settings).
+
+**Widget as image (all scopes, E and G):** title = key statement, generated from the data ("REP-Net ist
+in 3 von 4 Spalten am besten", "multivariat ist in 2 von 4 Regionen besser"), overridable; subtitle =
+what is compared, fixed values, replicates; note line ("niedriger = besser · grün = bester Wert je
+Spalte"); footer = run folder, epoch, commit. Widgets render in the app theme; exported images use a
+light theme by default (for slides) or dark.
+
+**Saving ("Als Deliverable speichern", replaces the E4 dialog):** large dialog: left a checklist of the
+board's widgets (one widget = one image, file `NN_<widget>.png`), background light/dark, "Configs des
+Laufs mitspeichern", target `deliverables/<date> <title>/` and linked issue; right a large preview of the
+focused widget exactly as exported; button "n Bilder speichern"; afterwards a toast with the path.
+Combining several widgets into one image: block I.
+
+**Rejected:** G2 widget builder (extra step; settings live on the tile), G3 deliverable-first page
+(duplicates the board; its per-widget title editing is kept inside the save preview).
 
 ## Changes to principles.md / tokens.json
 - Create both: colours and their meanings from feature A.
