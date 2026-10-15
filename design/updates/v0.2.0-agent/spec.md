@@ -7,14 +7,14 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 
 | Block | Status |
 |---|---|
-| A · Agent panel | open |
+| A · Agent panel | running |
 | B · Voice | open |
 | C · Tool control | open |
 | D · Analysis by agent | open |
 | E · Widget format | open |
 | F · Agent connection | open |
 
-Running block: none. Tim's last word: the agent should be able to use the whole tool (open runs as
+Running block: A · Agent panel. Alternatives proposed in chat: A1 docked panel, A2 overlay drawer, A3 command bar with answer popover; none built yet. Tim's last word: the agent should be able to use the whole tool (open runs as
 tabs, set widgets and their settings on the analysis screen) and be reachable by voice.
 
 ## Goal
