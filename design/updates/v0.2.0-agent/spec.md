@@ -12,14 +12,9 @@ Prototype: prototype/Prototyp.dc.html · Builds on: v0.1.0
 | C · Tool control | decided |
 | D · Analysis by agent | decided |
 | E · Widget format | decided |
-| F · Agent connection | running |
+| F · Agent connection | decided |
 
-Running block: F · Agent connection. Proposed in chat: backend runs `claude -p` per message with
-`--resume`, stream-json, the tool's own MCP server (localhost) for the C tools, confirmations enforced by
-the tool; read-only file access to the project; streaming with stop; connection check and error states.
-Waiting for Tim's word. Notes from Tim for later
-blocks: F: subscription via `claude -p` is fine (personal tool; a published version would use an API
-key). Whether chats show up in claude.ai does not matter.
+Running block: none. All blocks decided; next: final check, then handover.
 
 ## Goal
 The agent can operate the tool on Tim's behalf, by text or voice.
@@ -152,6 +147,49 @@ options, default }], data: { source, filter }, spec: <Vega-Lite without data> }`
 **In the prototype:** `E1-Eigene.dc.html` (draft `draft`, `draftWidths`, `draftSpec`, `keep`, catalog `ownCat`, own tile renderer `chart`, width control, ↑/↓ `up`/`down`); in the overall prototype `G-Vorlagen.dc.html` has width and ↑/↓ for the built-in widgets; the own-widget flow is only in `E1-Eigene.dc.html`.
 **Rejected:** Python code widgets (E2): look different, not switchable, run code; moved to a later update if the description proves too narrow. Description plus code escape hatch (E3): later, same reason. A separate widget builder screen: the agent is the builder.
 
+### F · Agent connection
+**What:** The backend runs Claude Code headless with Tim's subscription login. One chat = one Claude
+Code session. The window shows whether the agent is working (with stop), how full the chat's context
+is, whether its prompt cache is still warm, and warns before a message would re-read a large chat.
+
+**Call (one per message):** `claude -p "<context line>\n<message>" [--resume <session_id>]
+--output-format stream-json --verbose --mcp-config <tool MCP server> --strict-mcp-config
+--allowedTools "mcp__mlviz__*,Read,Glob,Grep"`, working directory = the project root.
+- The `session_id` of a new chat is taken from the first `system/init` event and stored with the chat.
+- The tool runs its own MCP server on localhost (`mlviz`) with the tools of C (search, navigate, view
+  settings, change analysis incl. templates and widget drafts, save) and `get_view` (full current view
+  state as JSON). The context line is short: area, tab, run, filters, template.
+- Confirmations (mode Gemischt / Bestätigen) are enforced by the MCP server: a tool call of a kind that
+  needs confirmation waits until Tim clicks Ausführen / Ablehnen, then returns the result or
+  "rejected by user". Claude Code's own permission prompts are never shown (only allowed tools exist).
+- No Bash, no Edit/Write: the agent changes the tool only through MCP tools and reads project files
+  read-only.
+- If `ANTHROPIC_API_KEY` is set in the backend environment → warning in the window ("läuft über API-Key,
+  nicht über das Abo"); the tool does not remove it.
+- One request per chat at a time; other chats can run in parallel.
+
+**Context and cache (computed by the tool, never by asking the agent):**
+- After every turn the tool stores per chat: input tokens of the last turn (`input_tokens +
+  cache_creation_input_tokens + cache_read_input_tokens` from the `result` usage), the time of the last
+  turn, and the cache TTL (1 h with subscription; 5 min if the run used an API key).
+- Context % = last input tokens / context window of the model (from Claude Code if available, else
+  200 000).
+- Cache warm = now − last turn < TTL; remaining minutes = TTL − (now − last turn).
+
+**Behaviour:**
+- Window header → after the chat title a small bar with "<n> %" (green < 70 %, amber 70–90 %, red > 90 %), tooltip "Kontext: <x>k von <y>k Tokens"; next to it a chip "Cache warm · <m> min" (green), "Cache abgelaufen" (amber) or "neu" for an empty chat.
+- Chat list → each row shows "<when> · <size>k · warm|kalt" (or "leer").
+- Send while the cache is cold and the chat has more than 50 000 tokens → nothing is sent; above the input a hint "Cache abgelaufen. Diese Nachricht liest den ganzen Chat neu ein (~<x>k Tokens). Noch nichts gesendet." with "Trotzdem senden", "In neuem Chat senden" (new empty chat, the typed message goes there; no summary), "Abbrechen". The check runs in the tool before any call.
+- Send → the message appears, the answer streams in word by word, action lines appear live; the send button turns into a red stop button (■); the capsule shows "Agent · arbeitet …".
+- Click stop → the `claude` process is terminated; the chat shows "Abgebrochen"; actions already done stay (with Rückgängig).
+- Chat menu → "Diesen Chat komprimieren (/compact)": only enabled while the cache is warm and the chat has ≥ 10 000 tokens (tooltip: compacting reads the chat once itself). Runs `claude -p "/compact" --resume <id>`; afterwards the chat shows "Chat komprimiert · <before>k → <after>k Tokens".
+- Chat menu bottom → "Abo · 5 h: <p> % · Woche: <q> %" if Claude Code reports rate-limit usage in stream-json; otherwise the line is not shown.
+- First open of the agent window → check: `claude` found, logged in, `ANTHROPIC_API_KEY` set. A failed check shows the step to fix it (e.g. "Im Terminal `claude` ausführen und anmelden") and "Erneut prüfen"; the capsule shows "Agent · nicht eingerichtet" (amber).
+- Claude Code reports an error or a usage limit → the chat shows the message and "Erneut senden"; the capsule shows "Agent · Fehler" (red).
+**Edge cases:** `/compact` does not work in `-p` mode (to be tested) → the menu entry is not shown; Tim compacts manually in Claude Code (`claude --resume <session_id>` → `/compact`); the chat menu offers "Session-ID kopieren". The tool never summarises a chat by itself.
+**In the prototype:** `Prototyp-02.dc.html`: chats with `tokens` and `cache`, `ctxPct`, `cacheLabel`, `send` (pre-send check, `BIG`), `hint`, `sendAnyway`, `newChatWithDraft`, `sendOrStop`, `compact`, `busy`. Setup check and error states are not in the prototype.
+**Rejected:** Summarise-and-start-new-chat as compaction: summarising reads the whole chat again, so it saves nothing once the cache is cold; Tim prefers manual compaction in Claude Code over extra machinery.
+
 ## Changes to principles.md / tokens.json
 
 ## Out of scope
@@ -160,3 +198,6 @@ options, default }], data: { source, filter }, spec: <Vega-Lite without data> }`
 - Voice input (feature B, later update); only the disabled microphone button is in v0.2.
 
 ## Open
+- `/compact` in `claude -p --resume` mode: if it works, show the menu entry; if not, hide it and offer "Session-ID kopieren".
+- Rate-limit usage in stream-json: if present, show the "Abo" line; if not, omit it.
+- Cache hit across `claude -p --resume` calls: if the usage shows no `cache_read_input_tokens` despite a warm cache, treat the cache as cold after every call (chip always "Cache abgelaufen" after TTL 0) and tell Tim.
