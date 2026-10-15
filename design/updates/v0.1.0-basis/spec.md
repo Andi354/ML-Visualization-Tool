@@ -19,7 +19,7 @@ _Working record for the design session; removed at handover._
 | E · Analysis: two runs + project history | decided | row "Feature E", E4 ✓ |
 | F · Detail | open | – |
 | G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
-| I · Combining widgets into one deliverable | running | brainstorm in chat |
+| I · Combining widgets into one deliverable | running | row "Feature I", I1–I3 (no choice yet) |
 | H · Agent (optional) | open | – |
 
 **Running block I · Combining widgets into one deliverable**
@@ -27,9 +27,16 @@ _Working record for the design session; removed at handover._
   had results on top and the REP-Net config below; one image per widget is fine and the usual case, but
   combining should be possible, maybe drag and drop in "Als Deliverable speichern"; own feature, not
   too complicated.
-- Alternatives offered (chat): I1 combine in the save list (select → "Zu einem Bild", order by drag,
-  stacked); I2 drop a widget onto another to group; I3 layout slots (1, 2 stacked, 2 side by side);
-  I4 attach on the board ("unter Tabelle anhängen"). Recommendation I1 (+ side-by-side option).
+- Tim (15.10.): file names everywhere with a default but editable (added to G); build I1, I2, I3.
+- Alternatives on the canvas, all as variants of the save dialog; combined image = one title, parts
+  with their subtitles, one footer (component `I-Preview`, W-Widget `part` mode; model `i-shared.js`):
+  - I1 · combine in the list: mark widgets → "Zu einem Bild"; group box with layout übereinander |
+    nebeneinander, order ↑↓, "lösen", "Trennen".
+  - I2 · drag onto another: drag a widget row onto another image to group; drop zone to detach;
+    same layout/order controls.
+  - I3 · layout templates: images list (+ Neues Bild), layout tiles (Ein Widget, Übereinander,
+    Nebeneinander, Groß + 2 klein), slots filled by click or drag from the widget palette.
+  - All: editable file name per image, editable title (default from the widget or "A und B").
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
@@ -377,7 +384,8 @@ light theme by default (for slides) or dark.
 **Saving ("Als Deliverable speichern", replaces the E4 dialog):** large dialog: left a checklist of the
 board's widgets (one widget = one image, file `NN_<widget>.png`), background light/dark, "Configs des
 Laufs mitspeichern", target `deliverables/<date> <title>/` and linked issue; right a large preview of the
-focused widget exactly as exported; button "n Bilder speichern"; afterwards a toast with the path.
+focused widget exactly as exported; every file name has a default and is editable (Tim, 15.10.);
+button "n Bilder speichern"; afterwards a toast with the path.
 Combining several widgets into one image: block I.
 
 **Rejected:** G2 widget builder (extra step; settings live on the tile), G3 deliverable-first page
