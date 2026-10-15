@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Gesamtprototyp</title>
+<script src="./support.js"></script>
+<script src="./runs-data.js"></script>
+<script src="./exp-data.js"></script>
+<script src="./cmp-data.js"></script>
+<script src="./one-data.js"></script>
+<script src="./f-data.js"></script>
+<script src="./cfg-data.js"></script>
+<script src="./g-shared.js"></script>
+<script src="./frame.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1016}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #6E9BF5;outline-offset:1px}
+</style>
+</helmet>
+<div style="width: 100%; height: 860px; box-sizing: border-box; display: flex; flex-direction: column; background: #0D1016; color: #E4E8EF; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; position: relative; overflow: hidden;">
+<div style="flex: 1; min-height: 0; display: flex;">
+<nav aria-label="Bereiche" style="width: 52px; flex-shrink: 0; background: #131720; border-right: 1px solid #262E3E; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0;">
+<div title="repnet-bench" style="width: 32px; height: 32px; border-radius: 6px; background: #1A2030; border: 1px solid #262E3E; display: flex; align-items: center; justify-content: center; font: 500 12px 'IBM Plex Mono', monospace; color: #A1AABB; margin-bottom: 8px;">rb</div>
+<sc-for list="{{rail}}" as="n" hint-placeholder-count="3"><button style="{{n.st}}" onClick="{{n.on}}" title="{{n.label}}" aria-label="{{n.label}}">
+<sc-if value="{{n.isRuns}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h12M3 9h12M3 13.5h8"/></svg></sc-if>
+<sc-if value="{{n.isCmp}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="3" width="5.5" height="12" rx="1"/><rect x="10" y="3" width="5.5" height="12" rx="1"/></svg></sc-if>
+<sc-if value="{{n.isDel}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 2.5h5.5L14 6v9.5H5z"/><path d="M10.5 2.5V6H14"/></svg></sc-if>
+</button></sc-for>
+<span style="flex: 1;"></span>
+
+</nav>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+<div role="tablist" style="flex-shrink: 0; height: 36px; display: flex; background: #131720; border-bottom: 1px solid #262E3E; overflow: hidden;">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="2"><div role="tab" title="{{t.title}}" style="{{t.st}}" onClick="{{t.on}}">{{t.label}}<sc-if value="{{t.closable}}"><button onClick="{{t.close}}" aria-label="Tab schließen" style="background: none; border: 0; padding: 0; color: #8590A3; cursor: pointer; font-size: 14px; line-height: 1;">×</button></sc-if></div></sc-for>
+</div>
+<div style="flex: 1; min-width: 0; min-height: 0; display: flex;">
+<div style="flex: 1; min-width: 0; position: relative;">
+<sc-if value="{{isRuns}}" hint-placeholder-val="{{true}}"><dc-import name="F-Runs" open-run="{{openRunId}}" set-view="{{setView}}" hint-size="100%,100%"></dc-import></sc-if>
+<sc-if value="{{isIssues}}" hint-placeholder-val="{{false}}"><dc-import name="F-Issues" open-run="{{openRunId}}" set-view="{{setView}}" hint-size="100%,100%"></dc-import></sc-if>
+<sc-if value="{{isExp}}" hint-placeholder-val="{{false}}"><dc-import name="P-Run" run="{{runName}}" set-view="{{setView}}" hint-size="100%,100%"></dc-import></sc-if>
+<sc-if value="{{isAnalysis}}" hint-placeholder-val="{{false}}"><dc-import name="P-Analyse" hint-size="100%,100%"></dc-import></sc-if>
+<sc-if value="{{isSoon}}" hint-placeholder-val="{{false}}"><div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #8590A3;">{{soon}}</div></sc-if>
+</div>
+<sc-if value="{{agent}}" hint-placeholder-val="{{false}}">
+<aside style="width: 340px; flex-shrink: 0; border-left: 1px solid #262E3E; background: #131720; display: flex; flex-direction: column;">
+<div style="height: 40px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid #262E3E;"><span style="font-weight: 600;">Agent</span><span style="color: #8590A3; font-size: 12px;">sieht die aktuelle Ansicht</span><span style="flex: 1;"></span><button onClick="{{toggleAgent}}" aria-label="Agent schließen" style="background: none; border: 0; color: #8590A3; cursor: pointer; font-size: 16px;">×</button></div>
+<div style="flex: 1; overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+<sc-for list="{{agentMsgs}}" as="m" hint-placeholder-count="2"><div><div style="font-size: 11px; color: #8590A3; margin-bottom: 3px;">{{m.who}}</div><div style="line-height: 1.5; color: #E4E8EF;">{{m.t}}</div></div></sc-for>
+</div>
+<div style="padding: 12px; border-top: 1px solid #262E3E;"><div style="border: 1px solid #262E3E; background: #1A2030; border-radius: 6px; padding: 9px 10px; color: #8590A3;">Frag etwas zu diesem Lauf …</div></div>
+</aside>
+</sc-if>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":860}}'>
+class Component extends DCLogic {
+renderVals() {
+  // v0.1: areas Läufe and Analyse; the agent (H) comes in a later update
+  const v = window.Frame.build(this);
+  const isAnalysis = (this.state || {}).view === 'cmp';
+  v.rail = v.rail.filter((n) => n.isRuns || n.isCmp).map((n) => Object.assign(n, n.isCmp ? { label: 'Analyse' } : {}));
+  v.tabs = v.tabs.map((t) => (t.label === 'Vergleich' ? Object.assign(t, { label: 'Analyse' }) : t));
+  return Object.assign(v, { isAnalysis, isSoon: false, agent: false, agentBtnHide: 'display: none;' });
+}
+}
+</script>
+</body>
+</html>

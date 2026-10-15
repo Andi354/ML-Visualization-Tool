@@ -1,41 +1,12 @@
 # v0.1.0 · Basis
 
 Issue: TIM-82 · Canvas: https://claude.ai/artifact/5XSVMrDJk2PpQS9sGqWd8f, page "v0.1 · Basis"
-Prototype: prototype.dc.html · Builds on: nothing (first update)
+Prototype: `prototype/Prototyp.dc.html` (open it on the canvas; files listed in `prototype/README.md`) ·
+Builds on: nothing (first update)
 
 ## Goal
 A local results tool for ds-init projects that replaces "open CSV, sort, scroll, ask an agent for a
 deliverable": runs, experiments, comparisons, details and deliverables, read directly from `runs/`.
-
-## State
-_Working record for the design session; removed at handover._
-
-| Block | Status | Canvas (page "v0.1 · Basis") |
-|---|---|---|
-| A · Design system | decided | row "Feature A", A5 · Schiefer ✓ |
-| B · Frame | decided | row "Feature B", B2 ✓; overall prototype row "Gesamtprototyp" |
-| C · Runs | decided | row "Feature C", C4 ✓ default, C3 ✓ view "Issues" |
-| D · Experiment | decided | row "Feature D", D5 ✓ |
-| E · Analysis: two runs + project history | decided | row "Feature E", E4 ✓ |
-| F · Detail | decided | row "Feature F", F1+F3 ✓ |
-| G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
-| I · Combining widgets into one image | decided | row "Feature I", I1 ✓ |
-| J · Config view (compact, whole config) | decided | row "Feature J", J1 + J4 as two views ✓ |
-| H · Agent (optional) | open | – |
-
-**Running block:** none. Open: H · Agent (optional) or the overall prototype (Tim to decide).
-- Tim's last word: "Ja passt, baue nach" — J as one widget with "Blöcke | YAML"; F rebuilt on the canvas
-  (F13): Config tile, forecast "Vergleichen mit", window via overview strip.
-
-**Working notes**
-- Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
-  pages `F-Runs` (C4), `F-Issues` (C3), `F-Exp` (D5); sample data in `exp-data.js`, `runs-data.js`
-  (issues real from Linear, numbers made up). New views get their own `F-*` page.
-  Content pages are mounted with `dc-import` (the canvas does not render iframes); `exp-data.js`
-  seeds its sample numbers by run id so open run tabs differ. Known prototype gap: filters/grouping
-  are shared across run tabs (the spec requires per-tab state).
-- Tim wants token-saving prototypes: shared data files, derive variants instead of rewriting.
-- Later-update idea: create configs and start runs from the tool.
 
 ## Features
 
@@ -80,7 +51,7 @@ Numbers use the German decimal comma and a thin space as thousands separator (`4
   a series keeps its colour when filters remove others
 - More than 6 series → fold into "Other" or small multiples, no generated colours
 
-**In the prototype:** `A5-Schiefer.dc.html` (colour reference), `Main.dc.html`.
+**In the prototype:** colour reference `A5-Schiefer.dc.html` on the canvas; all views use the tokens.
 **Rejected:**
 - A1 · Graphit: neutral grey, liked but too plain alone; its separation of meanings is kept.
 - A2 · Tinte: blue-black, liked; its depth is kept, its strong blue cast and gold best value are not.
@@ -89,20 +60,19 @@ Numbers use the German decimal comma and a thin space as thousands separator (`4
 
 ### B · Frame
 **What:** The app shell around all views, like VS Code: a narrow icon bar on the left for the areas,
-a tab strip on top for open runs, the agent as a right-hand panel. One tool instance per project;
+a tab strip on top for open runs. One tool instance per project;
 the project's short name sits at the top of the icon bar, there is no project switcher.
 
 **Layout:**
 - Icon bar, 52 px, `surface`, right border `line`. Top: project badge (two letters, mono, tooltip =
-  project name). Then areas Läufe, Vergleich, Deliverables (18 px line icons, 36 px buttons). Bottom:
-  Agent toggle. Active area: `accent` icon on `accent-bg` with `accent-line` border; others `text-3`.
+  project name). Then the areas Läufe and Analyse (E/G) (18 px line icons, 36 px buttons). The bottom
+  of the bar is reserved for the agent (later update). Active area: `accent` icon on `accent-bg` with `accent-line` border; others `text-3`.
 - Tab strip, 36 px, `surface`, bottom border `line`. First tab is pinned and shows the current area
-  (Läufe / Vergleich / Deliverables), no close button. Then one tab per opened run, label = run folder
+  (Läufe / Analyse), no close button. Then one tab per opened run, label = run folder
   name without the timestamp (full name as tooltip), mono 12 px, close `×`. Active tab: `bg` fill,
   2 px `accent` top border, `text`; inactive `text-3`.
 - Content fills the rest. Each view keeps its own header row (breadcrumb, view switches, actions)
   as designed in C and D.
-- Agent panel, 340 px, right, `surface`, left border `line`; header "Agent" + close. Content: block H.
 
 **Behaviour:**
 - Clicking a run (name or "Öffnen") in Läufe opens it in a new tab and focuses it; if a tab for that
@@ -111,8 +81,6 @@ the project's short name sits at the top of the icon bar, there is no project sw
 - Closing the active tab focuses the tab to its left (or the pinned tab).
 - Clicking an area icon switches the pinned tab to that area and focuses it; open run tabs stay.
 - The Läufe area remembers its view (Liste or Issues).
-- Agent toggle opens/closes the panel; content keeps its width minus 340 px. The panel stays open
-  across tab switches.
 - Open tabs and the active tab survive a reload (stored per project in the browser).
 - Middle click on a run tab closes it. No custom tab shortcuts: the tool runs in a browser, where `Ctrl+W` / `Ctrl+Tab` belong to the browser.
 
@@ -122,6 +90,7 @@ the project's short name sits at the top of the icon bar, there is no project sw
   with a close button.
 - Areas not built yet in an update are not shown in the icon bar.
 
+**In the prototype:** `Prototyp.dc.html` with `frame.js`.
 **Rejected:** B1 path only (no way to keep several runs open), B3 top tabs + command palette
 (palette adds little with a short run list; tabs for areas instead of runs).
 
@@ -186,8 +155,8 @@ timestamp, flags, cell bar, best value, "Öffnen"). Initial selection: the issue
 - Config name without issue prefix → standalone row.
 - Migrated run → "migriert" in the second line; values as stored.
 
-**In the prototype:** `C4-Kombination.dc.html` and `C3-Zweispaltig.dc.html` (as `Main.dc.html` and
-`Main-Issues.dc.html`), sample data in `runs-data.js` (`groups`, `rel`).
+**In the prototype:** `F-Runs.dc.html` (list, from C4) and `F-Issues.dc.html` (view Issues, from C3),
+sample data in `runs-data.js` (`groups`, `rel`).
 **Rejected:**
 - C1 · Issue list: style kept; boxes per issue and seven columns were too busy.
 - C2 · timeline always open: kept only as the collapsible "Verlauf".
@@ -267,8 +236,8 @@ that value in the sidebar.
   "Konstante Werte" shows what exists.
 - Group whose cells all failed → metric cells show "–", sorted last.
 
-**In the prototype:** `D5-Kombination.dc.html` (copied as `Main-Experiment.dc.html`), sample data and
-aggregation in `exp-data.js` (`aggregate`, `sortRows`).
+**In the prototype:** `F-Exp.dc.html` (from D5; rows clickable for F), sample data and aggregation in
+`exp-data.js` (`aggregate`, `sortRows`).
 **Rejected:**
 - D1 · header menus: clean, but the state of hidden dimensions is easy to lose; its sidebar idea is kept.
 - D2 · checkboxes "Gruppieren nach": value selection kept, flat lists get long with many axes.
@@ -339,6 +308,8 @@ Lauf-Merkmal" with the detected candidates plus "keins"); right: "Widgets · n v
 Kombinationen"; different epochs → `warn` in Config-Unterschiede and comparisons stay possible but
 flagged; a run still running → values marked "vorläufig"; project without a Lauf-Merkmal → one series.
 
+**In the prototype:** `P-Analyse.dc.html` → `E4-Analyse.dc.html` (embeds `E1-Duell`, `E2-Abgleich`,
+`E3-Verlauf`), sample data `cmp-data.js`. Its save dialog is the older E4 version; G and I apply.
 **Rejected:** E1 alone (no project context), E2 as its own view (hard to read; its widgets stay
 optional), E3 alone; widgets laid out as two full experiment screens side by side.
 
@@ -379,6 +350,8 @@ with these widgets and this combination as filter; the board itself is G).
 "Dieser Lauf hat keine Lernkurven gespeichert" / "… keine Vorhersagen" instead of the chart and the
 widget cannot be saved; a combination with errors shows the failed cells as empty grid cells.
 
+**In the prototype:** `P-Run.dc.html` (D + detail panel), widgets in `W-Widget.dc.html` (types curves,
+forecast, replicates), config tile `J1-Bloecke` / `J4-YAML`, sample data `f-data.js`, `cfg-data.js`.
 **Rejected:** F1 plain panel without saving (Tim prefers the widget tiles); F2 own tab per combination;
 F3 alone as analysis scope (too heavy for a quick look).
 
@@ -421,6 +394,8 @@ focused widget exactly as exported; every file name has a default and is editabl
 button "n Bilder speichern"; afterwards a toast with the path.
 Combining several widgets into one image: block I.
 
+**In the prototype:** `P-Analyse.dc.html` → `G1-Board.dc.html`, widgets `W-Widget.dc.html`, catalog
+`g-shared.js`, sample run `one-data.js`.
 **Rejected:** G2 widget builder (extra step; settings live on the tile), G3 deliverable-first page
 (duplicates the board; its per-widget title editing is kept inside the save preview).
 
@@ -447,6 +422,8 @@ comparison table on top and the best config below. One widget = one image stays 
   commit); default on.
 - The preview on the right always shows the focused image exactly as it will be saved.
 
+**In the prototype:** separate artboard `I1-Liste.dc.html` (save dialog with combining; preview
+`I-Preview.dc.html`, model `i-shared.js`); the overall prototype's G dialog does not combine yet.
 **Rejected:** I2 drag one widget onto another (hard to discover, no fallback without drag); I3 layout
 templates with slots (an extra step for the common single case).
 
@@ -476,13 +453,35 @@ replicate lines marked; button "YAML kopieren". Not exported as image.
 **Behaviour:** the chosen view is remembered per project; in the detail panel the grid box / chips are
 always visible and the blocks start folded.
 
+**In the prototype:** `J1-Bloecke.dc.html`, `J4-YAML.dc.html` (prop `embedded` for the tile), sample
+config `cfg-data.js`.
+
 ## Changes to principles.md / tokens.json
-- Create both: colours and their meanings from feature A.
+- Created both in `design/`: colours and their meanings, type, density and the cross-view rules
+  (widgets as images, key-statement titles, comparability guard).
 
 ## Out of scope
 - Light theme
 - Creating configs and starting runs from the tool (idea for a later update, synced with the folders)
 - Overview as a separate view mode (only the toggleable strip in this update)
+- Agent (block H): right-hand panel, boards by prompt, agent-written widgets; next update
+- Comparing three or more runs side by side (project history covers many runs)
+- Project-specific widgets (e.g. holiday forecast plot) and dataset analysis (e.g. CV folds)
+- Where the default Lauf-Merkmal is configured (`project.yaml` or in the tool); v0.1 detects candidates
 
-## Open
-- States per view: if a view's block does not define one, then hover = `raised`, focus = 2 px `accent` outline, disabled = `text-3`, loading = muted placeholder rows.
+## Defaults
+- States per view: if a view's block does not define one, then hover = `raised`, focus = 2 px `accent`
+  outline, disabled = `text-3`, loading = muted placeholder rows.
+
+## Open (to settle during implementation)
+- `predictions`: whether several forecast windows per date are stored (epoch eval-all-windows) and how
+  the origin is recorded; the window choice in F follows the data. No migrated run has `curves` or
+  `predictions` yet, so F is tested with the first new run.
+- Linear access for issue titles/status in C is optional (API key); without it only the issue ID shows.
+
+## Prototype notes
+- All numbers in the prototype are made up (`*-data.js`); issue titles and statuses are real (Linear,
+  14.10.). `support.js` is the canvas runtime and is not part of the repo.
+- Known gaps, the spec wins: filters/grouping are shared across run tabs in the prototype (spec: per
+  tab); the save dialog in the analysis does not offer combining (see `I1-Liste`); E4's own save dialog
+  is outdated (G and I apply).
