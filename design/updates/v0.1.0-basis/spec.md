@@ -20,7 +20,7 @@ _Working record for the design session; removed at handover._
 | F · Detail | decided | row "Feature F", F1+F3 ✓ |
 | G · Analysis: one run + saving deliverables | decided | row "Feature G", G1 ✓ |
 | I · Combining widgets into one image | decided | row "Feature I", I1 ✓ |
-| J · Config view (compact, whole config) | running | building J1, J4 |
+| J · Config view (compact, whole config) | running | row "Feature J", J1, J4 (no choice yet) |
 | H · Agent (optional) | open | – |
 
 **Running block:** F follow-ups + J proposal (chat). Then H · Agent (optional) or the overall prototype
@@ -36,6 +36,14 @@ _Working record for the design session; removed at handover._
   eval-all-windows there are many 30-day windows over the test period → window choice = window start
   within the test period (+ fold), overview strip of the test period with the window marked.
 - J: build J1 (by config block, swept first) and J4 (YAML view with highlights).
+- J on the canvas (panel width 680 px, sample `cfg-data.js` with data/model/train/replicates/run):
+  - J1 · by block: box "Im Grid variiert" on top (each axis with all its values, this combination's
+    value marked; paired axis lr_epochs as one row; replicates below a dashed rule), then one
+    collapsible box per config block with key/value pairs in two column pairs; swept values `accent`,
+    entries differing from base.yaml with an amber dot (tooltip "base.yaml: …").
+  - J4 · YAML: chips "Im Grid" on top, then the config as YAML with line numbers, foldable blocks
+    ("Alles zuklappen"), swept lines tinted with an `accent` bar and the other grid values as note,
+    base differences amber with "base: …", replicate lines marked; "YAML kopieren".
 
 **Working notes**
 - Overall prototype: one artboard `Prototyp` (= B2 frame, logic in `frame.js`) embedding the content
