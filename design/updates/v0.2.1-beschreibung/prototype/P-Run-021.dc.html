@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Lauf</title>
+<script src="./support.js"></script>
+<script src="./exp-data.js"></script>
+<script src="./one-data.js"></script>
+<script src="./f-data.js"></script>
+<script src="./cfg-data.js"></script>
+<script src="./g-shared.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1016}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,a:focus-visible{outline:2px solid #6E9BF5;outline-offset:1px}
+.card{background:#131720;border:1px solid #262E3E;border-radius:6px;padding:14px 16px;box-sizing:border-box;min-width:0}
+.ct{font-weight:600;font-size:13px;margin:0 0 2px}
+.cs{font-size:12px;color:#8590A3;margin:0 0 12px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.chip{font:400 12px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:3px;border:1px solid #262E3E;background:#1A2030;color:#A1AABB;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 100%; height: 100%; box-sizing: border-box; position: relative; display: flex; flex-direction: row; background: #0D1016; color: #E4E8EF; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden;">
+<div style="flex: 1; min-width: 0; height: 100%; overflow: hidden;"><dc-import name="F-Exp-H4" run="{{runProp}}" set-view="{{setViewProp}}" on-row="{{onRow}}" sel-key="{{selKey}}" hint-size="100%,900px"></dc-import></div>
+<sc-if value="{{noSel}}" hint-placeholder-val="{{true}}"><aside style="width: 300px; flex-shrink: 0; border-left: 1px solid #262E3E; background: #131720; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; text-align: center; color: #8590A3; line-height: 1.6;">Eine Zeile der Tabelle anklicken, um die Kombination im Detail anzusehen.</aside></sc-if>
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+<aside style="width: 640px; flex-shrink: 0; border-left: 1px solid #262E3E; background: #0F131B; display: flex; flex-direction: column; min-height: 0;">
+<div style="flex-shrink: 0; padding: 14px 18px 12px; border-bottom: 1px solid #262E3E; background: #131720;">
+<div style="display: flex; align-items: center; gap: 8px;"><span style="font-weight: 600;">Kombination</span><span style="font-size: 12px; color: #8590A3;">{{selN}}</span><span style="flex: 1;"></span><button onClick="{{openAnalysis}}" style="font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 4px; padding: 4px 10px; border: 1px solid #2C4572; background: #192640; color: #E4E8EF; margin-right: 6px;">{{analysisLabel}}</button><button onClick="{{close}}" aria-label="Detail schließen" style="background: none; border: 0; color: #8590A3; cursor: pointer; font-size: 17px;">×</button></div>
+<div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px;"><sc-for list="{{chips}}" as="c" hint-placeholder-count="3"><span class="chip">{{c}}</span></sc-for></div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px;"><sc-for list="{{kpis}}" as="k" hint-placeholder-count="4"><div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #8590A3;">{{k.label}}</span><span class="mono" style="font-size: 15px;">{{k.v}}</span><span class="mono" style="font-size: 11px; color: #8590A3;">{{k.sd}}</span></div></sc-for></div>
+</div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 14px 18px 40px; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 12px; color: #8590A3;">Verlaufs-Widgets dieser Kombination</span><span style="flex: 1;"></span>
+<button onClick="{{toggleAdd}}" style="font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 4px; padding: 4px 10px; border: 1px solid #262E3E; background: #131720; color: #E4E8EF;">+ Widget</button></div>
+<sc-if value="{{add}}" hint-placeholder-val="{{false}}"><div style="display: flex; flex-direction: column; gap: 2px; padding: 6px; background: #131720; border: 1px solid #2C4572; border-radius: 6px;"><sc-for list="{{catalog}}" as="c" hint-placeholder-count="3"><button onClick="{{c.add}}" style="text-align: left; display: flex; flex-direction: column; gap: 2px; background: none; border: 0; border-radius: 4px; padding: 7px 9px; cursor: pointer; color: #E4E8EF;"><span style="font-size: 13px;">{{c.label}}</span><span style="font-size: 12px; color: #8590A3;">{{c.q}}</span></button></sc-for></div></sc-if>
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8590A3;"><span style="color: #A1AABB; font-weight: 500;">{{t.label}}</span><span>· {{t.q}}</span><span style="flex: 1;"></span>
+<button onClick="{{t.toggle}}" style="{{t.setBtn}}">Einstellen</button><button onClick="{{t.remove}}" aria-label="Widget entfernen" style="background: none; border: 0; color: #8590A3; cursor: pointer; font-size: 15px;">×</button><button onClick="{{t.saveOne}}" title="Als Deliverable speichern" aria-label="Dieses Widget als Deliverable speichern" style="width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 4px; background: #6E9BF5; color: #0D1016; cursor: pointer;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2.5 2.5h8.5l2.5 2.5v8.5h-11z"/><path d="M5 2.5v3.5h5.5V2.5"/><rect x="5" y="9" width="6" height="4.5"/></svg></button></div>
+<sc-if value="{{t.open}}" hint-placeholder-val="{{false}}"><div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 8px 10px; background: #131720; border: 1px solid #2C4572; border-radius: 6px;">
+<sc-for list="{{t.ctrls}}" as="g" hint-placeholder-count="2"><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8590A3;">{{g.label}}<span style="display: flex; padding: 2px; gap: 2px; background: #0D1016; border: 1px solid #262E3E; border-radius: 5px;"><sc-for list="{{g.items}}" as="i" hint-placeholder-count="3"><button style="{{i.st}}" onClick="{{i.on}}">{{i.label}}</button></sc-for></span></span></sc-for>
+<sc-if value="{{t.noCtrl}}"><span style="font-size: 12px; color: #8590A3;">Keine Einstellungen für dieses Widget</span></sc-if>
+</div></sc-if>
+<sc-if value="{{t.isW}}" hint-placeholder-val="{{true}}"><dc-import name="W-Widget" type="{{t.type}}" opts="{{t.opts}}" on-window="{{t.onWindow}}" theme="dark" hint-size="100%,320px"></dc-import></sc-if>
+<sc-if value="{{t.isBlocks}}" hint-placeholder-val="{{false}}"><div style="border: 1px solid #262E3E; border-radius: 6px; background: #131720; padding: 12px;"><dc-import name="J1-Bloecke" embedded="{{true}}" hint-size="100%,260px"></dc-import></div></sc-if>
+<sc-if value="{{t.isYaml}}" hint-placeholder-val="{{false}}"><div style="border: 1px solid #262E3E; border-radius: 6px; background: #131720; overflow: hidden;"><dc-import name="J4-YAML" embedded="{{true}}" hint-size="100%,260px"></dc-import></div></sc-if>
+</div>
+</sc-for>
+
+</div>
+</aside>
+</sc-if>
+<sc-if value="{{dlg}}" hint-placeholder-val="{{false}}">
+<div onClick="{{closeDlg}}" style="position: absolute; inset: 0; background: rgba(6, 8, 12, 0.65);"></div>
+<div role="dialog" aria-label="Als Deliverable speichern" style="position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 1180px; height: 800px; box-sizing: border-box; background: #131720; border: 1px solid #262E3E; border-radius: 8px; box-shadow: 0 16px 48px rgba(0,0,0,0.55); display: grid; grid-template-columns: 300px minmax(0, 1fr); overflow: hidden;">
+<div style="border-right: 1px solid #262E3E; padding: 18px; display: flex; flex-direction: column; gap: 14px; overflow: auto;">
+<div style="font-size: 15px; font-weight: 600;">Als Deliverable speichern</div>
+<div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 12px; color: #8590A3;">Widgets · ein Widget = ein Bild</span>
+<sc-for list="{{pick}}" as="p" hint-placeholder-count="4"><div style="{{p.rowSt}}" onClick="{{p.focus}}"><input type="checkbox" checked="{{p.on}}" onChange="{{p.toggle}}" style="accent-color: #6E9BF5;"><span style="flex: 1; min-width: 0;">{{p.label}}</span><input value="{{p.file}}" onInput="{{p.onName}}" disabled="{{p.off}}" aria-label="Dateiname" class="mono" style="width: 130px; font-size: 11px; color: #E4E8EF; background: #0D1016; border: 1px solid #262E3E; border-radius: 3px; padding: 3px 5px;"></div></sc-for></div>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 12px; color: #8590A3;">Hintergrund</span><div style="display: flex; padding: 2px; gap: 2px; background: #0D1016; border: 1px solid #262E3E; border-radius: 5px; align-self: flex-start;"><sc-for list="{{themes}}" as="t" hint-placeholder-count="2"><button style="{{t.st}}" onClick="{{t.on}}">{{t.label}}</button></sc-for></div></div>
+<label style="display: flex; gap: 10px; align-items: center; cursor: pointer;"><input type="checkbox" checked="{{withCfg}}" onChange="{{toggleCfg}}" style="accent-color: #6E9BF5;"><span>Configs des Laufs mitspeichern</span></label>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #0D1016; border: 1px solid #262E3E; border-radius: 4px;"><span class="mono" style="font-size: 12px; word-break: break-all;">{{path}}</span><span style="font-size: 12px; color: #8590A3;">{{fileList}} · verknüpft mit TIM-52</span></div>
+<span style="flex: 1;"></span>
+<div style="display: flex; gap: 8px;"><button onClick="{{closeDlg}}" style="font: 500 13px 'IBM Plex Sans', sans-serif; color: #A1AABB; background: none; border: 1px solid #262E3E; border-radius: 4px; padding: 7px 14px; cursor: pointer;">Abbrechen</button><button onClick="{{save}}" disabled="{{noSave}}" style="{{saveSt}} flex: 1; font: 500 13px 'IBM Plex Sans', sans-serif; color: #0D1016; background: #6E9BF5; border: 0; border-radius: 4px; padding: 7px 14px; cursor: pointer;">{{saveLabel}}</button></div>
+</div>
+<div style="padding: 18px 24px; overflow: auto; background: {{previewBg}};">
+<div style="font-size: 12px; color: #8590A3; margin-bottom: 10px;">Vorschau · so wird {{previewName}} gespeichert</div>
+<dc-import name="W-Widget" type="{{prev.type}}" opts="{{prev.opts}}" title="{{prev.title}}" theme="{{theme}}" hint-size="100%,460px"></dc-import>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{saved}}" hint-placeholder-val="{{false}}"><div style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 16px; background: #11221B; border: 1px solid #245A45; border-radius: 6px; color: #5FD4A0; font-size: 12px; display: flex; gap: 10px; align-items: center;"><span>Gespeichert: {{savedText}}</span><button onClick="{{hideSaved}}" style="background: none; border: 0; color: #8590A3; cursor: pointer;">×</button></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":860},"run":{"editor":null},"setView":{"editor":null}}'>
+class Component extends DCLogic {
+renderVals() {
+  const st = this.state || {};
+  const set = (p) => this.setState(p);
+  const E = window.ExpData, sel = st.sel || null;
+  const selVals = {
+    noSel: !sel, hasSel: !!sel, selKey: sel ? sel.key : '', close: () => set({ sel: null }),
+    onRow: (row) => set({ sel: row }),
+    chips: sel ? Object.keys(sel.parts).map((k) => k + ' = ' + sel.parts[k]) : [],
+    selN: sel ? 'Mittel über ' + sel.n + ' Zellen' + (sel.err ? ' · ' + sel.err + ' Fehler' : '') : '',
+    kpis: sel ? E.METRICS.map((m) => ({ label: m.label, v: E.fmt(sel.m[m.key].mean, m.d), sd: '± ' + E.fmt(sel.m[m.key].sd, m.d) })) : []
+  };
+  const mape = sel ? sel.m[E.METRICS[0].key] : { mean: 4.2, sd: 0.1 };
+  // save dialog (shared by G1–G3): list = [{id, type, opts, title, label}]
+  const saveVals = (list, preselect) => {
+    const sel = st.pickSel || preselect || {}, theme = st.theme || 'light';
+    const chosen = list.filter((w) => sel[w.id]);
+    const focus = list.find((w) => w.id === st.focus) || chosen[0] || list[0];
+    const names = st.names || {};
+    const fname = (w, i) => names[w.id] || String(i + 1).padStart(2, '0') + '_' + w.type + '.png';
+    const files = chosen.map(fname).concat(st.withCfg === false || !chosen.length ? [] : ['configs/']);
+    const path = 'deliverables/2026-10-14 ' + (st.dTitle || 'TIM-52 Modellvergleich') + '/';
+    return {
+      dlg: !!st.dlg, closeDlg: () => set({ dlg: false }),
+      pick: list.map((w, i) => ({
+        label: w.label, on: !!sel[w.id], off: !sel[w.id], file: sel[w.id] ? fname(w, chosen.indexOf(w)) : '–', onName: (e) => set({ names: Object.assign({}, names, { [w.id]: e.target.value }) }),
+        toggle: () => set({ pickSel: Object.assign({}, sel, { [w.id]: !sel[w.id] }) }), focus: () => set({ focus: w.id }),
+        rowSt: 'display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 4px; cursor: pointer; border: 1px solid ' + (focus && focus.id === w.id ? '#2C4572' : 'transparent') + '; background: ' + (focus && focus.id === w.id ? '#192640' : 'transparent') + ';'
+      })),
+      themes: [['light', 'hell, für Folien'], ['dark', 'dunkel']].map(([k, l]) => ({ label: l, st: window.GShared.seg(theme === k), on: () => set({ theme: k }) })),
+      theme, previewBg: theme === 'light' ? '#E9ECF1' : '#0D1016',
+      prev: focus ? { type: focus.type, opts: focus.opts, title: focus.title || '' } : { type: 'table', opts: {}, title: '' },
+      previewName: focus ? '„' + focus.label + '“' : '',
+      withCfg: st.withCfg !== false, toggleCfg: () => set({ withCfg: st.withCfg === false }),
+      path, fileList: files.join(', '),
+      saveLabel: chosen.length === 0 ? 'Widgets auswählen' : chosen.length === 1 ? '1 Bild speichern' : chosen.length + ' Bilder speichern',
+      noSave: chosen.length === 0, saveSt: chosen.length ? '' : 'opacity: 0.45; cursor: default;',
+      save: () => { if (chosen.length) set({ dlg: false, saved: true, savedText: path + ' · ' + files.join(', ') }); },
+      saved: !!st.saved, savedText: st.savedText || '', hideSaved: () => set({ saved: false })
+    };
+  };
+  const G = window.GShared, seg = G.seg;
+  const CAT = [
+    { key: 'curves', label: 'Loss-Kurven', q: 'Wann lernt das Modell nicht mehr dazu?', opts: { reps: 'each' } },
+    { key: 'forecast', label: 'Vorhersage', q: 'Wie gut trifft die Vorhersage den Verlauf?', opts: { region: 'us', cmp: '' } },
+    { key: 'replicates', label: 'Wiederholungen', q: 'Wie stark schwanken Seeds und Folds?', opts: {} },
+    { key: 'config', label: 'Config', q: 'Mit welchen Einstellungen lief diese Kombination?', opts: { view: 'blocks' } }
+  ];
+  const key = sel ? sel.key : 'x';
+  const tiles = st.tiles || CAT.map((c, i) => ({ id: 'f' + i, type: c.key, opts: Object.assign({}, c.opts) }));
+  const upd = (id, patch) => set({ tiles: tiles.map((t) => (t.id === id ? Object.assign({}, t, patch) : t)) });
+  const full = (t) => Object.assign({ key, mean: mape.mean, sd: mape.sd }, t.opts, t.opts.cmp ? { cmp: key + '|' + t.opts.cmp, cmpLabel: t.opts.cmp } : { cmp: '' });
+  const grp = (label, cur, vals, names, pick) => ({ label, items: vals.map((v, i) => ({ label: names[i], st: seg(cur === v), on: () => pick(v) })) });
+  const ctrls = (t) => {
+    const set2 = (p) => upd(t.id, { opts: Object.assign({}, t.opts, p) });
+    if (t.type === 'curves') return [grp('Seeds', t.opts.reps, ['each', 'mean'], ['einzeln', 'nur Mittel'], (v) => set2({ reps: v }))];
+    if (t.type === 'forecast') return [grp('Region', t.opts.region, window.FData.REGIONS, window.FData.REGIONS, (v) => set2({ region: v })), grp('Vergleichen mit', t.opts.cmp || '', [''].concat(alts), ['keine'].concat(alts), (v) => set2({ cmp: v }))];
+    if (t.type === 'config') return [grp('Ansicht', t.opts.view, ['blocks', 'yaml'], ['Blöcke', 'YAML'], (v) => set2({ view: v }))];
+    return [];
+  };
+  const byKey = (k) => CAT.find((c) => c.key === k);
+  // comparison candidates: same run, one axis of this combination set to another value
+  const alts = sel ? [].concat(...Object.keys(sel.parts).map((k) => { const ax = E.AX.find((a) => a.key === k); return ax ? ax.values.filter((v) => v !== sel.parts[k]).map((v) => k + ' = ' + v) : []; })) : [];
+  const list = tiles.map((t) => ({ id: t.id, type: t.type, opts: full(t), label: byKey(t.type).label }));
+  return Object.assign(saveVals(list), selVals, {
+    runProp: (this.props || {}).run || '2026-10-14_0900_BEISPIEL_grid', setViewProp: (this.props || {}).setView,
+    analysisLabel: st.sent ? 'In Analyse geöffnet ✓' : 'Als Analyse öffnen', openAnalysis: () => set({ sent: true }),
+    add: !!st.add, toggleAdd: () => set({ add: !st.add }),
+    catalog: CAT.map((c) => ({ label: c.label, q: c.q, add: () => set({ add: false, tiles: tiles.concat({ id: 'f' + Date.now(), type: c.key, opts: Object.assign({}, c.opts) }) }) })),
+    tiles: tiles.map((t) => {
+      const cs = ctrls(t);
+      return {
+        isW: t.type !== 'config', isBlocks: t.type === 'config' && t.opts.view !== 'yaml', isYaml: t.type === 'config' && t.opts.view === 'yaml',
+        onWindow: (i) => upd(t.id, { opts: Object.assign({}, t.opts, { start: i }) }),
+        type: t.type, opts: full(t), label: byKey(t.type).label, q: byKey(t.type).q, open: !!t.open, ctrls: cs, noCtrl: cs.length === 0,
+        setBtn: "font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 4px; padding: 3px 9px; border: 1px solid " + (t.open ? '#2C4572' : '#262E3E') + '; background: ' + (t.open ? '#192640' : 'transparent') + '; color: #A1AABB;',
+        saveOne: () => set({ dlg: true, focus: t.id, pickSel: { [t.id]: true } }),
+        toggle: () => upd(t.id, { open: !t.open }), remove: () => set({ tiles: tiles.filter((x) => x.id !== t.id) })
+      };
+    })
+  });
+}
+}
+</script>
+</body>
+</html>

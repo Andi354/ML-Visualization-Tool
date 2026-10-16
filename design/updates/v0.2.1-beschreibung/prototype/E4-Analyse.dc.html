@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>E4 · Analyse</title>
+<script src="./support.js"></script>
+<script src="./cmp-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1016}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,a:focus-visible{outline:2px solid #6E9BF5;outline-offset:1px}
+.card{background:#131720;border:1px solid #262E3E;border-radius:6px;padding:14px 16px;box-sizing:border-box;min-width:0}
+.ct{font-weight:600;font-size:13px;margin:0 0 2px}
+.cs{font-size:12px;color:#8590A3;margin:0 0 12px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.chip{font:400 12px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:3px;border:1px solid #262E3E;background:#1A2030;color:#A1AABB;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 100%; height: {{rootH}}; box-sizing: border-box; position: relative; display: flex; flex-direction: column; background: #0D1016; color: #E4E8EF; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden;">
+<div style="flex-shrink: 0; min-height: 52px; box-sizing: border-box; padding: 8px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-bottom: 1px solid #262E3E; position: relative;">
+<span>Analyse</span><span style="color: #8590A3;">/</span>
+<div style="display: flex; padding: 2px; gap: 2px; background: #131720; border: 1px solid #262E3E; border-radius: 5px; {{viewsHide}}"><sc-for list="{{views}}" as="v" hint-placeholder-count="2"><button style="{{v.st}}" onClick="{{v.on}}">{{v.label}}</button></sc-for></div>
+<span style="width: 12px;"></span>
+<sc-if value="{{isTwo}}" hint-placeholder-val="{{true}}">
+<span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #1FA3A3;"></span><span class="mono" style="color: #A1AABB;">{{aName}}</span></span>
+<span style="color: #8590A3;">gegen</span>
+<span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #8C7CF0;"></span><span class="mono" style="color: #A1AABB;">{{bName}}</span></span>
+<div style="display: flex; padding: 2px; gap: 2px; background: #131720; border: 1px solid #262E3E; border-radius: 5px; margin-left: 6px;"><sc-for list="{{pairs}}" as="p" hint-placeholder-count="2"><button style="{{p.st}}" onClick="{{p.on}}">{{p.label}}</button></sc-for></div>
+</sc-if>
+<sc-if value="{{isProj}}" hint-placeholder-val="{{false}}">
+<span style="font-size: 12px; color: #8590A3;">Färben nach Lauf-Merkmal</span>
+<div style="display: flex; padding: 2px; gap: 2px; background: #131720; border: 1px solid #262E3E; border-radius: 5px;"><sc-for list="{{colorSeg}}" as="c" hint-placeholder-count="2"><button style="{{c.st}}" onClick="{{c.on}}">{{c.label}}</button></sc-for></div>
+</sc-if>
+<span style="flex: 1;"></span>
+<button onClick="{{toggleMenu}}" aria-expanded="{{menu}}" style="{{menuBtn}}">Widgets · {{onCount}} von {{allCount}}</button>
+<button onClick="{{openDlg}}" style="font: 500 13px 'IBM Plex Sans', sans-serif; color: #0D1016; background: #6E9BF5; border: 0; border-radius: 4px; padding: 7px 14px; cursor: pointer;">Als Deliverable speichern</button>
+<sc-if value="{{menu}}" hint-placeholder-val="{{false}}">
+<div role="menu" style="position: absolute; right: 200px; top: 50px; z-index: 5; width: 380px; background: #131720; border: 1px solid #2C4572; border-radius: 6px; padding: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.5);">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<div style="font-size: 11px; color: #8590A3; padding: 8px 8px 4px;">{{g.label}}</div>
+<sc-for list="{{g.items}}" as="i" hint-placeholder-count="4"><label style="display: flex; gap: 10px; align-items: flex-start; padding: 6px 8px; border-radius: 4px; cursor: pointer;"><input type="checkbox" checked="{{i.on}}" onChange="{{i.toggle}}" style="accent-color: #6E9BF5; margin-top: 2px;"><span style="display: flex; flex-direction: column; gap: 2px;"><span>{{i.label}}</span><span style="font-size: 12px; color: #8590A3;">{{i.q}}</span></span></label></sc-for>
+</sc-for>
+<div style="font-size: 11px; color: #8590A3; padding: 8px 8px 4px; border-top: 1px solid #262E3E; margin-top: 6px;">Weitere Widgets kommen über den Katalog dazu, später auch vom Agenten.</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{saved}}" hint-placeholder-val="{{false}}"><div style="flex-shrink: 0; padding: 8px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: #11221B; border-bottom: 1px solid #245A45; color: #5FD4A0; font-size: 12px;"><span>Gespeichert in</span><span class="mono">{{path}}</span><span style="color: #A1AABB;">· {{fileList}}</span><span style="flex: 1;"></span><button onClick="{{hideSaved}}" style="background: none; border: 0; color: #8590A3; cursor: pointer;">×</button></div></sc-if>
+<div style="flex: 1; min-height: 0; overflow: auto;">
+<sc-if value="{{isTwo}}" hint-placeholder-val="{{true}}">
+<dc-import name="E1-Duell" embedded="{{true}}" pair="{{pairE1}}" show="{{show}}" hint-size="100%,760px"></dc-import>
+<sc-if value="{{anyE2}}" hint-placeholder-val="{{false}}"><dc-import name="E2-Abgleich" embedded="{{true}}" pair="{{pairE2}}" show="{{showE2}}" hint-size="100%,600px"></dc-import></sc-if>
+</sc-if>
+<sc-if value="{{isProj}}" hint-placeholder-val="{{false}}"><dc-import name="E3-Verlauf" embedded="{{true}}" color-by="{{colorBy}}" show="{{show}}" hint-size="100%,760px"></dc-import></sc-if>
+</div>
+<sc-if value="{{dlg}}" hint-placeholder-val="{{false}}">
+<div onClick="{{closeDlg}}" style="position: absolute; inset: 0; background: rgba(6, 8, 12, 0.6);"></div>
+<div role="dialog" aria-label="Als Deliverable speichern" style="position: absolute; top: 110px; left: 50%; transform: translateX(-50%); width: 560px; background: #131720; border: 1px solid #262E3E; border-radius: 8px; padding: 20px 22px; box-shadow: 0 16px 48px rgba(0,0,0,0.55); display: flex; flex-direction: column; gap: 14px;">
+<div style="font-size: 15px; font-weight: 600;">Als Deliverable speichern</div>
+<label style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 12px; color: #8590A3;">Titel</span><input value="{{title}}" onInput="{{onTitle}}" style="font: 400 13px 'IBM Plex Sans', sans-serif; color: #E4E8EF; background: #1A2030; border: 1px solid #262E3E; border-radius: 4px; padding: 8px 10px;"></label>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 12px; color: #8590A3;">Inhalt: die eingeblendeten Widgets</span><div style="display: flex; flex-wrap: wrap; gap: 5px;"><sc-for list="{{onLabels}}" as="l" hint-placeholder-count="5"><span class="chip">{{l}}</span></sc-for></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 12px; color: #8590A3;">Format</span><div style="display: flex; padding: 2px; gap: 2px; background: #0D1016; border: 1px solid #262E3E; border-radius: 5px; align-self: flex-start;"><sc-for list="{{fmts}}" as="f" hint-placeholder-count="2"><button style="{{f.st}}" onClick="{{f.on}}">{{f.label}}</button></sc-for></div></div>
+<label style="display: flex; gap: 10px; align-items: center; cursor: pointer;"><input type="checkbox" checked="{{withCfg}}" onChange="{{toggleCfg}}" style="accent-color: #6E9BF5;"><span>Board-Datei und Configs der Läufe mitspeichern</span></label>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #0D1016; border: 1px solid #262E3E; border-radius: 4px;"><span class="mono" style="font-size: 12px;">{{path}}</span><span style="font-size: 12px; color: #8590A3;">{{fileList}} · verknüpft mit {{issue}}</span></div>
+<div style="display: flex; justify-content: flex-end; gap: 8px;"><button onClick="{{closeDlg}}" style="font: 500 13px 'IBM Plex Sans', sans-serif; color: #A1AABB; background: none; border: 1px solid #262E3E; border-radius: 4px; padding: 7px 14px; cursor: pointer;">Abbrechen</button><button onClick="{{save}}" style="font: 500 13px 'IBM Plex Sans', sans-serif; color: #0D1016; background: #6E9BF5; border: 0; border-radius: 4px; padding: 7px 14px; cursor: pointer;">Speichern</button></div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900},"embedded":{"editor":null},"view":{"editor":null}}'>
+class Component extends DCLogic {
+renderVals() {
+  const st = this.state || {};
+  const set = (p) => this.setState(p);
+  const PV = (this.props || {}).view, view = PV || st.view || 'two', pair = st.pair || 0, colorBy = st.colorBy || 'pred_len', fmt = st.fmt || 'one';
+  const seg = (on) => "font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border: 0; border-radius: 3px; padding: 3px 10px; background: " + (on ? '#1A2030' : 'transparent') + '; color: ' + (on ? '#E4E8EF' : '#8590A3') + ';';
+  // widget catalog: key, scope, default on, label, the question it answers
+  const CAT = [
+    ['diff', 'two', 1, 'Config-Unterschiede', 'Worin unterscheiden sich die beiden Läufe?'],
+    ['wins', 'two', 1, 'Wer gewinnt wo?', 'Welcher Lauf ist bei welcher Metrik besser?'],
+    ['bests', 'two', 1, 'Beste Config je Lauf', 'Hält der Sieger des einen Laufs im anderen?'],
+    ['strips', 'two', 1, 'Alle Kombinationen', 'Wie liegen alle Kombinationen beider Läufe?'],
+    ['regions', 'two', 1, 'Regionen', 'Wo unterscheiden sie sich je channel?'],
+    ['facts', 'two', 1, 'Umfang und Fehler', 'Zellen, Fehler, Dauer, Horizont, Epoche'],
+    ['effect', 'two', 0, 'Wirkung je Parameter', 'Welche Parameterwerte wirken in A und B verschieden?'],
+    ['rank', 'two', 0, 'Hält die Rangfolge?', 'Sortieren beide Läufe die Kombinationen gleich?'],
+    ['jumps', 'two', 0, 'Größte Rangsprünge', 'Welche Kombinationen sind nur in einem Lauf vorn?'],
+    ['timeline', 'proj', 1, 'Bester Wert je Lauf', 'Wie hat sich das Projekt entwickelt?'],
+    ['map', 'proj', 0, 'Parameter-Landkarte', 'Wirkt ein Parameterwert in allen Läufen gleich?']
+  ];
+  const on = Object.assign({}, ...CAT.map((c) => ({ [c[0]]: !!c[2] })), st.on || {});
+  const mine = CAT.filter((c) => c[1] === view);
+  const show = {}; mine.forEach((c) => { show[c[0]] = on[c[0]]; });
+  const PAIRS = [
+    { label: 'TIM-52 · 30 gegen 90', a: '2026-10-13_1830_TIM-52_best_combined_30', b: '2026-10-14_0912_TIM-52_best_combined_90', e1: 1, e2: 0, issue: 'TIM-52', title: 'Laufvergleich pred_len 30 vs 90' },
+    { label: 'Wiederholung TIM-49', a: '2026-10-08_2105_TIM-49_ets_gap_90', b: '2026-10-09_1422_TIM-49_ets_gap_90', e1: 0, e2: 1, issue: 'TIM-49', title: 'TIM-49 Wiederholung nach Fix' }
+  ];
+  const P = PAIRS[pair], C = window.CmpData;
+  const onList = mine.filter((c) => on[c[0]]);
+  const title = st.title ?? (view === 'two' ? P.title : 'Projektverlauf');
+  const path = 'deliverables/2026-10-14 ' + title + '/';
+  const files = (fmt === 'one' ? ['analyse.png'] : onList.map((c, i) => String(i + 1).padStart(2, '0') + '_' + c[0] + '.png')).concat(st.withCfg === false ? [] : ['board.yaml', 'configs/']);
+  return {
+    rootH: (this.props || {}).embedded ? '100%' : '900px',
+    viewsHide: PV ? 'display: none;' : '',
+    isTwo: view === 'two', isProj: view === 'proj',
+    views: [['two', 'Zwei Läufe'], ['proj', 'Projektverlauf']].map(([k, l]) => ({ label: l, st: seg(view === k), on: () => set({ view: k, menu: false, saved: false, title: undefined }) })),
+    aName: C.short(P.a), bName: C.short(P.b),
+    pairs: PAIRS.map((p, i) => ({ label: p.label, st: seg(i === pair), on: () => set({ pair: i, title: undefined }) })),
+    pairE1: P.e1, pairE2: P.e2, colorBy,
+    colorSeg: [['pred_len', 'pred_len'], ['none', 'keins']].map(([k, l]) => ({ label: l, st: seg(colorBy === k), on: () => set({ colorBy: k }) })),
+    show, showE2: Object.assign({ diff: false }, show), anyE2: !!(show.effect || show.rank || show.jumps),
+    menu: !!st.menu, toggleMenu: () => set({ menu: !st.menu }),
+    menuBtn: "font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 4px; padding: 6px 12px; border: 1px solid " + (st.menu ? '#2C4572' : '#262E3E') + '; background: ' + (st.menu ? '#192640' : '#131720') + '; color: #E4E8EF;',
+    onCount: String(onList.length), allCount: String(mine.length),
+    groups: [['Standard', 1], ['Zusätzlich', 0]].map(([label, d]) => ({
+      label, items: mine.filter((c) => c[2] === d).map((c) => ({ label: c[3], q: c[4], on: on[c[0]], toggle: () => set({ on: Object.assign({}, st.on, { [c[0]]: !on[c[0]] }) }) }))
+    })).filter((g) => g.items.length),
+    dlg: !!st.dlg, openDlg: () => set({ dlg: true, menu: false }), closeDlg: () => set({ dlg: false }),
+    title, onTitle: (e) => set({ title: e.target.value }),
+    onLabels: onList.map((c) => c[3]),
+    fmts: [['one', 'Ein Bild'], ['each', 'Ein Bild je Widget']].map(([k, l]) => ({ label: l, st: seg(fmt === k), on: () => set({ fmt: k }) })),
+    withCfg: st.withCfg !== false, toggleCfg: () => set({ withCfg: st.withCfg === false }),
+    path, fileList: files.join(', '), issue: view === 'two' ? P.issue : 'kein Issue',
+    save: () => set({ dlg: false, saved: true }), saved: !!st.saved, hideSaved: () => set({ saved: false })
+  };
+}
+}
+</script>
+</body>
+</html>

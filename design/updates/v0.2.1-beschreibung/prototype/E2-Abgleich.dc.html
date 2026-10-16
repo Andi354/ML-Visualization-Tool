@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>E2 · Abgleich</title>
+<script src="./support.js"></script>
+<script src="./cmp-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1016}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,a:focus-visible{outline:2px solid #6E9BF5;outline-offset:1px}
+.card{background:#131720;border:1px solid #262E3E;border-radius:6px;padding:14px 16px;box-sizing:border-box;min-width:0}
+.ct{font-weight:600;font-size:13px;margin:0 0 2px}
+.cs{font-size:12px;color:#8590A3;margin:0 0 12px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.chip{font:400 12px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:3px;border:1px solid #262E3E;background:#1A2030;color:#A1AABB;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 100%; height: {{rootH}}; box-sizing: border-box; display: flex; flex-direction: column; background: #0D1016; color: #E4E8EF; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden;">
+<div style="flex-shrink: 0; min-height: 48px; box-sizing: border-box; padding: 8px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-bottom: 1px solid #262E3E; {{headSt}}">
+<span>Vergleich</span><span style="color: #8590A3;">/</span><span style="color: #A1AABB;">Abgleich</span>
+<span style="width: 16px;"></span>
+<span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #1FA3A3;"></span><span class="mono" style="color: #A1AABB;">{{aName}}</span></span>
+<span style="color: #8590A3;">gegen</span>
+<span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #8C7CF0;"></span><span class="mono" style="color: #A1AABB;">{{bName}}</span></span>
+<span style="flex: 1;"></span>
+<span style="font-size: 12px; color: #8590A3;">Beispielpaare</span>
+<div style="display: flex; padding: 2px; gap: 2px; background: #131720; border: 1px solid #262E3E; border-radius: 5px;"><sc-for list="{{pairs}}" as="p" hint-placeholder-count="2"><button style="{{p.st}}" onClick="{{p.on}}">{{p.label}}</button></sc-for></div>
+</div>
+<div style="flex-shrink: 0; padding: 10px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; border-bottom: 1px solid #262E3E; {{w.diff}}">
+<span style="color: #8590A3; font-size: 12px;">Unterschied</span><span class="chip" style="color: #E4E8EF; border-color: #2C4572; background: #192640;">{{diff}}</span>
+<span style="color: #8590A3; font-size: 12px; margin-left: 12px;">Gleich</span><sc-for list="{{same}}" as="s" hint-placeholder-count="5"><span class="chip">{{s}}</span></sc-for>
+<span style="flex: 1;"></span><span style="font-size: 12px; color: #8590A3;">{{matched}}</span>
+</div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 18px 28px; display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 16px; align-content: start;">
+<div class="card" style="{{w.effect}}">
+<div style="display: flex; align-items: baseline; gap: 10px;"><p class="ct">Wirkung je Parameterwert</p><span style="flex: 1;"></span>
+<div style="display: flex; padding: 2px; gap: 2px; background: #0D1016; border: 1px solid #262E3E; border-radius: 5px;"><sc-for list="{{sorts}}" as="m" hint-placeholder-count="2"><button style="{{m.st}}" onClick="{{m.on}}">{{m.label}}</button></sc-for></div></div>
+<p class="cs">MAPE der Kombinationen mit diesem Wert gegenüber dem Mittel des Laufs · relativ, damit Horizonte vergleichbar sind</p>
+<div style="margin: 0 0 14px; padding: 10px 12px; border-left: 3px solid #F0B44C; background: #1A1810; border-radius: 0 4px 4px 0; font-size: 13px; line-height: 1.5;">{{headline}}</div>
+<div style="display: grid; grid-template-columns: 210px minmax(0, 1fr) 96px; column-gap: 14px; align-items: center;">
+<span></span><div style="display: flex; font-size: 11px; color: #8590A3; padding-bottom: 6px;"><span>← besser als der Schnitt</span><span style="flex: 1;"></span><span>schlechter →</span></div><span></span>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+<span style="{{r.lSt}}">{{r.label}}</span>
+<div style="position: relative; height: 26px;"><div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #3A4458;"></div><div style="{{r.link}}"></div><span title="{{r.aT}}" style="{{r.aDot}}"></span><span title="{{r.bT}}" style="{{r.bDot}}"></span></div>
+<span style="{{r.tagSt}}">{{r.tag}}</span>
+</sc-for>
+<span></span><div style="position: relative; height: 16px;"><sc-for list="{{ticks}}" as="t" hint-placeholder-count="5"><span class="mono" style="{{t.st}}">{{t.v}}</span></sc-for></div><span></span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 16px;">
+<div class="card" style="{{w.rank}}">
+<p class="ct">Hält die Rangfolge?</p><p class="cs">jeder Punkt = eine Kombination · Rang in A gegen Rang in B · auf der Diagonale = gleicher Rang</p>
+<div style="position: relative; width: 340px; height: 300px; margin: 0 0 22px 30px; border-left: 1px solid #3A4458; border-bottom: 1px solid #3A4458;">
+<svg style="position: absolute; inset: 0; width: 100%; height: 100%;" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0 L100 100" stroke="#262E3E" stroke-width="0.6" stroke-dasharray="2 2" fill="none" vector-effect="non-scaling-stroke"></path></svg>
+<sc-for list="{{pts}}" as="p" hint-placeholder-count="36"><span title="{{p.t}}" style="{{p.st}}"></span></sc-for>
+<span style="position: absolute; left: 50%; bottom: -20px; transform: translateX(-50%); font-size: 11px; color: #1FA3A3;">Rang in A (1 = beste)</span>
+<span style="position: absolute; left: -26px; top: 50%; transform: rotate(-90deg) translateX(-50%); transform-origin: left top; font-size: 11px; color: #8C7CF0; white-space: nowrap;">Rang in B</span>
+</div>
+<div style="display: grid; grid-template-columns: 1fr auto; row-gap: 8px;">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="3"><span style="color: #A1AABB;">{{k.k}}</span><span class="mono" style="{{k.st}}">{{k.v}}</span></sc-for>
+</div>
+</div>
+<div class="card" style="{{w.jumps}}">
+<p class="ct">Größte Rangsprünge</p><p class="cs">Kombinationen, die in einem Lauf vorn und im anderen hinten liegen</p>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 44px 44px 50px; row-gap: 8px; column-gap: 8px; align-items: center; font-size: 12px;">
+<span style="color: #8590A3; font-size: 11px;">Kombination</span><span style="color: #1FA3A3; font-size: 11px; text-align: right;">A</span><span style="color: #8C7CF0; font-size: 11px; text-align: right;">B</span><span style="color: #8590A3; font-size: 11px; text-align: right;">Sprung</span>
+<sc-for list="{{jumps}}" as="j" hint-placeholder-count="6"><span class="mono" style="color: #A1AABB; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{j.full}}">{{j.cfg}}</span><span class="mono" style="text-align: right;">{{j.a}}</span><span class="mono" style="text-align: right;">{{j.b}}</span><span class="mono" style="{{j.dSt}}">{{j.d}}</span></sc-for>
+</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+  const C = window.CmpData;
+  const st = this.state || {};
+  const PR = this.props || {};
+  const show = PR.show || {}, w = {};
+  ['diff', 'effect', 'rank', 'jumps'].forEach((k) => { w[k] = show[k] === false ? 'display: none;' : ''; });
+  const set = (p) => this.setState(p);
+  const PAIRS = [
+    { label: 'TIM-52 · 30 gegen 90', a: '2026-10-13_1830_TIM-52_best_combined_30', b: '2026-10-14_0912_TIM-52_best_combined_90', diff: 'data.pred_len 30 → 90' },
+    { label: 'Wiederholung TIM-49', a: '2026-10-08_2105_TIM-49_ets_gap_90', b: '2026-10-09_1422_TIM-49_ets_gap_90', diff: 'Code-Stand a1c93f2 → e70b4d1' }
+  ];
+  const pi = PR.pair ?? st.pair ?? 0, P = PAIRS[pi], sort = st.sort || 'axis';
+  const seg = (on) => "font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border: 0; border-radius: 3px; padding: 3px 10px; background: " + (on ? '#1A2030' : 'transparent') + '; color: ' + (on ? '#E4E8EF' : '#8590A3') + ';';
+  const ea = C.effects(P.a), eb = C.effects(P.b), A = C.combos(P.a), B = C.combos(P.b);
+  const lim = 8, x = (v) => (50 + Math.max(-lim, Math.min(lim, v)) / lim * 50);
+  let rows = [];
+  C.AX.forEach((ax) => ax.values.forEach((v, vi) => {
+    const a = ea[ax.key] ? ea[ax.key][vi] : null, b = eb[ax.key] ? eb[ax.key][vi] : null;
+    if (a === null || b === null) return;
+    const flip = a * b < 0 && Math.abs(a) > 1.5 && Math.abs(b) > 1.5, gap = Math.abs(a - b);
+    rows.push({ ax: ax.key, v, a, b, flip, gap, first: vi === 0 });
+  }));
+  if (sort === 'gap') rows.sort((p, q) => q.gap - p.gap);
+  const dot = (v, col, big) => 'position: absolute; top: 7px; left: ' + x(v).toFixed(2) + '%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: ' + col + ';' + (big ? ' box-shadow: 0 0 0 2px #131720;' : '');
+  const out = rows.map((r) => {
+    const l = Math.min(x(r.a), x(r.b)), w = Math.abs(x(r.a) - x(r.b));
+    return {
+      label: r.ax + ' = ' + r.v,
+      lSt: "font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: " + (r.flip ? '#E4E8EF' : '#A1AABB') + ';' + (sort === 'axis' && r.first ? ' padding-top: 10px;' : ''),
+      link: 'position: absolute; top: 11px; height: 4px; border-radius: 2px; left: ' + l.toFixed(2) + '%; width: ' + w.toFixed(2) + '%; background: ' + (r.flip ? '#5A4420' : '#262E3E') + ';',
+      aDot: dot(r.a, '#1FA3A3', true), bDot: dot(r.b, '#8C7CF0', true),
+      aT: 'A: ' + C.signed(r.a, 1) + ' %', bT: 'B: ' + C.signed(r.b, 1) + ' %',
+      tag: r.flip ? 'kippt' : r.gap > 3 ? 'stärker in ' + (Math.abs(r.b) > Math.abs(r.a) ? 'B' : 'A') : C.signed(r.a, 1) + ' / ' + C.signed(r.b, 1),
+      tagSt: 'font-size: 11px; justify-self: start; ' + (r.flip ? 'color: #F0B44C; border: 1px solid #5A4420; background: #2E2414; border-radius: 3px; padding: 1px 6px;' : r.gap > 3 ? 'color: #E4E8EF;' : "color: #8590A3; font-family: 'IBM Plex Mono', monospace;")
+    };
+  });
+  const flips = rows.filter((r) => r.flip).sort((p, q) => q.gap - p.gap);
+  const f = flips[0];
+  const headline = f
+    ? f.ax + ' = ' + f.v + ' kippt: in A ' + C.fmt(Math.abs(f.a), 1) + ' % ' + (f.a < 0 ? 'besser' : 'schlechter') + ' als der Schnitt, in B ' + C.fmt(Math.abs(f.b), 1) + ' % ' + (f.b < 0 ? 'besser' : 'schlechter') + '.' + (flips.length > 1 ? ' Insgesamt kippen ' + flips.length + ' Parameterwerte.' : '')
+    : 'Kein Parameterwert kippt: die Wirkungen zeigen in beiden Läufen in dieselbe Richtung.';
+  const rb = {}; B.forEach((c) => { rb[C.key(c.c)] = c; });
+  const n = A.length, top5a = {}, top5b = {};
+  A.slice(0, 5).forEach((c) => { top5a[C.key(c.c)] = 1; }); B.slice(0, 5).forEach((c) => { top5b[C.key(c.c)] = 1; });
+  const pts = A.map((c) => {
+    const k = C.key(c.c), o = rb[k], ta = top5a[k], tb = top5b[k];
+    const col = ta && tb ? '#5FD4A0' : ta ? '#1FA3A3' : tb ? '#8C7CF0' : '#4A5568';
+    return { t: c.label.join(' · ') + ' · Rang ' + c.rank + ' / ' + o.rank, st: 'position: absolute; left: ' + ((c.rank - 1) / (n - 1) * 100).toFixed(1) + '%; bottom: ' + ((n - o.rank) / (n - 1) * 100).toFixed(1) + '%; width: 9px; height: 9px; margin: 0 0 -4.5px -4.5px; border-radius: 50%; background: ' + col + ';' };
+  });
+  const overlap = Object.keys(top5a).filter((k) => top5b[k]).length, rho = C.spearman(P.a, P.b), bestInB = rb[C.key(A[0].c)].rank;
+  const jumps = A.map((c) => ({ c, o: rb[C.key(c.c)] })).sort((p, q) => Math.abs(q.c.rank - q.o.rank) - Math.abs(p.c.rank - p.o.rank)).slice(0, 7).map(({ c, o }) => ({
+    cfg: c.label.join(' · '), full: C.AX.map((ax, i) => ax.key + ' = ' + c.label[i]).join(', '),
+    a: String(c.rank), b: String(o.rank), d: (o.rank > c.rank ? '↓ ' : '↑ ') + Math.abs(o.rank - c.rank),
+    dSt: 'text-align: right; color: ' + (Math.abs(o.rank - c.rank) > 15 ? '#F0B44C' : '#A1AABB') + ';'
+  }));
+  return {
+    rootH: PR.embedded ? 'auto' : '900px', headSt: PR.embedded ? 'display: none;' : '', w,
+    aName: C.short(P.a), bName: C.short(P.b), diff: P.diff,
+    same: ['lstm_layer', 'time_embedding', 'conv_dims', 'lr_epochs', 'forecaster = repnet', 'seq_len = 360', '5 Seeds × 4 Folds'],
+    matched: n + ' von ' + n + ' Kombinationen in beiden Läufen',
+    pairs: PAIRS.map((p, i) => ({ label: p.label, st: seg(i === pi), on: () => set({ pair: i }) })),
+    sorts: [['axis', 'Nach Achse'], ['gap', 'Nach Unterschied']].map(([k, l]) => ({ label: l, st: seg(sort === k), on: () => set({ sort: k }) })),
+    headline, rows: out,
+    ticks: [-8, -4, 0, 4, 8].map((v) => ({ v: C.signed(v, 0) + ' %', st: 'position: absolute; top: 2px; font-size: 11px; color: #8590A3; left: ' + x(v) + '%; transform: translateX(' + (v === -8 ? '0' : v === 8 ? '-100%' : '-50%') + ');' })),
+    pts,
+    kpis: [
+      { k: 'Rangkorrelation (Spearman)', v: C.fmt(rho, 2), st: 'color: ' + (rho < 0.5 ? '#F0B44C' : '#5FD4A0') + ';' },
+      { k: 'Top 5 in beiden', v: overlap + ' von 5', st: 'color: ' + (overlap < 3 ? '#F0B44C' : '#5FD4A0') + ';' },
+      { k: 'Beste aus A landet in B auf', v: 'Rang ' + bestInB, st: 'color: ' + (bestInB > 10 ? '#F0B44C' : '#E4E8EF') + ';' }
+    ],
+    jumps
+  };
+}
+}
+</script>
+</body>
+</html>
