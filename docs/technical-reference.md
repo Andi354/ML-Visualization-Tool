@@ -17,9 +17,12 @@ The tool knows nothing about a project except these files. Every reader tolerate
 
 **Run tables are read only through `ds-store`** (`read_table`, `list_runs`, `run_status`,
 `table_version`), wrapped in `store.py`; the tool has no reader of its own and never opens a table file.
-`ds-store` 0.1.0 is vendored as a wheel in `vendor/` (it is not on an index): `make setup` installs it
-before the tool, the Dockerfile installs it together with the tool's wheel. Installing the tool's wheel
-elsewhere needs `pip install vendor/ds_store-*.whl ml_visualization_tool-*.whl`. Axis values are text
+`ds-store` is a package of its own (not on an index) and lives next to this repo in `../ds-store`:
+`make setup` installs it from there (`DS_STORE=` overrides the path), the Dockerfile builds it from the
+build context `ds-store` (docker-compose.yml passes `DS_STORE_PATH`, default `../ds-store`; plain docker:
+`--build-context ds-store=../ds-store`), so the image contains it and the container needs no sibling
+folder. Installing the tool's wheel elsewhere needs ds-store installed first (`pip install ../ds-store
+dist/ml_visualization_tool-*.whl`). Axis values are text
 (lists as JSON, paired axes as one label column). `curves` and `predictions` exist once per `cell_id`
 and carry no replicate columns (`read_table(..., with_cells=True)` adds them). A duplicate cell
 (`is_duplicate`) has the values of its original and shares its `cell_id`, so `channels` are tied to

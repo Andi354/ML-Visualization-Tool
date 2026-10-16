@@ -15,7 +15,7 @@ Language: chat and Linear in German, code and docs in English.
 - `make wheel`: builds `dist/ml_visualization_tool-<version>-py3-none-any.whl` (committed, one file, the previous build is removed)
 - `docker compose up --build`: runs the tool for the project in `MLVIZ_PROJECT_PATH` (see `.env.example`)
 - `.venv/bin/mlviz demo <dir>`: writes a synthetic demo project
-- `vendor/`: the `ds-store` wheel (reads the runs; not on an index, installed before the tool)
+- `ds-store` (reads the runs) is not in this repo: it sits next to it in `../ds-store` (`make setup` installs it, `DS_STORE=` overrides the path; the image builds it in)
 
 ## Layout
 

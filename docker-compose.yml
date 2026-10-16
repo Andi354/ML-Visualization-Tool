@@ -1,7 +1,11 @@
 # Usage: copy .env.example to .env, set MLVIZ_PROJECT_PATH, run `docker compose up --build`.
 services:
   mlviz:
-    build: .
+    build:
+      context: .
+      # ds-store sits next to this repo; the image contains it, the container does not need the folder
+      additional_contexts:
+        ds-store: "${DS_STORE_PATH:-../ds-store}"
     image: ml-visualization-tool:0.1.1
     # run as your own user, so exported files do not belong to root
     user: "${UID:-1000}:${GID:-1000}"
