@@ -17,6 +17,8 @@ export interface ProjectInfo {
   epochs: { name: string; since?: string; description?: string }[];
   own_model: { axis: string; value: string } | null;
   paths: Record<string, string>;
+  /** Project file content that is present but in no known form (shown at the top of the frame). */
+  warnings: string[];
   linear: boolean;
 }
 

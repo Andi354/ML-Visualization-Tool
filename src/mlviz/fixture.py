@@ -36,44 +36,30 @@ PROJECT = {
     "name": "Demo Bench",
     "paths": {"runs": "runs", "configs": "configs"},
     "outputs": {"analysis": "analysis", "research": "research", "deliverables": "deliverables"},
-    "primary_metric": "test_mse_missing",
-    "metrics": [
-        {"key": "test_mse_missing", "label": "MSE skaliert", "direction": "min", "viz": {"family": "scaled"}},
-        {"key": "test_mae_missing", "label": "MAE skaliert", "direction": "min", "viz": {"family": "scaled"}},
-        {"key": "test_rmse_missing", "label": "RMSE skaliert", "direction": "min", "viz": {"family": "scaled"}},
-        {"key": "test_mape_missing", "label": "MAPE skaliert", "direction": "min", "viz": {"family": "scaled"}},
-        {
-            "key": "test_mape",
-            "label": "MAPE",
-            "direction": "min",
-            "viz": {"family": "real"},
-            "unit": "%",
-            "scale": 100,
+    # the form of ds-init (as repnet-bench writes it): primary + catalog
+    "metrics": {
+        "primary": "test_mse_missing",
+        "catalog": {
+            "test_mse_missing": {"label": "MSE skaliert", "direction": "min", "viz": {"family": "scaled"}},
+            "test_mae_missing": {"label": "MAE skaliert", "direction": "min", "viz": {"family": "scaled"}},
+            "test_rmse_missing": {"label": "RMSE skaliert", "direction": "min", "viz": {"family": "scaled"}},
+            "test_mape_missing": {"label": "MAPE skaliert", "direction": "min", "viz": {"family": "scaled"}},
+            "test_mape": {"label": "MAPE", "direction": "min", "viz": {"family": "real"}, "unit": "%", "scale": 100},
+            "test_mae": {"label": "MAE", "direction": "min", "viz": {"family": "real"}},
+            "test_mse": {"label": "MSE", "direction": "min", "viz": {"family": "real"}},
+            "test_rmse": {"label": "RMSE", "direction": "min", "viz": {"family": "real"}},
+            "test_commitment_cost": {"label": "Commitment Cost", "direction": "min", "viz": {"family": "real"}},
+            "test_asymmetric_cost_real": {"label": "Asymmetrische Kosten", "direction": "min", "viz": {"family": "real"}},
         },
-        {"key": "test_mae", "label": "MAE", "direction": "min", "viz": {"family": "real"}},
-        {"key": "test_mse", "label": "MSE", "direction": "min", "viz": {"family": "real"}},
-        {"key": "test_rmse", "label": "RMSE", "direction": "min", "viz": {"family": "real"}},
-        {"key": "test_commitment_cost", "label": "Commitment Cost", "direction": "min", "viz": {"family": "real"}},
-        {
-            "key": "test_asymmetric_cost_real",
-            "label": "Asymmetrische Kosten",
-            "direction": "min",
-            "viz": {"family": "real"},
-        },
-    ],
+    },
     "viz": {"short": "DB", "own_model": {"axis": "forecaster", "value": "rep-net"}},
 }
 
-EPOCHS = {
-    "epochs": [
-        {"name": "tsrm6", "since": "2026-09-01", "description": "TSRM v6 encoder"},
-        {
-            "name": "eval-all-windows",
-            "since": "2026-10-05",
-            "description": "evaluation over all windows",
-        },
-    ]
-}
+# a list at the top level, as ds-init projects write it
+EPOCHS = [
+    {"name": "tsrm6", "repo": "REP-Net", "commit": "a1b2c3d", "date": "2026-09-01", "reason": "TSRM v6 encoder"},
+    {"name": "eval-all-windows", "repo": "REP-Net", "commit": "e4f5a6b", "date": "2026-10-05", "reason": "evaluation over all windows"},
+]
 
 BASE_CONFIG = {
     "data": {

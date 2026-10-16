@@ -37,6 +37,13 @@ function Frame({ project }: { project: ProjectInfo }) {
         onSelect={(area) => dispatch({ type: "select-area", area })}
       />
       <div class="main">
+        {project.warnings.length > 0 && (
+          <div class="project-warnings" role="alert" data-testid="project-warnings">
+            {project.warnings.map((w) => (
+              <div key={w}>⚠ {w}</div>
+            ))}
+          </div>
+        )}
         <TabStrip
           area={frame.area}
           tabs={frame.tabs}
