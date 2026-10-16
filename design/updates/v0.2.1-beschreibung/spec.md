@@ -8,9 +8,12 @@ Prototype: prototype/ · Builds on: v0.2.0
 | Block | Status |
 |---|---|
 | G · Short description in Läufe | decided |
-| H · Description in the run tab | open |
+| H · Description in the run tab | running |
 
-Running block: none.
+Running block: H · Description in the run tab. Proposed H1 block above the table, H2 sidebar, H3 header
+button + panel, H4 sub-tab; Tim: H1 and H3, sidebar too narrow. On the canvas: H1 · Block über der
+Tabelle (collapsible strip, fields side by side), H3 · Knopf im Kopf + Panel (520 px panel on the right).
+Field labels: Zweck, Soll zeigen, Erwartung, Notizen, Vergleichen mit. Waiting for Tim's word.
 
 ## Goal
 Each run says why it was made: in one line in Läufe, in full in its tab.
