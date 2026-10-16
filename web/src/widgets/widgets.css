@@ -393,6 +393,18 @@
   gap: 16px;
   align-items: start;
 }
+/* a full-width tile always starts a new row */
+.board-grid > .w-tile.full {
+  grid-column: 1 / -1;
+}
+.move-btn {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
 .add-widget-row {
   margin-top: 16px;
 }

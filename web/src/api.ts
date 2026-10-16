@@ -215,6 +215,8 @@ export interface CatalogEntry {
   requires: string | null;
   exportable: boolean;
   optional: boolean;
+  /** Width of a new tile: half of the row or full. */
+  width: "half" | "full";
 }
 export interface WidgetRequest {
   run?: string;

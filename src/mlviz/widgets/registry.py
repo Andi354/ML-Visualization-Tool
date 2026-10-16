@@ -25,6 +25,8 @@ class Widget:
     exportable: bool = True
     #: Optional widgets are off in a new board and can be added from the catalog.
     optional: bool = False
+    #: Width of a new tile in a board: `half` of the row or `full` (a full tile starts a new row).
+    width: str = "half"
 
     def to_json(self) -> dict:
         return {
@@ -36,6 +38,7 @@ class Widget:
             "requires": self.requires,
             "exportable": self.exportable,
             "optional": self.optional,
+            "width": self.width,
         }
 
 

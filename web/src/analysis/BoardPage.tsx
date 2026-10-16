@@ -1,7 +1,7 @@
 import type { ComponentChildren } from "preact";
 import { useEffect, useReducer, useState } from "preact/hooks";
 import type { CatalogEntry, ProjectInfo, RunInfo, WidgetRequest } from "../api";
-import { boardReducer, loadBoard, makeBoard, newId, saveBoard } from "../widgets/board";
+import { boardReducer, loadBoard, makeBoard, newId, saveBoard, type Width } from "../widgets/board";
 import { WidgetTile } from "../widgets/WidgetTile";
 import { SaveDialog } from "./SaveDialog";
 
@@ -26,7 +26,8 @@ interface Props {
 export function BoardPage({ project, scope, catalog, req, run, footerRuns, footerText, defaultTitle, defaultIssue, controls, selection }: Props) {
   const known = catalog.map((c) => c.key);
   const defaults = catalog.filter((c) => !c.optional).map((c) => c.key); // optional widgets start off
-  const [board, dispatch] = useReducer(boardReducer, null, () => loadBoard(project.name, scope, known, makeBoard(scope, defaults)));
+  const widths = Object.fromEntries(catalog.map((c) => [c.key, c.width])) as Record<string, Width>;
+  const [board, dispatch] = useReducer(boardReducer, null, () => loadBoard(project.name, scope, known, makeBoard(scope, defaults, widths), widths));
   useEffect(() => saveBoard(project.name, board), [project.name, board]);
 
   const [menu, setMenu] = useState<"widgets" | "add" | null>(null);
@@ -41,7 +42,7 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
   const present = known.filter((k) => board.widgets.some((w) => w.type === k));
   const toggleType = (key: string) => {
     if (present.includes(key)) board.widgets.filter((w) => w.type === key).forEach((w) => dispatch({ type: "remove", id: w.id }));
-    else dispatch({ type: "add", widget: key, id: newId(key) });
+    else dispatch({ type: "add", widget: key, id: newId(key), width: widths[key] });
   };
 
   return (
@@ -71,10 +72,14 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
       </div>
       <div class="analysis-scroll">
         <div class="board-grid" data-testid="board">
-          {board.widgets.map((w) => (
+          {board.widgets.map((w, i) => (
             <WidgetTile
               key={w.id}
               widget={w}
+              first={i === 0}
+              last={i === board.widgets.length - 1}
+              onMove={(dir) => dispatch({ type: "move", id: w.id, dir })}
+              onWidth={(width) => dispatch({ type: "width", id: w.id, width })}
               def={catalog.find((c) => c.key === w.type)}
               run={run}
               project={project}
@@ -99,7 +104,7 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
                   data-testid="add-widget-item"
                   data-widget={c.key}
                   onClick={() => {
-                    dispatch({ type: "add", widget: c.key, id: newId(c.key) });
+                    dispatch({ type: "add", widget: c.key, id: newId(c.key), width: c.width });
                     setMenu(null);
                   }}
                 >

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import { getCatalog, NotFound, postWidget, type CatalogEntry, type ProjectInfo, type RunInfo, type SettingDef, type WidgetRequest, type WidgetResult } from "../api";
-import type { BoardWidget } from "./board";
+import type { BoardWidget, Width } from "./board";
 import { renderWidget, type Ctx } from "./renderers";
 
 export function useCatalog(scope = ""): CatalogEntry[] {
@@ -21,6 +21,11 @@ interface Props {
   req: WidgetRequest;
   onSettings: (patch: Record<string, string | null>) => void;
   onRemove: () => void;
+  /** One position earlier (-1) or later (+1) in the board; `first` and `last` disable the arrows. */
+  onMove?: (dir: -1 | 1) => void;
+  first?: boolean;
+  last?: boolean;
+  onWidth?: (width: Width) => void;
   onSave?: (result: WidgetResult) => void;
   /** Click on a run in a project widget (toggles it for the map) and the current selection. */
   selection?: { runs: string[] | null; toggle: (id: string, current: string[]) => void };
@@ -65,6 +70,22 @@ function Setting({ def, value, options, onChange }: { def: SettingDef; value: st
   );
 }
 
+/** "Breite Halb | Ganz" in the settings of a tile and in the header of a draft. */
+export function WidthControl({ value, onChange }: { value: Width; onChange: (w: Width) => void }) {
+  return (
+    <div class="setting">
+      <span class="small muted">Breite</span>
+      <div class="seg" role="group" aria-label="Breite">
+        {(["half", "full"] as const).map((w) => (
+          <button key={w} class={value === w ? "on" : ""} aria-pressed={value === w} data-testid={`set-width-${w}`} onClick={() => onChange(w)}>
+            {w === "half" ? "Halb" : "Ganz"}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export interface FigureProps {
   type: string;
   result: WidgetResult;
@@ -96,7 +117,7 @@ export function WidgetFigure({ type, result, ctx, title, hideTitle = false, hint
 }
 
 /** One tile of a board: header (name, question, Einstellen, ×, save), settings, and the figure. */
-export function WidgetTile({ widget, def, run, project, req, onSettings, onRemove, onSave, selection }: Props) {
+export function WidgetTile({ widget, def, run, project, req, onSettings, onRemove, onSave, selection, onMove, first, last, onWidth }: Props) {
   const [result, setResult] = useState<WidgetResult | null>(null);
   const [error, setError] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -116,13 +137,23 @@ export function WidgetTile({ widget, def, run, project, req, onSettings, onRemov
   const visible = (def?.settings ?? []).filter((s) => s.key !== "window"); // the window is set by clicking the strip
   const canSave = !!onSave && !!result && !result.unavailable && result.exportable;
   return (
-    <section class="w-tile" data-testid="widget-tile" data-widget={widget.type}>
+    <section class={"w-tile" + (widget.width === "full" ? " full" : "")} data-testid="widget-tile" data-widget={widget.type} data-width={widget.width}>
       <header class="w-head">
         <div class="w-name">
           <span class="w-label">{def?.label ?? widget.type}</span>
           <span class="muted small w-question">{def?.question}</span>
         </div>
-        {visible.length > 0 && (
+        {onMove && (
+          <>
+            <button class="move-btn" title="Nach vorn schieben" aria-label="Nach vorn" data-testid="tile-up" disabled={first} onClick={() => onMove(-1)}>
+              ↑
+            </button>
+            <button class="move-btn" title="Nach hinten schieben" aria-label="Nach hinten" data-testid="tile-down" disabled={last} onClick={() => onMove(1)}>
+              ↓
+            </button>
+          </>
+        )}
+        {(visible.length > 0 || onWidth) && (
           <button class={"btn" + (showSettings ? " on" : "")} aria-expanded={showSettings} data-testid="tile-settings" onClick={() => setShowSettings(!showSettings)}>
             Einstellen
           </button>
@@ -141,6 +172,7 @@ export function WidgetTile({ widget, def, run, project, req, onSettings, onRemov
           {visible.map((s) => (
             <Setting key={s.key} def={s} value={widget.settings[s.key] ?? null} options={result?.options?.[s.key]} onChange={(v) => onSettings({ [s.key]: v })} />
           ))}
+          {onWidth && <WidthControl value={widget.width} onChange={onWidth} />}
         </div>
       )}
       <div class="w-body">

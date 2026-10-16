@@ -245,3 +245,11 @@ def test_unknown_settings_are_ignored_and_defaults_applied(project):
     assert r["data"]["mode"] == "nonsense-key"  # a known key is passed through
     r = widgets.compute(project, "curves", {"run": NEW, "combo": COMBO, "settings": {"bogus": 1}})
     assert r["data"]["mode"] == "single"
+
+
+def test_every_catalog_entry_has_a_width_the_comparison_table_is_full_all_others_half():
+    from mlviz.widgets.registry import catalog
+
+    entries = [w for scope in ("combination", "run", "two-runs", "project") for w in catalog(scope)]
+    assert {w["width"] for w in entries} == {"half", "full"}
+    assert {w["key"] for w in entries if w["width"] == "full"} == {"compare-table"}

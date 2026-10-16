@@ -333,3 +333,78 @@ def test_the_target_folder_can_be_chosen_inside_the_project(writable_page):
     dialog.get_by_test_id("save-images").click()
     expect(page.get_by_test_id("toast")).to_contain_text("analysis/2026-10-15 Anderer Ort")
     assert (page.writable_root / "analysis" / "2026-10-15 Anderer Ort" / "01_stability.png").is_file()
+
+
+# --- width and order of the tiles (v0.2, feature E) -----------------------------------------------
+def _tile_widths(page):
+    board = page.get_by_test_id("board").bounding_box()["width"]
+    return {
+        t.get_attribute("data-widget"): round(t.bounding_box()["width"] / board, 2)
+        for t in page.get_by_test_id("widget-tile").all()
+    }
+
+
+def _order(page):
+    return page.get_by_test_id("widget-tile").evaluate_all("els => els.map(e => e.dataset.widget)")
+
+
+def test_the_comparison_table_is_full_width_by_default_all_other_tiles_are_half(page):
+    page.get_by_test_id("area-analysis").click()
+    page.get_by_test_id("widget-tile").first.wait_for()
+    widths = _tile_widths(page)
+    assert widths["compare-table"] > 0.95
+    assert all(0.4 < w < 0.55 for k, w in widths.items() if k != "compare-table")
+
+
+def test_a_full_width_tile_starts_a_new_row(page):
+    page.get_by_test_id("area-analysis").click()
+    page.get_by_test_id("widget-tile").first.wait_for()
+    tiles = page.get_by_test_id("widget-tile")
+    full = tiles.first.bounding_box()
+    after = tiles.nth(1).bounding_box()
+    assert tiles.first.get_attribute("data-widget") == "compare-table"
+    assert after["y"] >= full["y"] + full["height"]  # the next tile is below, not beside
+
+
+def test_settings_have_a_width_control_that_changes_the_tile_at_once(page):
+    page.get_by_test_id("area-analysis").click()
+    tile = page.locator('[data-testid="widget-tile"][data-widget="per-region"]')
+    tile.wait_for()
+    assert 0.4 < _tile_widths(page)["per-region"] < 0.55
+    tile.get_by_test_id("tile-settings").click()
+    tile.get_by_test_id("set-width-full").click()
+    expect(tile).to_have_attribute("data-width", "full")
+    assert _tile_widths(page)["per-region"] > 0.95
+    tile.get_by_test_id("set-width-half").click()
+    assert 0.4 < _tile_widths(page)["per-region"] < 0.55
+
+
+def test_the_arrows_move_a_tile_one_position_and_are_disabled_at_the_ends(page):
+    page.get_by_test_id("area-analysis").click()
+    page.get_by_test_id("widget-tile").first.wait_for()
+    before = _order(page)
+    tiles = page.get_by_test_id("widget-tile")
+    expect(tiles.first.get_by_test_id("tile-up")).to_be_disabled()
+    expect(tiles.last.get_by_test_id("tile-down")).to_be_disabled()
+    tiles.nth(1).get_by_test_id("tile-up").click()
+    assert _order(page) == [before[1], before[0], *before[2:]]
+    first_one = page.locator(f'[data-testid="widget-tile"][data-widget="{before[0]}"]')
+    first_one.get_by_test_id("tile-down").click()
+    assert _order(page) == [before[1], before[2], before[0], *before[3:]]
+
+
+def test_width_and_order_are_remembered_per_project(page):
+    page.get_by_test_id("area-analysis").click()
+    page.get_by_test_id("widget-tile").first.wait_for()
+    before = _order(page)
+    page.get_by_test_id("widget-tile").nth(2).get_by_test_id("tile-up").click()
+    tile = page.locator('[data-testid="widget-tile"][data-widget="per-region"]')
+    tile.get_by_test_id("tile-settings").click()
+    tile.get_by_test_id("set-width-full").click()
+    moved = _order(page)
+    assert moved != before
+    page.reload()
+    page.get_by_test_id("area-analysis").click()
+    page.get_by_test_id("widget-tile").first.wait_for()
+    assert _order(page) == moved
+    assert _tile_widths(page)["per-region"] > 0.95
