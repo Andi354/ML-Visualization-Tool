@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
+from . import store
 from .project import Metric, Project
 from .runs import Run
 
@@ -47,8 +49,8 @@ def merkmal_candidates(runs: list[Run]) -> list[str]:
 
 
 @lru_cache(maxsize=512)
-def _best(path: str, mtime: float, metric: str, direction: str, axes: tuple[str, ...]) -> float | None:
-    run = Run(__import__("pathlib").Path(path))
+def _best(path: str, version: tuple, metric: str, direction: str, axes: tuple[str, ...]) -> float | None:
+    run = Run(Path(path))
     ok = run.ok_cells()
     if ok.empty or metric not in ok.columns:
         return None
@@ -62,15 +64,12 @@ def _best(path: str, mtime: float, metric: str, direction: str, axes: tuple[str,
 
 def group_best(run: Run, metric: Metric) -> float | None:
     """Best group mean (replicates averaged) of a metric over the successful cells of a run."""
-    p = run.path / "cells.parquet"
-    try:
-        mtime = p.stat().st_mtime_ns
-    except OSError:
-        return None
-    return _best(str(run.path), mtime, metric.key, metric.direction, tuple(run.axes))
+    return _best(str(run.path), store.version(run.path), metric.key, metric.direction, tuple(run.axes))
 
 
 def run_listing(project: Project, run: Run, candidates: list[str]) -> dict[str, Any]:
+    if run.problem:  # a store_version this package does not know: no numbers, only the reason
+        return {**run.info(), "cells": 0, "planned": 0, "errors": 0, "best": None, "merkmal": None, "config_values": {}}
     metric = project.first_real_metric() or (project.metric(project.primary_metric or "") if project.primary_metric else None)
     best = None
     if metric is not None:
@@ -89,11 +88,10 @@ def run_listing(project: Project, run: Run, candidates: list[str]) -> dict[str, 
         key = candidates[0]
         if key in flat:
             merkmal = {"key": key, "label": key.split(".", 1)[1], "value": flat[key]}
-    cells = len(run.cells)
     return {
         **run.info(),
-        "cells": cells,
-        "planned": run.planned_cells,
+        "cells": run.done_cells,
+        "planned": run.planned_cells if run.planned_cells is not None else run.done_cells,
         "errors": run.error_count(),
         "best": best,
         "merkmal": merkmal,

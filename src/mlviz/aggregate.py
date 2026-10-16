@@ -88,6 +88,21 @@ def _cells(run: Run) -> pd.DataFrame:
     return c
 
 
+def cell_key(channels: pd.DataFrame, cells: pd.DataFrame) -> str:
+    """Column that ties `channels` rows to `cells` rows: `row` (a duplicate cell shares the `cell_id` of
+    its original, so `cell_id` alone would pair every copy with every copy), else `cell_id`."""
+    return "row" if "row" in channels.columns and "row" in cells.columns else "cell_id"
+
+
+def join_cells(channels: pd.DataFrame, cells: pd.DataFrame, cols: list[str], how: str = "inner") -> pd.DataFrame:
+    """`channels` with the columns `cols` of the matching `cells` rows (inner join on `cell_key`).
+    Identity columns that `channels` repeats from `cells` are taken from `cells`."""
+    key = cell_key(channels, cells)
+    right = cells[list(dict.fromkeys([key, *[c for c in cols if c != key]]))]
+    left = channels.drop(columns=[c for c in right.columns if c != key and c in channels.columns])
+    return left.merge(right, on=key, how=how)
+
+
 def _counts(cells: pd.DataFrame, column: str) -> dict[str, int]:
     if cells.empty or column not in cells.columns:
         return {}
@@ -259,8 +274,8 @@ def run_table(run: Run, project: Project, query: dict) -> dict:
         ch[CHANNEL] = ch[CHANNEL].map(str)
         if channel_sel:
             ch = ch[ch[CHANNEL].isin(channel_sel)]
-        dims_cols = ["cell_id"] + [c for c in axes + reps if c in ok_cells.columns]
-        base = ch.merge(ok_cells[dims_cols], on="cell_id", how="inner")
+        dims_cols = [cell_key(ch, ok_cells)] + [c for c in axes + reps if c in ok_cells.columns]
+        base = join_cells(ch, ok_cells, dims_cols)
         if not channel_split:
             # average the selected channels per cell first, so sd stays a sd over cells
             mcols = [m for m in metrics if m in base.columns]
@@ -434,7 +449,7 @@ def _overview(
         ch[CHANNEL] = ch[CHANNEL].map(str)
         if channel_sel:
             ch = ch[ch[CHANNEL].isin(channel_sel)]
-        joined = ch.merge(ok[["cell_id"]], on="cell_id", how="inner")
+        joined = join_cells(ch, ok, [cell_key(ch, ok)])
         if metric in joined.columns and len(joined):
             cards.append(_card(CHANNEL, "channel", stats(joined, CHANNEL, list(dict.fromkeys(joined[CHANNEL])))))
     cards = [c for c in cards if len(c["values"]) > 1]

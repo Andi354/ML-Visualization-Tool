@@ -8,22 +8,42 @@ The tool knows nothing about a project except these files. Every reader tolerate
 
 | File | Content used |
 |---|---|
-| `project.yaml` | `name`, `short` (badge, 2 letters), `paths` (`runs`, `analyses`, `deliverables`, `reports`, `configs`), `metrics` (`key`, `label`, `direction`, `family`, optional `unit` and `scale`: the stored value times `scale` is shown with `unit`, e.g. a MAPE stored as a share with `scale: 100`, `unit: "%"`), `primary_metric`, `own_model` |
+| `project.yaml` | `name`, `paths` (`runs`, `configs`), `outputs` (`analysis`, `research`, `deliverables`; `reports` is derived from `analysis`), `metrics` (`key`, `direction`, optional `label`, `unit` and `scale`: the stored value times `scale` is shown with `unit`, e.g. a MAPE stored as a share with `scale: 100`, `unit: "%"`; `viz.family` per metric), `primary_metric`, `viz` (`short` = badge, 2 letters; `own_model`). The earlier flat form (`paths.analyses`, top-level `short`, `own_model`, metric `family`) still reads |
 | `epochs.yaml` | `epochs: [{name, since, description}]` |
-| `runs/<timestamp>_<experiment>/meta.json` | `experiment`, `issue`, `started`, `ended` (null = running), `axes`, `replicates`, `primary_metric`, `epoch`, `migrated`, `commit`, `plan.cells`, `counts` |
+| `runs/<YYYY-MM-DD_HHMM>_<name>/meta.json` | `name`, `store_version`, `issue`, `config`, `started_at`, `ended_at`, `axes`, `replicates`, `primary_metric`, `epoch`, `commit`, `plan: {cells, excluded, duplicates}`, `counts` (final tally, not used for progress); `migrated: true` marks converted runs |
 | `.../config.yaml` | resolved config: blocks `data`, `model`, `train`, `sweep`, `replicates`, `run`, `report` |
-| `.../cells.parquet` | one row per cell: `cell_id`, axis columns (text; lists as JSON, paired axes as one label column), replicate columns, `status` (`ok`/`error`), `duration_s`, metric columns |
-| `.../channels.parquet` | cell x channel: `cell_id`, `channel`, metric columns |
-| `.../plan.parquet` | planned cells (axis and replicate values) |
-| `.../curves/<cell_id>.parquet` | `shuffle_seed`, `cv_fold`, `epoch`, `train_loss`, `val_loss` (optional) |
-| `.../predictions/<cell_id>.parquet` | `shuffle_seed`, `cv_fold`, `channel`, `origin` (optional), `date`, `actual`, `prediction` (optional) |
+| `.../config.base.yaml` | the merged base configs as they were at the start of the run (missing for migrated runs) |
+| tables, through `ds-store` | `plan`: `row`, `cell_id`, `duplicate_of`, axes, replicates. `cells`: one row per planned cell, those plus `is_duplicate`, `status` (`ok`/`error`), `error`, `duration_s`, `finished_at`, `shard`, metric columns. `channels`: cell x channel (`cell_id`, `channel`, metric columns). `curves`: `cell_id`, `epoch`, `metric` (`train_loss`, `val_loss`), `value`. `predictions`: `cell_id`, `date`, `channel`, `y_pred`, `y_true` (whole test period) |
 
-The format of `curves/` and `predictions/` is an assumption (no real run has them yet, see the spec,
-"Open"). It is checked against the first real runs.
+**Run tables are read only through `ds-store`** (`read_table`, `list_runs`, `run_status`,
+`table_version`), wrapped in `store.py`; the tool has no reader of its own and never opens a table file.
+`ds-store` is a package of its own (not on an index) and lives next to this repo in `../ds-store`:
+`make setup` installs it from there (`DS_STORE=` overrides the path), the Dockerfile builds it from the
+build context `ds-store` (docker-compose.yml passes `DS_STORE_PATH`, default `../ds-store`; plain docker:
+`--build-context ds-store=../ds-store`), so the image contains it and the container needs no sibling
+folder. Installing the tool's wheel elsewhere needs ds-store installed first (`pip install ../ds-store
+dist/ml_visualization_tool-*.whl`). Axis values are text
+(lists as JSON, paired axes as one label column). `curves` and `predictions` exist once per `cell_id`
+and carry no replicate columns (`read_table(..., with_cells=True)` adds them). A duplicate cell
+(`is_duplicate`) has the values of its original and shares its `cell_id`, so `channels` are tied to
+`cells` by `row` (`aggregate.join_cells`), never by `cell_id`. A missing table reads as empty (the
+wrapper returns None); derived cells (`forecaster: hybrid`) leave `ensemble_*` axes empty on all other
+cells, and an empty axis value is a value of its own. The package sorts `channels` by name, so regions
+appear alphabetically, not in model order. Caches are keyed by `table_version` (and `meta.json`), so a
+running experiment shows up as it writes. Errors from the package (`UnsupportedStoreVersion`) become
+`StoreError`; without the package installed the API answers 409 and the run list shows that `ds-store`
+is missing.
 
-Run folders are named `<YYYY-MM-DD_HHMM[SS]>_<experiment>` (a timestamp suffix is accepted too). The
-experiment name is `meta.json: experiment`, else the folder name without the timestamp; the issue is
-`meta.json: issue`, else the prefix of the experiment name (`TIM-52_best_30` -> `TIM-52`).
+State and progress are `run_status`: `finished` (`ended_at` set), `running` (something written within 15
+minutes) or `stalled` (a crash, or one very long cell); `planned` is None for runs without `plan.parquet`.
+The run list shows a stalled run as unfinished with the flag "steht still". `list_runs` lists a run written
+by a newer package with `state: "unsupported"` and a `message`: the run list shows it with the flag
+"nicht lesbar" (the message as tooltip) and no numbers, the project widgets leave it out, and its own
+views answer 409 with the message. The status is cached for 30 seconds (the clock moves running to stalled).
+
+Run folders are named `<YYYY-MM-DD_HHMM>_<name>` (older layouts with seconds or a timestamp suffix are
+accepted too). The run name is `meta.json: name`, else the folder name without the timestamp; the issue is
+`meta.json: issue`, else the prefix of the name (`TIM-52_best_30` -> `TIM-52`).
 
 ## Concepts
 
@@ -62,7 +82,7 @@ experiment name is `meta.json: experiment`, else the folder name without the tim
 max over the successful cells of a group, `n` counts only those, `errors` the failed cells. A group
 with only failed cells stays in the table with empty metrics and sorts last in both directions. Sorting
 and the best value (by the metric's `direction`) run over all groups before the first 200 are returned.
-Channel "je Kanal" and a channel selection read `channels.parquet`; a selection without splitting
+Channel "je Kanal" and a channel selection read the `channels` table; a selection without splitting
 averages the selected channels per cell first. The overview cards use mean and sd over the cells with
 that value under the current filters; the histogram counts the group means.
 
@@ -70,9 +90,9 @@ that value under the current filters; the histogram counts the group means.
 
 `configview.run_config` takes the resolved `config.yaml` and, for a combination, sets the swept keys
 to the combination's values (the value of a label is found by its position in the grid order, which
-equals the order in `sweep:`). The base config is the merge of the `base:` files of the run's source
-config (`meta.json: config`); migrated runs have none, so nothing is marked as differing from base. An
-entry differs when the base has the key with another value. The frontend (`web/src/config/`) renders
+equals the order in `sweep:`). The base config is `config.base.yaml` in the run folder, not today's
+files in `configs/base/` (those are living); runs without it (migrated ones) have none, so nothing is
+marked as differing from base. An entry differs when the base has the key with another value. The frontend (`web/src/config/`) renders
 the same data as "Blöcke" or "YAML"; the choice is stored per project.
 
 ## Widgets and boards
@@ -88,9 +108,10 @@ A *board* (`web/src/widgets/board.ts`) is a description `{scope, widgets: [{id, 
 tool only renders it. The selection of widgets is stored per project and scope. The detail panel (F)
 is a board of scope `combination`; `WidgetTile` is the tile with header, settings and figure.
 
-Detail widgets read `curves/` and `predictions/` of the cells of the combination (the first fold only).
-`predictions` windows: with an `origin` column the stored window nearest to the requested date is
-plotted, else a `pred_len` slice of the test period; the default is the last window.
+Detail widgets read the `curves` and `predictions` tables for the cells of the combination (the first
+fold only; the fold is chosen on `cells`). `predictions` cover the whole test period, so the window is a
+`pred_len` slice starting at the requested date; the default is the last window. (A table with an
+`origin` column would still plot the stored window nearest to the requested date.)
 
 ## Two runs and project history
 
@@ -132,7 +153,8 @@ a single image), and one footer. Group file names are `NN_<type>+<type>.png`.
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.
-- `src/mlviz/runs.py`: `Run` (lazy, cached by mtime), `list_runs`, `get_run`. Run ids never leave `runs/`.
+- `src/mlviz/store.py`: the only reader of run tables (wraps `ds-store`, caches by `table_version`).
+- `src/mlviz/runs.py`: `Run` (meta, config, tables and state through `store.py`), `list_runs`, `get_run`. Run ids never leave `runs/`.
 - `src/mlviz/aggregate.py`: dimensions, constants and group table of one run (feature D).
 - `web/src/experiment/`: experiment view; `model.ts` holds the pure logic (dimension state, chips, columns, formatting).
 - `src/mlviz/configview.py`, `web/src/config/`: config view (feature J).
@@ -144,7 +166,7 @@ a single image), and one footer. Group file names are `NN_<type>+<type>.png`.
 - `src/mlviz/linear.py`: Linear client and local issue links.
 - `web/src/runs/model.ts`: pure logic of the Läufe area (filters, blocks, texts, timeline); components next to it.
 - `src/mlviz/server.py`: FastAPI app, `/api/...`, serves `src/mlviz/static` (the built frontend).
-- `src/mlviz/fixture.py`: synthetic demo project (`mlviz demo`), the base of all tests.
+- `src/mlviz/fixture.py`: synthetic demo project in the run format, written with the writers of `ds-store` (`mlviz demo`), the base of all tests. The package's `write_example_run` (8 cells) is too small for the views; `tests/test_store.py` uses it to check that the tool reads what the package writes.
 - `web/src/state/frame.ts`: frame state (areas, tabs). Stored per project in `localStorage`
   (`mlviz:v1:<project>:...`), every access guarded.
 - `web/src/tokens.css` is generated from `design/tokens.json` (`npm run tokens`); never edit it.

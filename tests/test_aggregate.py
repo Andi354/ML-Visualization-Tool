@@ -110,7 +110,7 @@ def test_channels_split_adds_a_column_and_takes_values_from_the_channel_table(pr
     t = table(r52, project, dims={"channel": {"mode": "split"}})
     assert t["params"] == ["forecaster", "channel"]
     assert t["groups"] == 5 * 4
-    ch = r52.channels.merge(r52.ok_cells()[["cell_id", "forecaster"]], on="cell_id")
+    ch = r52.channels.drop(columns="forecaster").merge(r52.ok_cells()[["row", "forecaster"]], on="row")
     for r in t["rows"][:6]:
         v = ch[(ch["forecaster"] == r["params"]["forecaster"]) & (ch["channel"] == r["params"]["channel"])][M]
         assert r["metrics"][M]["mean"] == pytest.approx(v.mean())
@@ -125,8 +125,8 @@ def test_channel_selection_filters_channels(project, r52):
 def test_channel_selection_without_split_averages_the_selected_channels(project, r52):
     t = table(r52, project, dims={"channel": {"mode": "agg", "sel": ["us", "eu"]}})
     assert t["params"] == ["forecaster"] and t["groups"] == 5
-    ch = r52.channels[r52.channels["channel"].isin(["us", "eu"])].groupby("cell_id")[M].mean()
-    ok = r52.ok_cells().set_index("cell_id")
+    ch = r52.channels[r52.channels["channel"].isin(["us", "eu"])].groupby("row")[M].mean()
+    ok = r52.ok_cells().set_index("row")
     expected = ch.reindex(ok.index).groupby(ok["forecaster"]).mean()
     for r in t["rows"]:
         assert r["metrics"][M]["mean"] == pytest.approx(expected[r["params"]["forecaster"]])

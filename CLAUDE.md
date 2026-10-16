@@ -15,10 +15,11 @@ Language: chat and Linear in German, code and docs in English.
 - `make wheel`: builds `dist/ml_visualization_tool-<version>-py3-none-any.whl` (committed, one file, the previous build is removed)
 - `docker compose up --build`: runs the tool for the project in `MLVIZ_PROJECT_PATH` (see `.env.example`)
 - `.venv/bin/mlviz demo <dir>`: writes a synthetic demo project
+- `ds-store` (reads the runs) is not in this repo: it sits next to it in `../ds-store` (`make setup` installs it, `DS_STORE=` overrides the path; the image builds it in)
 
 ## Layout
 
-- `src/mlviz/`: backend (FastAPI), reads `runs/`; `web/`: frontend (Vite, Preact, TypeScript)
+- `src/mlviz/`: backend (FastAPI), reads `runs/` through `ds-store` (`store.py`); `web/`: frontend (Vite, Preact, TypeScript)
 - `tests/`: pytest (`tests/browser/` = Playwright); `web/tests/`: vitest
 - `docs/technical-reference.md`: what the tool reads from a project and how the code is organised
 - `design/`: principles, tokens, `updates/v<version>-<shortname>/` (spec, prototype)

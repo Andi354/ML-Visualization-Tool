@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-from pathlib import Path
 from typing import Any
 
 import yaml
@@ -24,34 +23,6 @@ def compact(v: Any) -> str:
     return display_value(v)
 
 
-def _deep_merge(a: dict, b: dict) -> dict:
-    out = dict(a)
-    for k, v in b.items():
-        out[k] = _deep_merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else v
-    return out
-
-
-def base_config(project: Project, run: Run) -> dict | None:
-    """Merged `base:` files of the run's source config, or None when the run has no source config."""
-    src = run.meta.get("config")
-    if not src:
-        return None
-    path = (project.root / src).resolve()
-    if project.root not in path.parents or not path.is_file():
-        return None
-    try:
-        own = yaml.safe_load(path.read_text()) or {}
-    except (OSError, yaml.YAMLError):
-        return None
-    merged: dict = {}
-    for rel in own.get("base") or []:
-        b = (path.parent / rel).resolve()
-        if project.root in b.parents and b.is_file():
-            try:
-                merged = _deep_merge(merged, yaml.safe_load(b.read_text()) or {})
-            except (OSError, yaml.YAMLError):
-                continue
-    return merged
 
 
 def _raw_for_label(run: Run, axis: str, label: str) -> tuple[bool, Any]:
@@ -75,7 +46,7 @@ def run_config(project: Project, run: Run, combo: dict[str, str] | None = None) 
     combo = combo or {}
     sweep = cfg.get("sweep") or {}
     axes = dimension_axes(run)
-    base = base_config(project, run)
+    base = run.base_config  # the merged base configs of the run's start; None for runs without
 
     grid_axes: list[dict] = []
     swept: dict[tuple[str, str], list[str]] = {}  # (block, key) -> all values of the grid

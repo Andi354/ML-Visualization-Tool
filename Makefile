@@ -1,7 +1,10 @@
 .PHONY: setup web test test-web test-browser build wheel
 
+# ds-store lives next to this repo (it is not on an index); override with DS_STORE=/path/to/ds-store
+DS_STORE ?= ../ds-store
+
 setup:
-	uv venv .venv && uv pip install -p .venv/bin/python -e ".[dev]"
+	uv venv .venv && uv pip install -p .venv/bin/python -e "$(DS_STORE)" && uv pip install -p .venv/bin/python -e ".[dev]"
 	cd web && npm ci
 
 web:

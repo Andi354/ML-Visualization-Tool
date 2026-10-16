@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from ..aggregate import CHANNEL, _ordered_values, dimension_axes, has_channels
+from ..aggregate import CHANNEL, _ordered_values, dimension_axes, has_channels, join_cells
 from ..project import Metric, Project
 from ..runs import Run, get_run
 from .common import combo_cells, de, metric_text
@@ -198,7 +198,7 @@ def per_region(project: Project, req: dict) -> dict:
     sub = frame
     for a, v in fixed.items():
         sub = sub[sub[a] == v]
-    joined = ch.assign(**{CHANNEL: ch[CHANNEL].map(str)}).merge(sub[["cell_id", axis]], on="cell_id", how="inner")
+    joined = join_cells(ch.assign(**{CHANNEL: ch[CHANNEL].map(str)}), sub, [axis])
     if joined.empty:
         return {"unavailable": "Keine Werte je Region"}
     series = [v for v in _ordered_values(run, axis) if v in set(joined[axis])]

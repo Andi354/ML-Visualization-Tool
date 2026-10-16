@@ -73,7 +73,7 @@ def local_links(project: Project, issue: str) -> dict[str, str | None]:
     `README.md` mentions it.
     """
     analysis = None
-    base = project.path("analyses")
+    base = project.path("analysis")
     if base.is_dir():
         for d in sorted(base.iterdir()):
             if d.is_dir() and (d.name == issue or d.name.startswith(issue + "_")):
