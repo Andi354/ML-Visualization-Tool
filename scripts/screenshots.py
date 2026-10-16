@@ -13,6 +13,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
 os.environ["MLVIZ_NOW"] = "2026-10-15T12:00:00"
 
+import ds_store_stub  # noqa: E402
+
+ds_store_stub.install()  # until the ds-store package is installed
+
 from browser.conftest import serve  # noqa: E402
 from browser.helpers import folder  # noqa: E402
 from playwright.sync_api import sync_playwright  # noqa: E402

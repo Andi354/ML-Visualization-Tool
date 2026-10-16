@@ -77,7 +77,7 @@ def test_entries_that_differ_from_the_base_config_are_marked_with_the_base_value
     assert block["model"]["differs"] == 1 and block["run"]["differs"] == 1 and block["data"]["differs"] == 0
 
 
-def test_without_a_source_config_there_is_no_base_comparison(project):
+def test_a_run_without_config_base_has_no_base_comparison(project):
     c = configview.run_config(project, run_of(project, "TIM-45_g6_combined"))
     assert not c["base_known"]
     assert all(not e["differs"] for b in c["blocks"] for e in b["entries"])
@@ -124,3 +124,21 @@ def test_endpoint_with_combination_and_errors(demo_project):
     assert ok.status_code == 200 and ok.json()["grid"]["axes"][0]["current"] == "ets"
     assert client.get(f"/api/runs/{rid}/config", params={"combo": "{nope"}).status_code == 400
     assert client.get("/api/runs/2020-01-01_000000_gone/config").status_code == 404
+
+
+def test_the_base_is_the_one_stored_in_the_run_not_todays_file(tmp_path):
+    root = make_project(tmp_path / "p")
+    rid = run_folder(RUNS[6])
+    # the living base in configs/base/ changes after the run: the comparison must not follow it
+    base_file = root / "configs" / "base" / "demo_daily.yaml"
+    base_file.write_text(base_file.read_text().replace("encoding_size: 64", "encoding_size: 999"))
+    project = Project.load(root)
+    c = configview.run_config(project, get_run(project, rid))
+    enc = next(e for b in c["blocks"] for e in b["entries"] if e["key"] == "encoding_size")
+    assert not enc["differs"]
+    # the stored base decides
+    stored = root / "runs" / rid / "config.base.yaml"
+    stored.write_text(stored.read_text().replace("encoding_size: 64", "encoding_size: 32"))
+    c = configview.run_config(project, get_run(project, rid))
+    enc = next(e for b in c["blocks"] for e in b["entries"] if e["key"] == "encoding_size")
+    assert enc["differs"] and enc["base"] == "32"
