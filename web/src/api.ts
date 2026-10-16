@@ -83,6 +83,21 @@ export const getRuns = () => getJson<RunRow[]>("/api/runs");
 export const getIssues = () => getJson<Record<string, IssueInfo>>("/api/issues");
 export const getRun = (id: string) => getJson<RunInfo>(`/api/runs/${encodeURIComponent(id)}`);
 
+// --- description of a run (v0.2.1, feature H) ----------------------------------------------------
+export interface Description {
+  short: string | null;
+  purpose: string | null;
+  shows: string[];
+  expectation: string | null;
+  notes: string[];
+  /** `run` is the folder of the run it names, null when the project has no such run. */
+  compare_to: { name: string; run: string | null }[];
+  problems: string[];
+}
+/** The description of a run, null for a run without one. */
+export const getDescription = (id: string) =>
+  getJson<{ description: Description | null }>(`/api/runs/${encodeURIComponent(id)}/description`).then((r) => r.description);
+
 // --- experiment view (feature D) -------------------------------------------------------------
 export interface DimValue {
   value: string;

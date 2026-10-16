@@ -63,3 +63,84 @@ def test_a_ds_store_without_the_description_functions_means_no_description(proje
 
     monkeypatch.delattr(ds_store, "read_description")
     assert store.read_description(project.path("runs") / BEST_90) is None
+
+
+# --- H: the description of a run ---------------------------------------------------------------
+TIM45 = fixture.run_folder(next(r for r in fixture.RUNS if r["experiment"] == "TIM-45_g6_combined"))
+BEST_30_SECOND = fixture.run_folder([r for r in fixture.RUNS if r["experiment"] == "TIM-52_best_30"][1])
+
+
+def description(client, run_id):
+    r = client.get(f"/api/runs/{run_id}/description")
+    assert r.status_code == 200
+    return r.json()["description"]
+
+
+def test_a_run_without_a_description_answers_null(client):
+    assert description(client, PLAIN) is None
+
+
+def test_an_unknown_run_is_404(client):
+    assert client.get("/api/runs/gibt-es-nicht/description").status_code == 404
+
+
+def test_the_fields_come_back_as_plain_text(client):
+    d = description(client, BEST_90)
+    assert d["short"].startswith("Bestes Setup")
+    assert d["purpose"].splitlines() == [
+        "Prüfen, ob das beste REP-Net-Setup aus dem Grid auch bei 90 Tagen Horizont vorn liegt.",
+        "Dazu läuft es mit allen Baselines unter denselben Bedingungen.",
+    ]
+    assert d["shows"] == ["REP-Net gegen sarima, ets, prophet und snaive", "Abstand je Horizont-Abschnitt"]
+    assert d["notes"] == ["Gleiche Folds wie TIM-52_best_30"]
+    assert d["expectation"].startswith("REP-Net bleibt vorn")
+    assert d["problems"] == []
+
+
+def test_empty_optional_fields_are_empty_not_missing(client):
+    d = description(client, BEST_30_SECOND)
+    assert d["notes"] == [] and d["compare_to"] == [] and d["expectation"] is None
+
+
+def test_compare_to_names_resolve_to_runs_or_are_marked_unknown(client):
+    d = description(client, BEST_90)
+    assert d["compare_to"] == [
+        {"name": "2026-10-08_1120_TIM-52_best_30", "run": BEST_30_SECOND},
+        {"name": "TIM-99_gibt_es_nicht", "run": None},
+    ]
+
+
+def test_compare_to_also_accepts_the_experiment_name(project):
+    from mlviz import descriptions
+
+    [hit] = descriptions.resolve_compare(project, ["TIM-52_best_30"])
+    assert hit["run"] == BEST_30_SECOND  # the newest run of that name
+
+
+def test_problems_come_with_the_fields_that_can_be_read(client):
+    d = description(client, TIM45)
+    assert d["problems"] == ["shows fehlt"]
+    assert d["short"].startswith("Lernrate und Epochen") and d["purpose"] and d["shows"] == []
+
+
+def test_a_description_that_cannot_be_read_is_a_problem_not_an_error(project, monkeypatch):
+    import ds_store
+
+    from mlviz import descriptions
+
+    def broken(run_dir):
+        raise OSError("kaputt")
+
+    monkeypatch.setattr(ds_store, "read_description", broken)
+    d = descriptions.describe(project, get_run(project, BEST_90))
+    assert d["problems"] == ["kaputt"] and d["purpose"] is None and d["shows"] == []
+
+
+def test_markdown_is_not_interpreted(project, monkeypatch):
+    import ds_store
+
+    from mlviz import descriptions
+
+    monkeypatch.setattr(ds_store, "read_description", lambda d: {"short": "**fett**", "purpose": "# kein Titel", "shows": ["_x_"], "problems": []})
+    d = descriptions.describe(project, get_run(project, BEST_90))
+    assert d["short"] == "**fett**" and d["purpose"] == "# kein Titel" and d["shows"] == ["_x_"]

@@ -179,11 +179,19 @@
 }
 
 /* main */
+/* one scroll column (v0.2.1): description, overview, toolbar and table scroll together */
 .exp-main {
   flex: 1 1 0;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
+  overflow: auto;
+  position: relative;
+}
+/* the toolbar sticks to the top of the column, the table header right below it (--toolbar-h is measured) */
+.exp-toolbar-box {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  background: var(--bg);
 }
 .exp-toolbar {
   flex: none;
@@ -353,9 +361,6 @@
 
 /* table */
 .exp-table-wrap {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
   padding: 0 var(--gutter) 16px;
 }
 .exp-table {
@@ -365,8 +370,13 @@
 .exp-table.stale {
   opacity: 0.6;
 }
-.exp-table th {
+/* both header rows stick as one block right below the toolbar, so no row height has to be known */
+.exp-table thead {
   position: sticky;
+  top: var(--toolbar-h, 49px);
+  z-index: 2;
+}
+.exp-table th {
   background: var(--bg);
   text-align: left;
   font-weight: 500;
@@ -374,16 +384,12 @@
   white-space: nowrap;
 }
 .exp-table .group-row th {
-  top: 0;
-  z-index: 2;
   padding: 10px var(--cell-padding) 4px;
   font-size: var(--size-tiny);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .exp-table .col-row th {
-  top: 33px;
-  z-index: 2;
   padding: 4px var(--cell-padding) 6px;
   border-bottom: 1px solid var(--line);
 }
@@ -441,4 +447,120 @@
 }
 .stat-cell.error {
   color: var(--error);
+}
+
+/* description of the run and the own line of the overview (v0.2.1) */
+.desc-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px var(--gutter);
+  background: #10141c;
+  border-bottom: 1px solid var(--line);
+}
+.desc-line,
+.ov-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.desc-line:hover,
+.ov-line:hover {
+  background: none;
+}
+.ov-line {
+  padding: 8px var(--gutter);
+  background: #0f131b;
+  border-bottom: 1px solid var(--line);
+}
+.ov-line:hover {
+  background: #0f131b;
+}
+.desc-label,
+.desc-field-label {
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.desc-field-label {
+  margin-bottom: 5px;
+}
+.desc-short {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--size-body, 13px);
+  color: color-mix(in srgb, var(--text), var(--text-2));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ov-hint {
+  flex: 1;
+  font-size: var(--size-small);
+  color: var(--text-3);
+}
+.desc-fold {
+  font-size: var(--size-small);
+  color: var(--accent);
+  white-space: nowrap;
+}
+.desc-grid {
+  display: grid;
+  gap: 24px;
+  font-size: 13px;
+}
+.desc-grid p {
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+.desc-grid ul {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.5;
+}
+.desc-grid li {
+  margin-bottom: 2px;
+}
+.desc-warn {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 7px 10px;
+  font-size: var(--size-small);
+  color: var(--warn);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  border-radius: 5px;
+}
+.desc-compare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.desc-compare .desc-field-label {
+  margin: 0 4px 0 0;
+}
+.desc-chip {
+  padding: 3px 8px;
+  font-size: var(--size-small);
+  color: color-mix(in srgb, var(--text), var(--text-2));
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-line);
+  border-radius: 4px;
+}
+.desc-chip.unknown {
+  color: var(--text-3);
+  background: transparent;
+  border-color: var(--line);
+  text-decoration: line-through;
+  cursor: default;
 }

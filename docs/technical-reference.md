@@ -295,6 +295,20 @@ fields `short`, `purpose`, `shows`, `notes`, `expectation`, `compare_to` and a l
   `has_description`. The run list shows it as its own line (`.short-line`) between name and axes, the view
   Issues above the tags; the search of Läufe and the Issues view also matches it. The agent's `find_runs`
   (`text`) matches the run id, `short`, `purpose` and `shows`.
+- **Description (run tab):** `GET /api/runs/{id}/description` answers `{description}`: `null` without
+  `description.yaml`, else `descriptions.describe`: `short`, `purpose` and `expectation` (text), `shows` and
+  `notes` (lists), `compare_to` (`{name, run}`, `run` = the folder the name resolves to, by folder name first,
+  else the newest run of that name, `null` if unknown) and `problems`. Empty fields stay empty, nothing is
+  interpreted as Markdown. A description that cannot be read at all comes back as a problem, not an error.
+  `experiment/Description.tsx` shows it above the overview in `ExperimentView`: the line "BESCHREIBUNG ·
+  short · zuklappen" (folded state per run in the browser storage, written on the click), the fields side
+  by side in the fixed order Zweck (1.5 parts), Soll zeigen, Erwartung, Notizen, then the chips "Vergleichen
+  mit" (a known run opens as a tab or gets the focus, an unknown one is struck through and does nothing).
+  `problems` show a warning box above the fields.
+- **One scroll column:** `.exp-main` scrolls (description, overview line and graphs, toolbar, table; wide
+  tables scroll horizontally in it). The toolbar (`.exp-toolbar-box`) is `position: sticky; top: 0`, its height
+  is measured (`ResizeObserver`) into `--toolbar-h`, and the table head (`thead`, both rows as one block)
+  sticks at `top: var(--toolbar-h)`. The detail panel stays beside the column.
 
 ## Code
 
