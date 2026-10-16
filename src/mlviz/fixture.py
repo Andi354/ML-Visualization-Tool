@@ -32,40 +32,34 @@ CHANNELS = ["us", "eu", "asia", "latam"]
 
 PROJECT = {
     "name": "Demo Bench",
-    "short": "DB",
-    "paths": {
-        "runs": "runs",
-        "analyses": "analysis",
-        "deliverables": "deliverables",
-        "reports": "reports",
-        "configs": "configs",
-    },
+    "paths": {"runs": "runs", "configs": "configs"},
+    "outputs": {"analysis": "analysis", "research": "research", "deliverables": "deliverables"},
     "primary_metric": "test_mse_missing",
     "metrics": [
-        {"key": "test_mse_missing", "label": "MSE skaliert", "direction": "min", "family": "scaled"},
-        {"key": "test_mae_missing", "label": "MAE skaliert", "direction": "min", "family": "scaled"},
-        {"key": "test_rmse_missing", "label": "RMSE skaliert", "direction": "min", "family": "scaled"},
-        {"key": "test_mape_missing", "label": "MAPE skaliert", "direction": "min", "family": "scaled"},
+        {"key": "test_mse_missing", "label": "MSE skaliert", "direction": "min", "viz": {"family": "scaled"}},
+        {"key": "test_mae_missing", "label": "MAE skaliert", "direction": "min", "viz": {"family": "scaled"}},
+        {"key": "test_rmse_missing", "label": "RMSE skaliert", "direction": "min", "viz": {"family": "scaled"}},
+        {"key": "test_mape_missing", "label": "MAPE skaliert", "direction": "min", "viz": {"family": "scaled"}},
         {
             "key": "test_mape",
             "label": "MAPE",
             "direction": "min",
-            "family": "real",
+            "viz": {"family": "real"},
             "unit": "%",
             "scale": 100,
         },
-        {"key": "test_mae", "label": "MAE", "direction": "min", "family": "real"},
-        {"key": "test_mse", "label": "MSE", "direction": "min", "family": "real"},
-        {"key": "test_rmse", "label": "RMSE", "direction": "min", "family": "real"},
-        {"key": "test_commitment_cost", "label": "Commitment Cost", "direction": "min", "family": "real"},
+        {"key": "test_mae", "label": "MAE", "direction": "min", "viz": {"family": "real"}},
+        {"key": "test_mse", "label": "MSE", "direction": "min", "viz": {"family": "real"}},
+        {"key": "test_rmse", "label": "RMSE", "direction": "min", "viz": {"family": "real"}},
+        {"key": "test_commitment_cost", "label": "Commitment Cost", "direction": "min", "viz": {"family": "real"}},
         {
             "key": "test_asymmetric_cost_real",
             "label": "Asymmetrische Kosten",
             "direction": "min",
-            "family": "real",
+            "viz": {"family": "real"},
         },
     ],
-    "own_model": {"axis": "forecaster", "value": "rep-net"},
+    "viz": {"short": "DB", "own_model": {"axis": "forecaster", "value": "rep-net"}},
 }
 
 EPOCHS = {
@@ -457,7 +451,7 @@ def make_project(root: Path | str) -> Path:
                 )
             )
         _write_run(root, r)
-    for sub in ("reports", "deliverables", "analysis"):
+    for sub in ("deliverables", "analysis"):
         (root / sub).mkdir(exist_ok=True)
     # an analysis and a deliverable folder linked to TIM-52 by the issue ID
     (root / "analysis" / "TIM-52_best_config").mkdir(exist_ok=True)
