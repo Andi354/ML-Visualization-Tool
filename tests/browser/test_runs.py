@@ -47,6 +47,7 @@ def test_click_on_issue_head_expands_and_collapses(page):
 
 
 def test_blocks_are_sorted_by_their_newest_run_standalone_rows_at_their_own_date(page):
+    expect(page.get_by_test_id("issue-block").first).to_be_visible()  # the list is loaded
     keys = page.locator("[data-testid=issue-block], [data-testid=run-row].standalone").evaluate_all(
         "els => els.map(e => e.dataset.issue || e.dataset.run)"
     )

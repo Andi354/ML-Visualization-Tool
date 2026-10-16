@@ -236,6 +236,11 @@ def run_folder(r: dict) -> str:
     return f"{r['ts']:%Y-%m-%d_%H%M}_{r['experiment']}"
 
 
+def _seed(r: dict) -> str:
+    """Seed text of a run for the made-up numbers (independent of the folder name format)."""
+    return f"{r['ts']:%Y-%m-%d_%H%M%S}_{r['experiment']}"
+
+
 def _metrics(r: dict, combo: dict, rep: dict, channel: str | None = None) -> dict[str, float]:
     key = tuple(sorted((k, label(v)) for k, v in combo.items()))
     eff = 0.0
@@ -247,7 +252,7 @@ def _metrics(r: dict, combo: dict, rep: dict, channel: str | None = None) -> dic
             e *= 0.08
         eff += e
     pred_len = r["config"]["data"]["pred_len"]
-    noise = _unit(run_folder(r), key, tuple(sorted(rep.items())), channel) * 0.04
+    noise = _unit(_seed(r), key, tuple(sorted(rep.items())), channel) * 0.04
     ch = 0.0 if channel is None else _unit(channel, key) * 0.05 + CHANNELS.index(channel) * 0.04
     mse = 0.8 * (1 + eff) * (1 + 0.004 * pred_len) * (1 + noise) * (1 + ch)
     mape = 0.025 * math.sqrt(mse / 0.8) * (1 + 0.003 * pred_len)
@@ -290,7 +295,7 @@ def _write_run(root: Path, r: dict) -> None:
         for rep in reps:
             planned.append({"combo": c, "rep": rep})
 
-    rng = np.random.default_rng(abs(hash_int(run_folder(r))))
+    rng = np.random.default_rng(abs(hash_int(_seed(r))))
     n_written = len(planned)
     if r.get("running"):
         n_written = int(len(planned) * r["running"])
@@ -380,7 +385,7 @@ def _write_run(root: Path, r: dict) -> None:
         "replicates": rep_keys,
         "primary_metric": "test_mse_missing",
         "epoch": r["epoch"],
-        "commit": hashlib.sha1(run_folder(r).encode()).hexdigest()[:7],
+        "commit": hashlib.sha1(_seed(r).encode()).hexdigest()[:7],
         "plan": {"cells": len(planned), "excluded": 0, "duplicates": n_dup},
     }
     if r.get("migrated"):
