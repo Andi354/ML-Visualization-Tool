@@ -221,7 +221,7 @@ comes from `modelUsage.*.contextWindow`, the cache lifetime is 3600 s, 300 s wit
 request at a time; stop terminates the process ("Abgebrochen"). A message into a chat with more than 50 000 tokens
 and a cold cache is held back in the browser before any call (`model.needsColdHint`). `/compact` works in `-p` mode
 (`system/compact_boundary` carries `pre_tokens` and `post_tokens`) and is offered while the cache is warm and the chat has
-at least 10 000 tokens. The command can be replaced with `MLVIZ_CLAUDE` (the tests use `tests/fake_claude.py`). An empty
+at least 10 000 tokens. The command is `claude` from the PATH, else the binary of the newest Claude Code VS Code extension (`~/.vscode-server/extensions/anthropic.claude-code-*/resources/native-binary/claude`); `MLVIZ_CLAUDE` replaces it (the tests use `tests/fake_claude.py`). An empty
 Claude Code session already carries tens of thousands of tokens when the user has many plugins and skills installed;
 the context bar shows that honestly.
 

@@ -6,7 +6,8 @@ tool. The stream is read line by line; every change of the chat (the message, ea
 handed out as a snapshot so the browser can show it live. The tool never asks the agent for numbers it can
 compute itself: context and cache come from the usage of the last API call, the clock of the tool and the TTL.
 
-`MLVIZ_CLAUDE` replaces the `claude` command (a command line; the tests use a stand-in).
+`MLVIZ_CLAUDE` replaces the `claude` command (a command line; the tests use a stand-in). Without it the PATH is searched,
+then the newest Claude Code VS Code extension under `~/.vscode-server/extensions`.
 """
 
 from __future__ import annotations
@@ -14,12 +15,14 @@ from __future__ import annotations
 import json
 import os
 import queue
+import re
 import secrets
 import shlex
 import shutil
 import subprocess
 import threading
 import time
+from pathlib import Path
 from dataclasses import dataclass, field
 from collections.abc import Iterator
 from typing import Any
@@ -70,8 +73,19 @@ def command() -> list[str] | None:
     custom = os.environ.get("MLVIZ_CLAUDE")
     if custom:
         return shlex.split(custom)
-    found = shutil.which("claude")
+    found = shutil.which("claude") or _vscode_claude()
     return [found] if found else None
+
+
+def _vscode_claude() -> str | None:
+    """The `claude` binary shipped with the Claude Code VS Code extension (newest version), for hosts where it is not on the PATH."""
+    root = Path.home() / ".vscode-server" / "extensions"
+    found = []
+    for path in root.glob("anthropic.claude-code-*/resources/native-binary/claude"):
+        version = re.search(r"claude-code-(\d+(?:\.\d+)*)", path.parent.parent.parent.name)
+        if version and os.access(path, os.X_OK):
+            found.append((tuple(int(n) for n in version.group(1).split(".")), str(path)))
+    return max(found)[1] if found else None
 
 
 def api_key_set() -> bool:
@@ -84,7 +98,7 @@ def setup_check() -> dict[str, Any]:
     cmd = command()
     if cmd is None:
         out["problem"] = "Claude Code ist nicht installiert (oder die Anwendung läuft in Docker)."
-        out["step"] = "Claude Code installieren und das Tool ohne Docker starten (`make run`)."
+        out["step"] = "Claude Code installieren und das Tool ohne Docker starten (`make run`); liegt `claude` nicht im PATH, den Pfad in `MLVIZ_CLAUDE` setzen."
         return out
     try:
         r = subprocess.run([*cmd, "auth", "status"], capture_output=True, text=True, timeout=30)
