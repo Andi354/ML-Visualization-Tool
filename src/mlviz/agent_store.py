@@ -126,6 +126,9 @@ class AgentStore:
             except (OSError, ValueError):
                 continue
             if isinstance(chat, dict) and _ID.match(str(chat.get("id", ""))):
-                out.append({k: v for k, v in chat.items() if k != "messages"} | {"messages_n": len(chat.get("messages") or [])})
-        out.sort(key=lambda c: (c.get("updated_at") or "", c["id"]), reverse=True)
+                out.append({k: v for k, v in chat.items() if k != "messages"} | {"messages_n": len(chat.get("messages") or []), "_mtime": f.stat().st_mtime_ns})
+        # same second (or a fixed clock in tests): the file written last is the newest
+        out.sort(key=lambda c: (c.get("updated_at") or "", c["_mtime"]), reverse=True)
+        for c in out:
+            del c["_mtime"]
         return out

@@ -78,10 +78,14 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `POST /api/widgets/{key}` | data of one widget: `{run, combo, settings}` -> `{title, subtitle, note, unavailable, options, data}` |
 | `GET /api/folders?path=` | sub-folders of a project folder (no `runs/`, no hidden folders), for the target picker |
 | `POST /api/deliverables` | writes base64 PNGs below a project folder: `{target, files: [{name, data, title}], title, issue, runs, configs, overwrite}`; 409 with the clashing names unless `overwrite` |
-| `GET /api/agent` | chats of the project (newest first, without messages), the mode of the agent (`direct`, `mixed`, `confirm`) and `now`, the clock of the tool (the cache display counts from it) |
+| `GET /api/agent` | chats of the project (newest first, without messages), the mode of the agent (`direct`, `mixed`, `confirm`) `limits` (subscription usage in percent, if Claude Code reported it) and `now`, the clock of the tool (the cache display counts from it) |
 | `POST /api/agent/chats` | a new empty chat (`Neuer Chat`) |
 | `GET /api/agent/chats/{id}` | one chat with its messages (404 for an unknown or malformed id) |
 | `POST /api/agent/chats/{id}/messages` | appends a message of the user, `{text}` (empty text is a 400); the first one names a new chat |
+| `GET /api/agent/setup` | `{ready, problem, step, api_key}`: Claude Code found and logged in (`claude auth status`); `api_key` if `ANTHROPIC_API_KEY` is set |
+| `POST /api/agent/chats/{id}/run` | `{text, context, resend?}` sends a message (a new `claude -p`); answers as server-sent events, each `data:` a snapshot `{chat, busy, limits}`; 409 while the chat is working |
+| `POST /api/agent/chats/{id}/compact` | `/compact` on the session of the chat, streamed like `run` (400 without a session) |
+| `POST /api/agent/chats/{id}/stop` | ends the running `claude` process of the chat (`{stopped}`) |
 | `GET /api/own-widgets?scope=` | own widgets kept in the project as catalog entries (`key` `own:<slug>`, `settings` from the params, `width`, `own: true`) with their `definition` |
 | `POST /api/own-widgets` | keeps a description under its name (the same name overwrites); 400 with `detail.errors` when it is not valid |
 | `POST /api/own-widgets/validate` | `{errors}` for a description, nothing is written |
@@ -198,6 +202,23 @@ first write, nothing else is written into the project): `chats/<id>.json` (one c
 cache chip are computed in the browser from `tokens`, `last_turn_at` and `cache_ttl_s` against the clock of the
 tool (`model.contextUse`, `model.cacheState`), never by asking the agent. `.mlviz/` can be committed (templates and
 own widgets will live there too) or put into the project's `.gitignore`.
+
+**Connection (feature F).** `src/mlviz/agent_run.py`. One message is one call
+`claude -p "[Ansicht: <context>]\n<message>" [--resume <session_id>] --output-format stream-json --verbose --strict-mcp-config
+--allowedTools "Read,Glob,Grep"` in the project folder, with the login of the user running the tool (no Docker; the setup
+check says "nicht eingerichtet" where `claude` is missing or not logged in). The stream is read line by line: the
+`session_id` of `system/init` is stored with the chat, every text block of the answer is appended to the chat and handed
+to the browser as a snapshot, `rate_limit_event` gives the subscription usage (`unifiedWindows.five_hour/seven_day`
+`.utilization`), `result` ends the turn (`is_error` becomes an info line with `error: true` and "Erneut senden").
+`tokens` are the input tokens of the last API call of the turn (`input + cache_creation + cache_read` of the last
+assistant message; the `result` usage adds up all calls of a turn and would overstate the context), the context window
+comes from `modelUsage.*.contextWindow`, the cache lifetime is 3600 s, 300 s with `ANTHROPIC_API_KEY`. A chat runs one
+request at a time; stop terminates the process ("Abgebrochen"). A message into a chat with more than 50 000 tokens
+and a cold cache is held back in the browser before any call (`model.needsColdHint`). `/compact` works in `-p` mode
+(`system/compact_boundary` carries `pre_tokens` and `post_tokens`) and is offered while the cache is warm and the chat has
+at least 10 000 tokens. The command can be replaced with `MLVIZ_CLAUDE` (the tests use `tests/fake_claude.py`). An empty
+Claude Code session already carries tens of thousands of tokens when the user has many plugins and skills installed;
+the context bar shows that honestly.
 
 ## Widget width, order and own widgets (v0.2)
 

@@ -2,14 +2,17 @@
 import type { RefObject } from "preact";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { AgentIcon, MicIcon } from "../frame/icons";
-import { getAgent, getChat, newChat, sendMessage, setMode as putMode, type AgentOverview } from "./api";
+import { compactChat, getAgent, getChat, getSetup, newChat, runMessage, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
 import { defaultRect, fit, moved, resized, type Bounds, type Rect } from "./geometry";
 import {
   cacheState,
-  capsuleText,
+  capsuleView,
   chatMeta,
+  compactState,
   contextUse,
+  limitsLine,
   modeOf,
+  needsColdHint,
   MODES,
   nextMode,
   type AgentMode,
@@ -50,6 +53,11 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
   const [chatsOpen, setChatsOpen] = useState(false);
   const [modesOpen, setModesOpen] = useState(false);
   const [draft, setDraft] = useState("");
+  const [setup, setSetup] = useState<AgentSetup | null>(null);
+  const [limits, setLimits] = useState<Limits | null>(null);
+  const [busyChat, setBusyChat] = useState<string | null>(null);
+  /** The message held back because a cold chat would be read in full again (nothing was sent). */
+  const [hint, setHint] = useState<{ text: string } | null>(null);
   const fetchedAt = useRef(Date.now());
   const messagesEnd = useRef<HTMLDivElement>(null);
   const opened = agent.mode !== "closed";
@@ -74,11 +82,13 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     const o = await getAgent();
     fetchedAt.current = Date.now();
     setOverview(o);
+    setLimits(o.limits);
     return o;
   }, []);
 
   useEffect(() => {
     if (!opened || overview) return;
+    getSetup().then(setSetup).catch(() => {});
     refresh()
       .then(async (o) => {
         const id = agent.chat && o.chats.some((c) => c.id === agent.chat) ? agent.chat : (o.chats[0]?.id ?? null);
@@ -160,15 +170,67 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     onChange({ chat: c.id });
     refresh().catch(() => {});
   };
-  const send = async () => {
-    const text = draft.trim();
-    if (!text) return;
-    setDraft("");
-    const target = chat ?? (await newChat());
-    const updated = await sendMessage(target.id, text);
-    setChat(updated);
-    onChange({ chat: updated.id });
+  const ready = setup?.ready ?? true; // until the check is back, the window is not blocked
+  const busy = !!chat && busyChat === chat.id;
+
+  const onSnapshot = (snap: RunSnapshot) => {
+    setChat((c) => (c && c.id !== snap.chat.id ? c : snap.chat)); // not if the user has opened another chat meanwhile
+    if (snap.limits) setLimits(snap.limits);
+  };
+  /** Sends `text` to `target` (or the current chat, or a new one) and shows the answer as it comes in. */
+  const start = async (text: string, opts: { resend?: boolean; target?: Chat } = {}) => {
+    const target = opts.target ?? chat ?? (await newChat());
+    setChat(target);
+    onChange({ chat: target.id });
+    setBusyChat(target.id);
+    try {
+      await runMessage(target.id, { text, context, resend: opts.resend }, onSnapshot);
+    } catch {
+      /* the chat on disk shows what arrived */
+    }
+    setBusyChat(null);
+    getChat(target.id).then((c) => setChat((cur) => (cur && cur.id !== c.id ? cur : c))).catch(() => {});
     refresh().catch(() => {});
+  };
+  const send = () => {
+    const text = draft.trim();
+    if (!text || busy || !ready) return;
+    if (chat && needsColdHint(chat, nowMs())) {
+      setHint({ text }); // check before any call: nothing is sent
+      return;
+    }
+    setDraft("");
+    start(text).catch(() => {});
+  };
+  const sendAnyway = () => {
+    if (!hint) return;
+    const { text } = hint;
+    setHint(null);
+    setDraft("");
+    start(text).catch(() => {});
+  };
+  const sendInNewChat = async () => {
+    if (!hint) return;
+    const { text } = hint;
+    setHint(null);
+    setDraft("");
+    start(text, { target: await newChat() }).catch(() => {});
+  };
+  const resend = () => {
+    const last = [...(chat?.messages ?? [])].reverse().find((m) => m.k === "user");
+    if (last) start(last.t, { resend: true }).catch(() => {});
+  };
+  const compact = async () => {
+    if (!chat) return;
+    setChatsOpen(false);
+    setBusyChat(chat.id);
+    await compactChat(chat.id, onSnapshot).catch(() => {});
+    setBusyChat(null);
+    refresh().catch(() => {});
+  };
+  const copySession = () => {
+    if (chat?.session_id) navigator.clipboard?.writeText(chat.session_id).catch(() => {});
+    setChatsOpen(false);
   };
 
   const mode: AgentMode = overview?.mode ?? "mixed";
@@ -179,16 +241,17 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
   };
 
   const info = chat ?? { tokens: 0, last_turn_at: null, cache_ttl_s: 3600 };
-  const use = contextUse(info.tokens);
+  const use = contextUse(info.tokens, chat?.context_window || undefined);
   const cache = cacheState(info, nowMs());
   const m = modeOf(mode);
 
   if (agent.mode === "min") {
+    const cap = capsuleView(chat, busy, ready);
     return (
-      <div class="agent-capsule" data-testid="agent-capsule">
+      <div class={"agent-capsule " + cap.state} data-testid="agent-capsule" data-state={cap.state}>
         <AgentIcon size={14} color="var(--accent)" />
         <button class="agent-capsule-text" onClick={() => onChange({ mode: "open" })} data-testid="agent-capsule-open-text">
-          {capsuleText(chat, false)}
+          {cap.text}
         </button>
         <button class="agent-mic round" disabled title={MIC_TIP} aria-label="Sprechen (später)" data-testid="agent-mic">
           <MicIcon size={14} />
@@ -255,6 +318,21 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
             </button>
           ))}
           {!overview?.chats.length && <div class="agent-popover-head">Noch keine Chats</div>}
+          {chat && (
+            <div class="agent-chat-menu" data-testid="agent-chat-menu">
+              <button class="agent-menu-item" disabled={!compactState(chat, nowMs()).enabled || busy} title={compactState(chat, nowMs()).tip} onClick={compact} data-testid="agent-compact">
+                Diesen Chat komprimieren (/compact)
+              </button>
+              <button class="agent-menu-item" disabled={!chat.session_id} onClick={copySession} data-testid="agent-copy-session">
+                Session-ID kopieren
+              </button>
+              {limitsLine(limits) && (
+                <div class="agent-popover-head" data-testid="agent-limits">
+                  {limitsLine(limits)}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -287,25 +365,72 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
               </div>
             );
           return (
-            <div key={i} class="agent-info" data-testid="agent-info">
+            <div key={i} class={"agent-info" + (msg.error ? " error" : "")} data-testid={msg.error ? "agent-error" : "agent-info"}>
               {msg.t}
+              {msg.error && i === (chat?.messages.length ?? 0) - 1 && !busy && (
+                <button class="agent-resend" onClick={resend} data-testid="agent-resend">
+                  Erneut senden
+                </button>
+              )}
             </div>
           );
         })}
+        {busy && (
+          <div class="agent-working" data-testid="agent-working">
+            arbeitet …
+          </div>
+        )}
         <div ref={messagesEnd} />
       </div>
 
       <div class="agent-composer">
+        {setup && !setup.ready && (
+          <div class="agent-notice warn" data-testid="agent-setup-problem">
+            <div>
+              <b>Agent nicht eingerichtet.</b> {setup.problem}
+            </div>
+            <div class="agent-notice-step">{setup.step}</div>
+            <div class="agent-hint-buttons">
+              <button class="agent-btn" onClick={() => getSetup().then(setSetup).catch(() => {})} data-testid="agent-recheck">
+                Erneut prüfen
+              </button>
+            </div>
+          </div>
+        )}
+        {setup?.ready && setup.api_key && (
+          <div class="agent-notice warn small" data-testid="agent-api-key">
+            Der Agent läuft über API-Key, nicht über das Abo.
+          </div>
+        )}
+        {hint && chat && (
+          <div class="agent-notice warn" data-testid="agent-cold-hint">
+            <div>
+              <b>Cache abgelaufen.</b> Diese Nachricht liest den ganzen Chat neu ein (~{Math.round(chat.tokens / 1000)}k Tokens). Noch nichts gesendet.
+            </div>
+            <div class="agent-hint-buttons">
+              <button class="agent-btn primary" onClick={sendAnyway} data-testid="agent-send-anyway">
+                Trotzdem senden
+              </button>
+              <button class="agent-btn" onClick={() => sendInNewChat()} data-testid="agent-send-new">
+                In neuem Chat senden
+              </button>
+              <button class="agent-btn quiet" onClick={() => setHint(null)} data-testid="agent-hint-cancel">
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        )}
         <div class="agent-input-row">
           <input
             value={draft}
+            disabled={!ready}
             placeholder="Frag oder sag dem Agenten, was er tun soll …"
             data-testid="agent-input"
             onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.isComposing) {
                 e.preventDefault();
-                send().catch(() => {});
+                send();
               } else if (e.key === "Tab" && e.shiftKey) {
                 e.preventDefault(); // Shift+Tab cycles the mode instead of moving the focus
                 pickMode(nextMode(mode));
@@ -315,9 +440,15 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
           <button class="agent-mic" disabled title={MIC_TIP} aria-label="Sprechen (später)" data-testid="agent-mic">
             <MicIcon />
           </button>
-          <button class="agent-send" title="Senden (Enter)" aria-label="Senden (Enter)" onClick={() => send().catch(() => {})} data-testid="agent-send">
-            ↑
-          </button>
+          {busy ? (
+            <button class="agent-send stop" title="Stopp" aria-label="Stopp" onClick={() => chat && stopChat(chat.id).catch(() => {})} data-testid="agent-stop">
+              ■
+            </button>
+          ) : (
+            <button class="agent-send" title="Senden (Enter)" aria-label="Senden (Enter)" disabled={!ready} onClick={send} data-testid="agent-send">
+              ↑
+            </button>
+          )}
         </div>
         <div class="agent-mode-row">
           <button class={"agent-mode-btn " + mode} title="Modus wechseln (Shift+Tab)" onClick={() => setModesOpen(!modesOpen)} data-popover data-testid="agent-mode">

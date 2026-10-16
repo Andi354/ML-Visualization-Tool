@@ -400,3 +400,87 @@
   color: var(--text-2);
   border-radius: 14px;
 }
+
+/* connection (feature F): notices above the input, stop button, error lines, capsule states */
+.agent-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 9px 10px;
+  font-size: var(--size-tiny);
+  line-height: 1.45;
+  border: 1px solid var(--warn-line);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  border-radius: 8px;
+}
+.agent-notice b {
+  color: var(--warn);
+  font-weight: 600;
+}
+.agent-notice.small {
+  padding: 5px 10px;
+  color: var(--warn);
+}
+.agent-notice-step {
+  color: var(--text-2);
+}
+.agent-hint-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.agent-btn {
+  padding: 5px 10px;
+  font-size: var(--size-tiny);
+  color: var(--text);
+  border: 1px solid var(--agent-line);
+  border-radius: 5px;
+}
+.agent-btn.primary {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.agent-btn.quiet {
+  color: var(--text-2);
+}
+.agent-send.stop {
+  color: #fff;
+  background: var(--error);
+}
+.agent-working {
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+}
+.agent-info.error {
+  color: var(--error);
+}
+.agent-resend {
+  margin-left: 8px;
+  color: var(--accent);
+  font-size: var(--size-tiny);
+}
+.agent-chat-menu {
+  border-top: 1px solid var(--agent-line);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+.agent-menu-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  font-size: var(--size-small);
+  color: var(--text);
+}
+.agent-menu-item:disabled {
+  color: var(--agent-off);
+  cursor: default;
+}
+.agent-capsule.unset .agent-capsule-text {
+  color: var(--warn);
+}
+.agent-capsule.error .agent-capsule-text {
+  color: var(--error);
+}

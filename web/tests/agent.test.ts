@@ -3,6 +3,10 @@ import { CORNER_GAP, DEFAULT_SIZE, defaultRect, EDGE_GAP, fit, MIN_SIZE, moved, 
 import {
   cacheState,
   capsuleText,
+  capsuleView,
+  compactState,
+  limitsLine,
+  needsColdHint,
   chatMeta,
   contextLabel,
   contextUse,
@@ -143,5 +147,35 @@ describe("window state in the browser", () => {
     expect(loadAgent("p3")).toEqual({ mode: "closed", rect: null, chat: null });
     localStorage.setItem("mlviz:v1:p4:agent", "{not json");
     expect(loadAgent("p4")).toEqual(initialAgent);
+  });
+});
+
+describe("connection (feature F)", () => {
+  const warm = { tokens: 60_000, last_turn_at: "2026-10-15T11:50:00", cache_ttl_s: 3600 };
+  const cold = { tokens: 60_000, last_turn_at: "2026-10-15T09:00:00", cache_ttl_s: 3600 };
+  const now = Date.parse("2026-10-15T12:00:00");
+  it("holds a message back only for a big chat with a cold cache", () => {
+    expect(needsColdHint(cold, now)).toBe(true);
+    expect(needsColdHint(warm, now)).toBe(false);
+    expect(needsColdHint({ ...cold, tokens: 50_000 }, now)).toBe(false);
+    expect(needsColdHint({ tokens: 0, last_turn_at: null, cache_ttl_s: 3600 }, now)).toBe(false);
+  });
+  it("compacting needs a warm cache and 10k tokens", () => {
+    expect(compactState(warm, now).enabled).toBe(true);
+    expect(compactState(cold, now).enabled).toBe(false);
+    expect(compactState({ ...warm, tokens: 9_000 }, now).enabled).toBe(false);
+  });
+  it("writes the subscription line only when something was reported", () => {
+    expect(limitsLine(null)).toBeNull();
+    expect(limitsLine({})).toBeNull();
+    expect(limitsLine({ five_hour: 24, seven_day: 65 })).toBe("Abo · 5 h: 24 % · Woche: 65 %");
+    expect(limitsLine({ seven_day: 3 })).toBe("Abo · Woche: 3 %");
+  });
+  it("the capsule shows not set up before busy before error before the last action", () => {
+    const c = (messages: Chat["messages"]) => ({ id: "x", title: "t", updated_at: "", session_id: null, tokens: 0, last_turn_at: null, cache_ttl_s: 3600, messages });
+    expect(capsuleView(c([]), true, false)).toEqual({ text: "Agent · nicht eingerichtet", state: "unset" });
+    expect(capsuleView(c([]), true, true)).toEqual({ text: "Agent · arbeitet …", state: "busy" });
+    expect(capsuleView(c([{ k: "info", t: "Limit", error: true }]), false, true)).toEqual({ text: "Agent · Fehler", state: "error" });
+    expect(capsuleView(c([{ k: "action", t: "Filter gesetzt" }]), false, true)).toEqual({ text: "Agent · Filter gesetzt", state: "ready" });
   });
 });

@@ -6,13 +6,14 @@ import os
 from pathlib import Path
 
 from fastapi import Body, FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 import json
 
 from . import aggregate, configview, deliverables, linear, widgets
 from . import own_widgets, templates
+from . import agent_run
 from .agent_store import AgentStore, ChatNotFound
 from .store import StoreError
 from .listing import merkmal_candidates, run_listing
@@ -102,6 +103,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
 
     # --- agent (chats and settings, stored in <project>/.mlviz/) -------------------------------
     agent = AgentStore(project)
+    runner = agent_run.AgentRunner(project, agent)
 
     def _chat_or_404(chat_id: str) -> dict:
         try:
@@ -112,7 +114,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     @app.get("/api/agent")
     def api_agent() -> dict:
         """Chats of the project (newest first, without messages) and the mode of the agent."""
-        return {"chats": agent.list(), "mode": agent.mode(), "now": now().isoformat()}
+        return {"chats": agent.list(), "mode": agent.mode(), "now": now().isoformat(), "limits": runner.limits}
 
     @app.post("/api/agent/chats")
     def api_agent_new_chat(payload: dict = Body(default_factory=dict)) -> dict:
@@ -130,6 +132,53 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
             raise HTTPException(400, "text is empty")
         _chat_or_404(chat_id)
         return agent.append(chat_id, "user", text)
+
+    @app.get("/api/agent/setup")
+    def api_agent_setup() -> dict:
+        """Can the agent run here? (Claude Code found and logged in; warning if an API key is set.)"""
+        return agent_run.setup_check()
+
+    @app.post("/api/agent/chats/{chat_id}/run")
+    def api_agent_run(chat_id: str, payload: dict = Body(...)) -> StreamingResponse:
+        """Sends a message to the agent; the answer streams back as server-sent events (`data: {chat, busy, limits}`)."""
+        text = str(payload.get("text") or "").strip()
+        resend = bool(payload.get("resend"))
+        if not text:
+            raise HTTPException(400, "text is empty")
+        _chat_or_404(chat_id)  # 404 if there is no such chat
+        if runner.running(chat_id):
+            raise HTTPException(409, "the chat is already working")
+
+        def events():
+            try:
+                for snap in runner.run(chat_id, text, str(payload.get("context") or ""), resend):
+                    yield f"data: {json.dumps(snap, ensure_ascii=False)}\n\n"
+            except agent_run.Busy:
+                yield f"data: {json.dumps({'error': 'busy'})}\n\n"
+
+        return StreamingResponse(events(), media_type="text/event-stream", headers={"cache-control": "no-cache"})
+
+    @app.post("/api/agent/chats/{chat_id}/compact")
+    def api_agent_compact(chat_id: str) -> StreamingResponse:
+        """Compacts the session of a chat (`/compact`); streams snapshots like `run`."""
+        chat = _chat_or_404(chat_id)
+        if not chat.get("session_id"):
+            raise HTTPException(400, "the chat has no session yet")
+        if runner.running(chat_id):
+            raise HTTPException(409, "the chat is already working")
+
+        def events():
+            try:
+                for snap in runner.compact(chat_id):
+                    yield f"data: {json.dumps(snap, ensure_ascii=False)}\n\n"
+            except agent_run.Busy:
+                yield f"data: {json.dumps({'error': 'busy'})}\n\n"
+
+        return StreamingResponse(events(), media_type="text/event-stream", headers={"cache-control": "no-cache"})
+
+    @app.post("/api/agent/chats/{chat_id}/stop")
+    def api_agent_stop(chat_id: str) -> dict:
+        return {"stopped": runner.stop(chat_id)}
 
     @app.put("/api/agent/mode")
     def api_agent_mode(payload: dict = Body(...)) -> dict:
