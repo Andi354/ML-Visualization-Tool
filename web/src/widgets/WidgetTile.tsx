@@ -140,7 +140,7 @@ export function WidgetTile({ widget, def, run, project, req, onSettings, onRemov
   const visible = (def?.settings ?? []).filter((s) => s.key !== "window"); // the window is set by clicking the strip
   const canSave = !!onSave && !!result && !result.unavailable && result.exportable;
   return (
-    <section class={"w-tile" + (widget.width === "full" ? " full" : "")} data-testid="widget-tile" data-widget={widget.type} data-width={widget.width}>
+    <section class={"w-tile" + (widget.width === "full" ? " full" : "")} data-testid="widget-tile" data-id={widget.id} data-widget={widget.type} data-width={widget.width}>
       <header class="w-head">
         <div class="w-name">
           <span class="w-label">

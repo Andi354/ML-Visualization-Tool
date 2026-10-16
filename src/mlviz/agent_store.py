@@ -15,6 +15,7 @@ import json
 import os
 import re
 import secrets
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +25,7 @@ STATE_DIR = ".mlviz"
 MODES = ("direct", "mixed", "confirm")
 DEFAULT_MODE = "mixed"
 NEW_CHAT_TITLE = "Neuer Chat"
-MESSAGE_KINDS = ("user", "agent", "action", "info")
+MESSAGE_KINDS = ("user", "agent", "action", "info", "confirm", "choice")
 _ID = re.compile(r"^[0-9a-f]{12}$")
 #: Prompt cache lifetime with a subscription; 5 minutes if the run used an API key.
 CACHE_TTL_S = 3600
@@ -44,6 +45,8 @@ def _atomic_write(path: Path, data: dict) -> None:
 class AgentStore:
     def __init__(self, project: Project):
         self.dir = project.root / STATE_DIR
+        # a chat file is changed from the reading thread of a request and from tool calls at the same time
+        self._lock = threading.RLock()
 
     # --- settings -----------------------------------------------------------------------------
     @property
@@ -98,24 +101,50 @@ class AgentStore:
         return self._read(chat_id)
 
     def save(self, chat: dict[str, Any]) -> dict[str, Any]:
-        _atomic_write(self._file(chat["id"]), chat)
+        with self._lock:
+            _atomic_write(self._file(chat["id"]), chat)
         return chat
 
     def update(self, chat_id: str, **fields: Any) -> dict[str, Any]:
-        chat = self._read(chat_id)
-        chat.update(fields)
-        return self.save(chat)
+        with self._lock:
+            chat = self._read(chat_id)
+            chat.update(fields)
+            return self.save(chat)
+
+    def replace(self, chat_id: str, cid: str, message: dict[str, Any]) -> dict[str, Any]:
+        """Swaps the message that carries `cid` (a confirmation card) for another one, in place."""
+        with self._lock:
+            chat = self._read(chat_id)
+            for i, m in enumerate(chat["messages"]):
+                if m.get("cid") == cid:
+                    chat["messages"][i] = {**message, "at": now().isoformat(), "cid": cid}
+                    break
+            else:
+                chat["messages"].append({**message, "at": now().isoformat(), "cid": cid})
+            chat["updated_at"] = now().isoformat()
+            return self.save(chat)
+
+    def set_action(self, chat_id: str, cid: str, **fields: Any) -> dict[str, Any]:
+        """Updates an action line after undo or redo (`state`, `t`)."""
+        with self._lock:
+            chat = self._read(chat_id)
+            for m in chat["messages"]:
+                if m.get("cid") == cid and m.get("k") == "action":
+                    m.update(fields)
+                    return self.save(chat)
+        raise ChatNotFound(cid)
 
     def append(self, chat_id: str, kind: str, text: str, **extra: Any) -> dict[str, Any]:
         if kind not in MESSAGE_KINDS:
             raise ValueError(f"kind must be one of {MESSAGE_KINDS}")
-        chat = self._read(chat_id)
-        stamp = now().isoformat()
-        chat["messages"].append({"k": kind, "t": text, "at": stamp, **extra})
-        chat["updated_at"] = stamp
-        if kind == "user" and chat["title"] == NEW_CHAT_TITLE and len(chat["messages"]) == 1:
-            chat["title"] = text.strip().splitlines()[0][:48] or NEW_CHAT_TITLE
-        return self.save(chat)
+        with self._lock:
+            chat = self._read(chat_id)
+            stamp = now().isoformat()
+            chat["messages"].append({"k": kind, "t": text, "at": stamp, **extra})
+            chat["updated_at"] = stamp
+            if kind == "user" and chat["title"] == NEW_CHAT_TITLE and len(chat["messages"]) == 1:
+                chat["title"] = text.strip().splitlines()[0][:48] or NEW_CHAT_TITLE
+            return self.save(chat)
 
     def list(self) -> list[dict[str, Any]]:
         """Chats without their messages, newest activity first."""

@@ -57,6 +57,25 @@ def say(text):
 if "[error]" in prompt:
     out({"type": "result", "subtype": "success", "is_error": True, "result": "Usage limit reached", "usage": usage})
     sys.exit(1)
+import re
+import urllib.request
+
+calls = re.findall(r"\[tool (\w+)( \{.*?\})?\]", prompt)
+if calls:
+    # like Claude Code: speak MCP to the tool's own server with the config it was given
+    cfg = json.loads(args[args.index("--mcp-config") + 1])["mcpServers"]["mlviz"]
+
+    def rpc(method, params=None, mid=1):
+        req = urllib.request.Request(cfg["url"], data=json.dumps({"jsonrpc": "2.0", "id": mid, "method": method, "params": params or {}}).encode(), headers={"content-type": "application/json", **cfg["headers"]})
+        with urllib.request.urlopen(req, timeout=130) as r:
+            return json.loads(r.read())
+
+    rpc("initialize", {"protocolVersion": "2025-06-18"})
+    for i, (name, raw) in enumerate(calls):
+        res = rpc("tools/call", {"name": name, "arguments": json.loads(raw) if raw else {}}, i + 2)["result"]
+        say(f"{name}: {res['content'][0]['text'][:300]}")
+    out({"type": "result", "subtype": "success", "is_error": False, "result": "ok", "usage": usage})
+    sys.exit(0)
 last = prompt.splitlines()[-1]
 if "[blocks]" in prompt:
     say("Erster Teil.")

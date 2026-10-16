@@ -6,13 +6,24 @@ export type WindowState = "open" | "min" | "closed";
 
 export interface AgentMessage {
   /** user and agent speak; action is a line about something the agent did; info is a note in the history. */
-  k: "user" | "agent" | "action" | "info";
+  k: "user" | "agent" | "action" | "info" | "confirm" | "choice";
   t: string;
   at?: string;
   /** Set on action lines that can be undone (feature C). */
   undo_id?: string;
   /** An info line that reports an error of Claude Code (offers "Erneut senden"). */
   error?: boolean;
+  /** Id of a card or action (confirmation, run choice); the tool answers it by this id. */
+  cid?: string;
+  /** Confirmation card: further lines (target path, settings) and whether the button says "Speichern". */
+  details?: string[];
+  save?: boolean;
+  /** Run card: the runs to choose from. */
+  runs?: { id: string; name: string; started: string | null; state: string; axes: string[]; issue: string | null }[];
+  /** Action line: done or reverted; rejected is set when the user said no; auto when no card was needed. */
+  state?: "done" | "reverted";
+  rejected?: boolean;
+  auto?: boolean;
 }
 
 /** A chat as the list shows it (no messages). One chat is one Claude Code session. */

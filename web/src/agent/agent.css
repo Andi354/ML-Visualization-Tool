@@ -484,3 +484,100 @@
 .agent-capsule.error .agent-capsule-text {
   color: var(--error);
 }
+
+/* tools (feature C): confirmation card, run cards, action lines */
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid var(--warn-line);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  border-radius: 8px;
+}
+.agent-card-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  line-height: 1.45;
+}
+.agent-card-label {
+  color: var(--warn);
+  font-size: var(--size-tiny);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.agent-card-detail {
+  padding: 6px 8px;
+  font-size: var(--size-tiny);
+  color: var(--text-2);
+  background: var(--agent-header);
+  border-radius: 4px;
+}
+.agent-card-key {
+  align-self: center;
+  font-size: var(--size-tiny);
+  color: var(--agent-mute);
+}
+.agent-grow {
+  flex: 1;
+}
+.agent-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.agent-choice-q {
+  line-height: 1.45;
+}
+.agent-run-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 7px 10px;
+  text-align: left;
+  border: 1px solid var(--agent-line);
+  background: var(--agent-header);
+  border-radius: 6px;
+}
+.agent-run-card:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-bg);
+}
+.agent-run-name {
+  font-size: var(--size-small);
+}
+.agent-run-sub {
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+}
+.agent-action.done {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--best) 30%, transparent);
+  background: color-mix(in srgb, var(--best) 6%, transparent);
+}
+.agent-action.rejected .agent-action-icon,
+.agent-action.reverted .agent-action-icon {
+  color: var(--text-3);
+}
+.agent-action.rejected .agent-action-text,
+.agent-action.reverted .agent-action-text {
+  color: var(--text-3);
+}
+.agent-action-text {
+  flex: 1;
+  min-width: 0;
+}
+.agent-action-how {
+  font-size: var(--size-tiny);
+  color: var(--agent-mute);
+  white-space: nowrap;
+}
+.agent-action-btn {
+  padding: 0 2px;
+  font-size: var(--size-small);
+  color: var(--accent);
+  white-space: nowrap;
+}

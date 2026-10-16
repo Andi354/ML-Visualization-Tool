@@ -1035,3 +1035,16 @@
 .board-grid.glow {
   animation: board-glow 1.6s ease-out;
 }
+
+/* the element an agent action changed glows briefly */
+@keyframes agent-glow {
+  from {
+    box-shadow: 0 0 0 2px var(--accent-line), 0 0 14px var(--accent-bg);
+  }
+  to {
+    box-shadow: none;
+  }
+}
+.agent-glow {
+  animation: agent-glow 1.5s ease-out;
+}

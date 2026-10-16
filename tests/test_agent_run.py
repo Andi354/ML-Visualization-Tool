@@ -50,7 +50,7 @@ def test_the_call_is_headless_in_the_project_folder_with_the_view_in_front(clien
     a = call["args"]
     assert a[a.index("-p") + 1] == "[Ansicht: Lauf · TIM-52]\nHallo"
     assert a[a.index("--output-format") + 1] == "stream-json" and "--verbose" in a
-    assert "--strict-mcp-config" in a and a[a.index("--allowedTools") + 1] == "Read,Glob,Grep"
+    assert "--strict-mcp-config" in a and a[a.index("--allowedTools") + 1] == "mcp__mlviz__*,Read,Glob,Grep"
     assert call["cwd"] == str(client.app.state.project.root)
     assert "--resume" not in a
 
