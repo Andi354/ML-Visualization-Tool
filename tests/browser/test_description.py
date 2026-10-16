@@ -35,6 +35,7 @@ def test_the_description_comes_first_then_overview_then_toolbar_and_table(page):
 def test_the_fields_stand_side_by_side_in_a_fixed_order(page):
     start(page, BEST_90)
     fields = view(page).get_by_test_id("description-fields").locator("[data-field]")
+    expect(fields).to_have_count(4)  # the description is loaded after the table
     assert fields.evaluate_all("els => els.map(e => e.dataset.field)") == ["purpose", "shows", "expectation", "notes"]
     boxes = fields.evaluate_all("els => els.map(e => e.getBoundingClientRect().toJSON())")
     assert len({round(b["y"]) for b in boxes}) == 1  # one row
