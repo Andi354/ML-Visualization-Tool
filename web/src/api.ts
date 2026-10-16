@@ -26,6 +26,8 @@ export interface RunInfo {
   issue: string | null;
   started: string | null;
   ended: string | null;
+  /** `finished`, `running` or `stalled` (not finished and nothing written for a while). */
+  state: "finished" | "running" | "stalled";
   running: boolean;
   migrated: boolean;
   epoch: string | null;
@@ -55,10 +57,16 @@ export interface IssueInfo {
 }
 
 export class NotFound extends Error {}
+/** The run store (ds-store) could not read the runs; the message is meant to be shown. */
+export class StoreProblem extends Error {}
 
 export async function getJson<T>(url: string): Promise<T> {
   const r = await fetch(url);
   if (r.status === 404) throw new NotFound(url);
+  if (r.status === 409) {
+    const body = await r.json().catch(() => null);
+    if (body?.store_error) throw new StoreProblem(String(body.detail));
+  }
   if (!r.ok) throw new Error(`${url}: ${r.status}`);
   return r.json() as Promise<T>;
 }

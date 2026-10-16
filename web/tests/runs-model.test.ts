@@ -25,6 +25,7 @@ function run(over: Partial<RunRow> = {}): RunRow {
     issue: null,
     started: "2026-10-01T10:00:00",
     ended: "2026-10-01T11:00:00",
+    state: over.state ?? (over.running ? "running" : "finished"),
     running: false,
     migrated: false,
     epoch: "eval-all-windows",
@@ -128,6 +129,13 @@ describe("texts", () => {
     expect(bestText(run())).toEqual({ value: "3,97 %", note: "MAPE · pred_len 30" });
     expect(bestText(run({ running: true })).note).toBe("MAPE · pred_len 30 · vorläufig");
     expect(bestText(run({ best: null }))).toEqual({ value: "–", note: "" });
+  });
+  it("a stalled run is unfinished: progress against planned, provisional, flagged", () => {
+    const stalled = run({ state: "stalled", cells: 5, planned: 20 });
+    expect(cellText(stalled)).toBe("5 / 20");
+    expect(cellBar(stalled)).toEqual({ ok: 25, err: 0 });
+    expect(bestText(stalled).note).toContain("vorläufig");
+    expect(flags(stalled, "eval-all-windows").map((f) => f.text)).toEqual(["◐ steht still"]);
   });
   it("flags only deviations: running and an older epoch", () => {
     expect(flags(run(), "eval-all-windows")).toEqual([]);

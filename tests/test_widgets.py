@@ -83,7 +83,7 @@ def test_forecast_defaults_to_the_first_channel_and_the_last_window(project):
     r = compute(project, "forecast")
     d = r["data"]
     assert d["channel"] == "us"
-    assert d["window"]["origins"] == ["2026-01-01", "2026-01-31", "2026-03-02"]
+    assert d["window"]["origins"] is None  # predictions cover the whole test period, no stored windows
     assert d["window"]["start"] == "2026-03-02" and d["window"]["days"] == 30
     assert len(d["series"]["dates"]) == 30 and len(d["overview"]["dates"]) == 90  # whole test period
     assert r["options"]["channel"] == ["us", "eu", "asia", "latam"]
@@ -107,10 +107,10 @@ def test_forecast_mape_is_the_mean_absolute_percentage_error_of_the_window(proje
 def test_forecast_channel_and_window_settings(project):
     r = compute(project, "forecast", channel="asia", window="2026-01-03")
     assert r["data"]["channel"] == "asia"
-    assert r["data"]["window"]["start"] == "2026-01-01"  # the stored window nearest to the click
+    assert r["data"]["window"]["start"] == "2026-01-03"  # a window of pred_len days starting at the click
     assert "Region asia" in r["title"]
     r2 = compute(project, "forecast", window="2026-01-29")
-    assert r2["data"]["window"]["start"] == "2026-01-31"
+    assert r2["data"]["window"]["start"] == "2026-01-29"
 
 
 def test_forecast_channel_from_the_row_when_the_table_is_split_by_channel(project):

@@ -6,12 +6,13 @@ import os
 from pathlib import Path
 
 from fastapi import Body, FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 import json
 
 from . import aggregate, configview, deliverables, linear, widgets
+from .store import StoreError
 from .listing import merkmal_candidates, run_listing
 from .project import Project
 from .runs import get_run, list_runs
@@ -24,6 +25,11 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     project = Project.load(root)
     app = FastAPI(title="ML Visualization Tool")
     app.state.project = project
+
+    @app.exception_handler(StoreError)
+    def store_error(_, e: StoreError) -> JSONResponse:
+        """ds-store could not read a run (missing package, `store_version` too new): say it plainly."""
+        return JSONResponse({"detail": str(e), "store_error": True}, status_code=409)
 
     @app.get("/api/project")
     def api_project() -> dict:

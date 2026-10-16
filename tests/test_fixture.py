@@ -18,5 +18,6 @@ def test_one_run_has_more_than_200_groups(demo_project):
 
 def test_meta_json_carries_what_the_tool_reads(demo_project):
     meta = json.loads((demo_project / "runs" / run_folder(RUNS[3]) / "meta.json").read_text())
-    assert {"axes", "replicates", "primary_metric", "epoch", "plan", "counts", "migrated"} <= meta.keys()
-    assert meta["ended"]
+    assert {"name", "store_version", "started_at", "ended_at", "axes", "replicates", "primary_metric", "epoch", "plan", "counts"} <= meta.keys()
+    assert not {"experiment", "started", "ended"} & meta.keys()
+    assert meta["ended_at"]

@@ -1,15 +1,16 @@
-"""Reading run folders (`runs/<experiment>_<timestamp>/`).
+"""Reading run folders (`runs/<YYYY-MM-DD_HHMM>_<name>/`).
 
-A run folder holds `meta.json`, the resolved `config.yaml`, `cells.parquet`, `plan.parquet`, and
-optionally `channels.parquet`, `curves/` and `predictions/`. Everything is read lazily and cached by
-file modification time, so a running experiment shows up as it writes.
+A run folder holds `meta.json`, the resolved `config.yaml`, `config.base.yaml` and the tables
+`plan`, `cells`, `channels`, `curves` and `predictions`. The tables, the state and the progress come
+from `ds-store` (see `store.py`); `meta.json` and the YAML files are read here. Everything is cached
+by modification time, so a running experiment shows up as it writes.
 """
 
 from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -17,6 +18,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
+from . import store
 from .project import Project
 
 # Run folders carry a timestamp as prefix (`2026-09-28_195436_<name>`, seconds optional) or, in older
@@ -45,11 +47,6 @@ def _mtime(path: Path) -> float:
 
 
 @lru_cache(maxsize=256)
-def _read_parquet(path: str, mtime: float) -> pd.DataFrame:
-    return pd.read_parquet(path)
-
-
-@lru_cache(maxsize=256)
 def _read_json(path: str, mtime: float) -> dict:
     return json.loads(Path(path).read_text())
 
@@ -70,6 +67,8 @@ class Run:
     """One run folder."""
 
     path: Path
+    #: Status as `ds-store` listed it, so a run list does not read every run twice.
+    listed: dict | None = field(default=None, repr=False, compare=False)
 
     @property
     def id(self) -> str:
@@ -77,8 +76,8 @@ class Run:
 
     @property
     def name(self) -> str:
-        """Experiment name: the folder name without the timestamp."""
-        return str(self.meta.get("experiment") or strip_timestamp(self.id))
+        """Experiment name: `name` of `meta.json`, else the folder name without the timestamp."""
+        return str(self.meta.get("name") or strip_timestamp(self.id))
 
     @property
     def issue(self) -> str | None:
@@ -104,34 +103,71 @@ class Run:
         except (OSError, yaml.YAMLError):
             return {}
 
-    def _table(self, name: str) -> pd.DataFrame | None:
-        p = self._file(name)
-        if not p.exists():
+    @property
+    def base_config(self) -> dict | None:
+        """`config.base.yaml` of the run (the base configs as they were at its start), None if absent."""
+        p = self._file("config.base.yaml")
+        if not p.is_file():
             return None
-        return _read_parquet(str(p), _mtime(p))
+        try:
+            return _read_yaml(str(p), _mtime(p))
+        except (OSError, yaml.YAMLError):
+            return None
+
+    # --- tables (through ds-store) -------------------------------------------------------------
+    def table(self, name: str, with_cells: bool = False) -> pd.DataFrame | None:
+        return store.read_table(self.path, name, with_cells=with_cells)
 
     @property
     def cells(self) -> pd.DataFrame:
-        df = self._table("cells.parquet")
+        df = self.table("cells")
         return df if df is not None else pd.DataFrame()
 
     @property
     def channels(self) -> pd.DataFrame | None:
-        return self._table("channels.parquet")
+        return self.table("channels")
 
     @property
     def plan(self) -> pd.DataFrame | None:
-        return self._table("plan.parquet")
+        return self.table("plan")
 
     @property
     def has_curves(self) -> bool:
-        d = self._file("curves")
-        return d.is_dir() and any(d.iterdir())
+        df = self.table("curves")
+        return df is not None and not df.empty
 
     @property
     def has_predictions(self) -> bool:
-        d = self._file("predictions")
-        return d.is_dir() and any(d.iterdir())
+        df = self.table("predictions")
+        return df is not None and not df.empty
+
+    # --- state and progress (ds-store: finished | running | stalled) ---------------------------
+    @property
+    def status(self) -> dict:
+        if self.listed is not None:
+            return self.listed
+        return store.run_status(self.path)
+
+    @property
+    def state(self) -> str:
+        return str(self.status.get("state") or "finished")
+
+    @property
+    def running(self) -> bool:
+        return self.state == "running"
+
+    @property
+    def done_cells(self) -> int:
+        done = self.status.get("done")
+        return int(done) if done is not None else len(self.cells)
+
+    @property
+    def planned_cells(self) -> int | None:
+        planned = self.status.get("planned")
+        if planned is not None:
+            return int(planned)
+        plan = (self.meta.get("plan") or {}).get("cells")
+        return int(plan) if plan is not None else None
 
     # --- meta ---------------------------------------------------------------------------------
     @property
@@ -144,15 +180,11 @@ class Run:
 
     @property
     def started(self) -> datetime | None:
-        return _parse_time(self.meta.get("started")) or _time_from_name(self.id)
+        return _parse_time(self.meta.get("started_at")) or _time_from_name(self.id)
 
     @property
     def ended(self) -> datetime | None:
-        return _parse_time(self.meta.get("ended"))
-
-    @property
-    def running(self) -> bool:
-        return self.meta.get("ended") in (None, "")
+        return _parse_time(self.meta.get("ended_at"))
 
     @property
     def migrated(self) -> bool:
@@ -161,14 +193,6 @@ class Run:
     @property
     def epoch(self) -> str | None:
         return self.meta.get("epoch")
-
-    @property
-    def planned_cells(self) -> int:
-        plan = (self.meta.get("plan") or {}).get("cells")
-        if plan is not None:
-            return int(plan)
-        p = self.plan
-        return len(p) if p is not None else len(self.cells)
 
     def ok_cells(self) -> pd.DataFrame:
         c = self.cells
@@ -191,6 +215,7 @@ class Run:
             "issue": self.issue,
             "started": s.isoformat() if s else None,
             "ended": e.isoformat() if e else None,
+            "state": self.state,
             "running": self.running,
             "migrated": self.migrated,
             "epoch": self.epoch,
@@ -234,7 +259,7 @@ def list_runs(project: Project) -> list[Run]:
     base = project.path("runs")
     if not base.is_dir():
         return []
-    runs = [Run(p) for p in base.iterdir() if p.is_dir() and (p / "meta.json").exists()]
+    runs = [Run(p, status) for p, status in store.list_runs(base) if (p / "meta.json").exists()]
     runs.sort(key=lambda r: (r.started or datetime.min, r.id), reverse=True)
     return runs
 

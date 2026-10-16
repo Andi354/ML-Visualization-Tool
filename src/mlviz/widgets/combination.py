@@ -21,8 +21,17 @@ def _run(project, request) -> Run:
     return run
 
 
-def _read(path) -> pd.DataFrame | None:
-    return pd.read_parquet(path) if path.exists() else None
+def _of_cells(run: Run, table: str, cells: pd.DataFrame) -> pd.DataFrame | None:
+    """Rows of a flat run table (`curves`, `predictions`) that belong to the given cells.
+
+    These tables exist once per `cell_id` and carry no replicate columns; duplicates of a cell
+    share its rows, so each `cell_id` is taken once."""
+    df = run.table(table)
+    if df is None or df.empty:
+        return None
+    ids = list(dict.fromkeys(cells["cell_id"]))
+    sub = df[df["cell_id"].isin(ids)]
+    return sub if not sub.empty else None
 
 
 # --- Loss-Kurven ---------------------------------------------------------------------------------
@@ -45,21 +54,21 @@ def curves(project, req: dict) -> dict:
     if fold is not None:  # one fold (the first) keeps the plot readable
         cells = cells[cells["cv_fold"] == fold]
     seeds: list[dict] = []
-    for _, row in cells.iterrows():
-        df = _read(run.path / "curves" / f"{row['cell_id']}.parquet")
-        if df is None or df.empty:
-            continue
-        if fold is not None and "cv_fold" in df.columns:
-            df = df[df["cv_fold"].astype(str) == fold]
-        df = df.sort_values("epoch")
-        seeds.append(
-            {
-                "label": seed_label(row, run),
-                "epochs": [int(e) for e in df["epoch"]],
-                "train": [float(v) for v in df["train_loss"]],
-                "val": [float(v) for v in df["val_loss"]],
-            }
-        )
+    long = _of_cells(run, "curves", cells)
+    if long is not None:
+        wide = long.pivot_table(index=["cell_id", "epoch"], columns="metric", values="value").reset_index()
+        for _, row in cells.drop_duplicates("cell_id").iterrows():
+            df = wide[wide["cell_id"] == row["cell_id"]].sort_values("epoch")
+            if df.empty or "train_loss" not in df or "val_loss" not in df:
+                continue
+            seeds.append(
+                {
+                    "label": seed_label(row, run),
+                    "epochs": [int(e) for e in df["epoch"]],
+                    "train": [float(v) for v in df["train_loss"]],
+                    "val": [float(v) for v in df["val_loss"]],
+                }
+            )
     if not seeds:
         return {"unavailable": "Für diese Kombination liegen keine Lernkurven vor"}
     n = min(len(s["epochs"]) for s in seeds)
@@ -89,15 +98,10 @@ def curves(project, req: dict) -> dict:
 
 # --- Vorhersage ----------------------------------------------------------------------------------
 def _predictions(run: Run, cells: pd.DataFrame, fold: str | None) -> pd.DataFrame | None:
-    frames = []
-    for _, row in cells.iterrows():
-        df = _read(run.path / "predictions" / f"{row['cell_id']}.parquet")
-        if df is None or df.empty:
-            continue
-        if fold is not None and "cv_fold" in df.columns:
-            df = df[df["cv_fold"].astype(str) == fold]
-        frames.append(df.assign(__cell=row["cell_id"]))
-    return pd.concat(frames, ignore_index=True) if frames else None
+    """Predictions of the given cells, one cell per `cell_id`; `__cell` names the cell of each row.
+    `fold` is already applied to `cells`, the table itself has no replicate columns."""
+    df = _of_cells(run, "predictions", cells)
+    return None if df is None else df.assign(__cell=df["cell_id"])
 
 
 def _pred_len(run: Run) -> int | None:
@@ -145,8 +149,8 @@ def _window(df: pd.DataFrame, run: Run, want: str | None):
 def _series(sub: pd.DataFrame, channel: str, dates: list[str]) -> dict:
     sub = sub[sub["channel"].astype(str) == channel]
     g = sub.groupby(sub["date"].astype(str))
-    pred = g["prediction"].agg(["mean", "min", "max"])
-    actual = g["actual"].mean()
+    pred = g["y_pred"].agg(["mean", "min", "max"])
+    actual = g["y_true"].mean()
     out = {"dates": [], "actual": [], "mean": [], "min": [], "max": [], "error": []}
     for d in dates:
         if d not in pred.index:
@@ -195,7 +199,7 @@ def forecast(project, req: dict) -> dict:
     sub, wdates, win = _window(df[df["channel"].astype(str) == channel], run, st.get("window"))
     main = _series(sub, channel, wdates)
     overview_df = df[df["channel"].astype(str) == channel]
-    ov = overview_df.groupby(overview_df["date"].astype(str))["actual"].mean()
+    ov = overview_df.groupby(overview_df["date"].astype(str))["y_true"].mean()
     options = compare_options(run, combo)
 
     compare = None

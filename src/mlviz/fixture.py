@@ -1,7 +1,9 @@
 """Synthetic demo project in the layout of a ds-init project.
 
 Used by the tests and by `mlviz demo <dir>` to try the tool without real results. All numbers are
-made up and deterministic. The layout written here is what the reader in `runs.py` expects.
+made up and deterministic. The layout written here is the run format of ds-init (store_version 1):
+one file per table (`plan`, `cells`, `channels`, `curves`, `predictions`), `curves` and `predictions`
+flat with `cell_id`, `config.base.yaml` next to `config.yaml`.
 """
 
 from __future__ import annotations
@@ -237,7 +239,7 @@ RUNS = [
 
 
 def run_folder(r: dict) -> str:
-    return f"{r['ts']:%Y-%m-%d_%H%M%S}_{r['experiment']}"
+    return f"{r['ts']:%Y-%m-%d_%H%M}_{r['experiment']}"
 
 
 def _metrics(r: dict, combo: dict, rep: dict, channel: str | None = None) -> dict[str, float]:
@@ -299,22 +301,45 @@ def _write_run(root: Path, r: dict) -> None:
     if r.get("running"):
         n_written = int(len(planned) * r["running"])
     error_rate = r.get("error_rate", 0.0)
+    started = r["ts"]
+    n_dup = r.get("duplicates", 0)
 
-    cells, chans = [], []
-    seen: dict[str, str] = {}
+    cells, chans, plan_rows = [], [], []
+    first_row: dict[str, int] = {}
     for i, p in enumerate(planned):
         eff_key = json.dumps([label(v) for v in p["combo"].values()] + [str(sorted(p["rep"].items()))])
-        cid = hashlib.sha1((r["experiment"] + eff_key).encode()).hexdigest()[:12]
-        row = {"cell_id": cid, "is_duplicate": False, "duplicate_of": None}
-        for k, v in p["combo"].items():
-            row[k] = label(v)
-        row.update(p["rep"])
+        if n_dup and i >= len(planned) - n_dup:  # the last cells repeat the first ones
+            eff_key = json.dumps([label(v) for v in planned[i - (len(planned) - n_dup)]["combo"].values()]
+                                 + [str(sorted(planned[i - (len(planned) - n_dup)]["rep"].items()))])
+        cid = hashlib.sha256((r["experiment"] + eff_key).encode()).hexdigest()[:16]
+        duplicate_of = first_row.get(cid)
+        first_row.setdefault(cid, i)
+        axes_row = {k: label(v) for k, v in p["combo"].items()}
+        plan_rows.append({"row": i, "cell_id": cid, "duplicate_of": duplicate_of, **axes_row, **p["rep"]})
         if i >= n_written:
+            continue
+        finished = started + timedelta(seconds=40 * (i + 1))
+        row = {
+            "row": i,
+            "cell_id": cid,
+            **axes_row,
+            **p["rep"],
+            "is_duplicate": duplicate_of is not None,
+            "duplicate_of": duplicate_of,
+        }
+        if duplicate_of is not None:  # a duplicate carries the values of its original
+            orig = next(c for c in cells if c["row"] == duplicate_of)
+            cells.append({**orig, **row, "finished_at": finished.isoformat(), "shard": 0})
+            for ch in [c for c in chans if c["row"] == duplicate_of]:
+                chans.append({**ch, "row": i, "finished_at": finished.isoformat()})
             continue
         failed = rng.random() < error_rate
         row["status"] = "error" if failed else "ok"
         row["error"] = "CUDA out of memory" if failed else None
         row["duration_s"] = float(30 + 20 * rng.random())
+        row["finished_at"] = finished.isoformat()
+        row["shard"] = i % 2
+        row["n_params"] = 40_000 + 1_000 * (i % 7)
         m = _metrics(r, p["combo"], p["rep"])
         for k in SCALED + REAL:
             row[k] = None if failed else m[k]
@@ -322,18 +347,16 @@ def _write_run(root: Path, r: dict) -> None:
         if not failed:
             for ch in CHANNELS:
                 cm = _metrics(r, p["combo"], p["rep"], ch)
-                chans.append({"cell_id": cid, "channel": ch, **{k: cm[k] for k in SCALED + REAL}})
-        seen.setdefault(cid, cid)
+                chans.append(
+                    {"row": i, "cell_id": cid, "channel": ch, **{k: cm[k] for k in SCALED + REAL}, "finished_at": finished.isoformat()}
+                )
 
     cells_df = pd.DataFrame(cells)
     cells_df.to_parquet(folder / "cells.parquet", index=False)
-    pd.DataFrame(chans).to_parquet(folder / "channels.parquet", index=False)
-    plan_rows = []
-    for p in planned:
-        row = {k: label(v) for k, v in p["combo"].items()}
-        row.update(p["rep"])
-        plan_rows.append(row)
+    pd.DataFrame(chans).drop(columns="row").to_parquet(folder / "channels.parquet", index=False)
     pd.DataFrame(plan_rows).to_parquet(folder / "plan.parquet", index=False)
+    if not r.get("migrated"):  # runs from before the new format have no base config
+        (folder / "config.base.yaml").write_text(yaml.safe_dump(BASE_CONFIG, sort_keys=False, allow_unicode=True))
 
     # summary.csv: one row per group (replicates averaged)
     axes = list(r["sweep"])
@@ -350,79 +373,67 @@ def _write_run(root: Path, r: dict) -> None:
         summary = summary.sort_values("test_mse_missing_mean")
         summary.to_csv(folder / "summary.csv", index=False)
 
-    started = r["ts"]
     ended = None if r.get("running") else started + timedelta(minutes=12 + len(planned) // 20)
     meta = {
-        "run": folder.name,
-        "experiment": r["experiment"],
+        "name": r["experiment"],
+        "store_version": 1,
         "issue": r["issue"],
         "config": None if r.get("migrated") else f"configs/experiments/{r['issue'] or 'misc'}/{r['experiment']}.yaml",
         "command": None if r.get("migrated") else f"mlviz-bench run {r['experiment']}",
-        "started": started.isoformat(),
-        "ended": ended.isoformat() if ended else None,
+        "started_at": started.isoformat(),
+        "ended_at": ended.isoformat() if ended else None,
         "axes": axes,
         "replicates": rep_keys,
         "primary_metric": "test_mse_missing",
         "epoch": r["epoch"],
-        "migrated": bool(r.get("migrated")),
         "commit": hashlib.sha1(run_folder(r).encode()).hexdigest()[:7],
-        "plan": {"cells": len(planned), "excluded": 0},
-        "counts": {
-            "cells": int((cells_df["status"] == "ok").sum()) if len(cells_df) else 0,
-            "errors": int((cells_df["status"] == "error").sum()) if len(cells_df) else 0,
-        },
+        "plan": {"cells": len(planned), "excluded": 0, "duplicates": n_dup},
     }
+    if r.get("migrated"):
+        meta["migrated"] = True
+    if ended:  # `counts` is the final tally, written at the end of a run
+        meta["counts"] = {
+            "planned": len(planned),
+            "written": len(cells_df),
+            "ok": int((cells_df["status"] == "ok").sum()),
+            "error": int((cells_df["status"] == "error").sum()),
+            "duplicates": n_dup,
+        }
     (folder / "meta.json").write_text(json.dumps(meta, indent=2))
 
     if r.get("extras"):
-        _write_curves_predictions(folder, planned, r)
+        _write_curves_predictions(folder, cells_df, r)
 
 
 def hash_int(s: str) -> int:
     return int(hashlib.sha1(s.encode()).hexdigest()[:8], 16)
 
 
-def _write_curves_predictions(folder: Path, planned: list[dict], r: dict) -> None:
-    (folder / "curves").mkdir(exist_ok=True)
-    (folder / "predictions").mkdir(exist_ok=True)
-    by_cell: dict[str, list] = {}
-    pred_by_cell: dict[str, list] = {}
-    cells = pd.read_parquet(folder / "cells.parquet")
-    for _, row in cells.iterrows():
+def _write_curves_predictions(folder: Path, cells: pd.DataFrame, r: dict) -> None:
+    """`curves` (cell_id, epoch, metric, value) and `predictions` (cell_id, date, channel, y_pred, y_true)
+    exist once per cell_id; they carry no replicate columns."""
+    curves, preds = [], []
+    pred_len = r["config"]["data"]["pred_len"]
+    start = datetime(2026, 1, 1)
+    for _, row in cells.drop_duplicates("cell_id").iterrows():
         cid = row["cell_id"]
-        seed, fold = int(row["shuffle_seed"]), int(row["cv_fold"])
-        n_ep = 40
+        seed = int(row["shuffle_seed"])
         best = 27 + (seed % 3)
-        for ep in range(1, n_ep + 1):
+        for ep in range(1, 41):
             tr = 1.0 / (1 + 0.12 * ep) + 0.02 * _unit(cid, ep, "t")
             va = 1.0 / (1 + 0.1 * ep) + 0.0025 * (ep - best) ** 2 / 10 + 0.02 * _unit(cid, ep, "v") + 0.1
-            by_cell.setdefault(cid, []).append(
-                {"shuffle_seed": seed, "cv_fold": fold, "epoch": ep, "train_loss": tr, "val_loss": va}
-            )
-        pred_len = r["config"]["data"]["pred_len"]
-        start = datetime(2026, 1, 1)
+            curves.append({"cell_id": cid, "epoch": ep, "metric": "train_loss", "value": tr})
+            curves.append({"cell_id": cid, "epoch": ep, "metric": "val_loss", "value": va})
         for ch in CHANNELS:
-            for window_i, origin_off in enumerate([0, 30, 60]):
-                origin = start + timedelta(days=origin_off)
-                for d in range(pred_len):
-                    date = origin + timedelta(days=d)
-                    actual = 100 + 15 * math.sin((origin_off + d) / 7.0) + 5 * _unit(ch, origin_off + d)
-                    pred = actual + 3 * _unit(cid, ch, origin_off + d, "p")
-                    pred_by_cell.setdefault(cid, []).append(
-                        {
-                            "shuffle_seed": seed,
-                            "cv_fold": fold,
-                            "channel": ch,
-                            "origin": origin.date().isoformat(),
-                            "date": date.date().isoformat(),
-                            "actual": actual,
-                            "prediction": pred,
-                        }
-                    )
-    for cid, rows in by_cell.items():
-        pd.DataFrame(rows).to_parquet(folder / "curves" / f"{cid}.parquet", index=False)
-    for cid, rows in pred_by_cell.items():
-        pd.DataFrame(rows).to_parquet(folder / "predictions" / f"{cid}.parquet", index=False)
+            for d in range(3 * pred_len):  # the whole test period
+                date = start + timedelta(days=d)
+                actual = 100 + 15 * math.sin(d / 7.0) + 5 * _unit(ch, d)
+                pred = actual + 3 * _unit(cid, ch, d, "p")
+                preds.append(
+                    {"cell_id": cid, "date": date.date().isoformat(), "channel": ch, "y_pred": pred, "y_true": actual}
+                )
+    pd.DataFrame(curves).to_parquet(folder / "curves.parquet", index=False)
+    pd.DataFrame(preds).to_parquet(folder / "predictions.parquet", index=False)
 
 
 def make_project(root: Path | str) -> Path:

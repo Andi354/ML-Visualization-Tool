@@ -92,14 +92,17 @@ export function stamp(iso: string | null): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+/** Not finished: running, or stalled (nothing written for a while, a crash or one very long cell). */
+const unfinished = (r: RunRow) => r.state !== "finished";
+
 export function cellText(r: RunRow): string {
-  if (r.running) return `${formatInt(r.cells)} / ${formatInt(r.planned)}`;
+  if (unfinished(r)) return `${formatInt(r.cells)} / ${formatInt(r.planned)}`;
   return `${formatInt(r.cells)} Zellen` + (r.errors ? ` · ${formatInt(r.errors)} Fehler` : "");
 }
 
 /** Widths in percent of the cell bar: successful and failed cells (against planned while running). */
 export function cellBar(r: RunRow): { ok: number; err: number } {
-  const den = Math.max(r.running ? r.planned : r.cells, 1);
+  const den = Math.max(unfinished(r) ? r.planned : r.cells, 1);
   return { ok: ((r.cells - r.errors) / den) * 100, err: (r.errors / den) * 100 };
 }
 
@@ -108,13 +111,14 @@ export function bestText(r: RunRow): { value: string; note: string } {
   const v = formatNumber(r.best.value * r.best.scale, 2) + (r.best.unit ? " " + r.best.unit : "");
   const parts = [r.best.label];
   if (r.merkmal) parts.push(`${r.merkmal.label} ${r.merkmal.value}`);
-  if (r.running) parts.push("vorläufig");
+  if (unfinished(r)) parts.push("vorläufig");
   return { value: v, note: parts.join(" · ") };
 }
 
 export function flags(r: RunRow, current: string | null): { text: string; kind: "running" | "warn" }[] {
   const out: { text: string; kind: "running" | "warn" }[] = [];
   if (r.running) out.push({ text: "● läuft", kind: "running" });
+  if (r.state === "stalled") out.push({ text: "◐ steht still", kind: "warn" });
   if (current && r.epoch && r.epoch !== current) out.push({ text: `Epoche ${r.epoch}`, kind: "warn" });
   return out;
 }
