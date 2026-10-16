@@ -289,3 +289,50 @@ def test_issues_view_with_linear_has_link_and_status_pill(linear_page):
     expect(detail.locator("h1")).to_have_text("Beste Config zusammenführen")
     expect(detail.get_by_role("link", name="In Linear ↗")).to_have_attribute("href", "https://linear.example/TIM-52")
     expect(detail.locator(".status-pill")).to_have_text(re.compile("In Progress"))
+
+
+# --- v0.2.1 · G: short description as its own line ---------------------------------------------
+BEST_90 = folder("TIM-52_best_90")
+
+
+def test_a_run_with_a_description_shows_short_between_name_and_axes(page):
+    r = row(page, BEST_90)
+    short = r.get_by_test_id("short")
+    expect(short).to_have_text("Bestes Setup aus dem Grid mit Horizont 90 gegen die Baselines")
+    lines = r.locator(".name-col > span").evaluate_all("els => els.map(e => e.className.split(' ')[0])")
+    assert lines[:3] == ["name-line", "short-line", "sub"]
+    assert short.evaluate("e => getComputedStyle(e).fontFamily").startswith('"IBM Plex Sans"')
+
+
+def test_a_run_without_a_description_looks_as_before(page):
+    expect(row(page, TIM71).get_by_test_id("short")).to_have_count(1)  # the demo run with a long short
+    expect(row(page, TIM83).get_by_test_id("short")).to_have_count(0)
+    expect(row(page, ALONE).get_by_test_id("short")).to_have_count(0)
+
+
+def test_a_long_short_is_cut_with_an_ellipsis_and_the_tooltip_has_the_cut_text(page):
+    short = row(page, TIM71).get_by_test_id("short")
+    text = short.get_attribute("title")
+    assert len(text) == 101 and text.endswith("…")
+    assert short.evaluate("e => getComputedStyle(e).whiteSpace") == "nowrap"
+
+
+def test_an_older_run_shows_its_own_short_when_opened(page):
+    row(page, TIM52_NEW).get_by_test_id("older-toggle").click()
+    expect(page.locator('[data-testid="older-row"]').get_by_test_id("short")).to_contain_text("Erster Lauf der Baselines")
+
+
+def test_search_matches_the_text_of_short(page):
+    page.get_by_test_id("search").fill("korrigierten Folds")
+    expect(row(page, TIM52_NEW)).to_be_visible()
+    expect(row(page, TIM71)).to_have_count(0)
+
+
+def test_the_issues_view_shows_short_above_the_tags(page):
+    page.get_by_test_id("view-issues").click()
+    page.locator('[data-testid="issue-item"][data-issue="TIM-52"]').click()
+    run_line = page.locator(f'[data-testid="exp-run"][data-run="{BEST_90}"]')
+    expect(run_line.get_by_test_id("short")).to_have_text("Bestes Setup aus dem Grid mit Horizont 90 gegen die Baselines")
+    short_y = run_line.get_by_test_id("short").bounding_box()["y"]
+    tags_y = run_line.locator(".tags").bounding_box()["y"]
+    assert short_y < tags_y

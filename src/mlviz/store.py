@@ -9,6 +9,9 @@ The run folder layout (one file per table, or part files while a run is going) i
   as one table (empty when the run has none); `with_cells=True` adds the axis and replicate columns
 - `run_status(run_dir)`: the same numbers for one run; state is `finished`, `running` or `stalled`
 - `table_version(run_dir, name)`: changes when the table's files change (cache key)
+- `read_description(run_dir)` (from `ds-store` after TIM-71): `None` without `description.yaml`, else the fields
+  `short`, `purpose`, `shows`, `notes`, `expectation`, `compare_to` and a list `problems`. `list_runs` then also
+  returns per run `short` and `has["description"]`. A `ds-store` without them means "no description".
 
 `meta.json` and `config.yaml` are plain files and are read by `runs.py`.
 """
@@ -20,6 +23,9 @@ from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
+
+#: `short` is one line of at most this many characters; the tool cuts a longer one and adds an ellipsis.
+SHORT_MAX = 100
 
 #: `run_status` depends on the clock (running -> stalled); its cache entries live this long.
 STATUS_TTL_S = 30
@@ -96,3 +102,24 @@ def list_runs(runs_root: Path) -> list[tuple[Path, dict]]:
     except Exception as e:
         raise _wrap(e) from e
     return [(Path(runs_root) / item["run"], dict(item)) for item in items]
+
+
+def cut_short(text) -> str | None:
+    """`short` as the runs screen shows it: one line, at most SHORT_MAX characters (then cut with an ellipsis); None if empty."""
+    line = " ".join(str(text or "").split())
+    if not line:
+        return None
+    return line if len(line) <= SHORT_MAX else line[:SHORT_MAX] + "…"
+
+
+def read_description(run_dir: Path) -> dict | None:
+    """The description of a run: None without a file (or with a `ds-store` that cannot read descriptions),
+    else its fields and `problems`. A file that cannot be read at all comes back as a problem, not an error."""
+    fn = getattr(_api(), "read_description", None)
+    if fn is None:
+        return None
+    try:
+        data = fn(Path(run_dir))
+    except Exception as e:
+        return {"problems": [str(e) or "Beschreibung nicht lesbar"]}
+    return dict(data) if data is not None else None

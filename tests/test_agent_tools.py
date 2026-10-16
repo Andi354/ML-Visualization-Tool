@@ -312,3 +312,15 @@ def test_unknown_and_ambiguous_runs_are_an_error_for_the_agent_not_a_command(cli
     text, is_error = runner.call_tool(chat, "open_run", {"run": "gibt-es-nicht"})
     assert is_error and "keinen Lauf" in text
     assert runner.live[chat].out.empty() and messages(client, chat) == []
+
+
+def test_find_runs_text_also_matches_the_description(runner):
+    def find(text):
+        return {r["id"] for r in agent_tools.run_tool(runner.project, "find_runs", {"text": text})["runs"]}
+
+    assert any("TIM-52_best_90" in r for r in find("Horizont 90"))  # short
+    assert any("TIM-52_best_90" in r for r in find("denselben Bedingungen"))  # purpose
+    assert any("TIM-52_best_90" in r for r in find("Abstand je Horizont-Abschnitt"))  # shows
+    assert not any("TIM-52_best_90" in r for r in find("kommt nirgends vor"))
+    row = next(r for r in agent_tools.run_tool(runner.project, "find_runs", {"text": "TIM-52_best_90"})["runs"])
+    assert row["short"].startswith("Bestes Setup")

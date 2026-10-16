@@ -153,6 +153,15 @@ class Run:
         return store.run_status(self.path)
 
     @property
+    def short(self) -> str | None:
+        """One-line description from `ds-store`'s run list (cut to 100 characters), None without a description."""
+        return store.cut_short((self.listed or {}).get("short"))
+
+    @property
+    def has_description(self) -> bool:
+        return bool(((self.listed or {}).get("has") or {}).get("description")) or self.short is not None
+
+    @property
     def problem(self) -> str | None:
         """Why the run cannot be shown (a store_version this package does not know), else None."""
         return self.status.get("message") if self.state == "unsupported" else None
@@ -236,6 +245,8 @@ class Run:
             "has_curves": self.has_curves,
             "has_predictions": self.has_predictions,
             "commit": self.meta.get("commit"),
+            "short": self.short,
+            "has_description": self.has_description,
         }
 
 

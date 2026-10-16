@@ -16,7 +16,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from . import aggregate, configview, own_widgets, widgets
+from . import aggregate, configview, own_widgets, store, widgets
 from .listing import merkmal_candidates, run_listing
 from .project import Project
 from .runs import get_run, list_runs
@@ -83,8 +83,8 @@ def _add(tool: Tool) -> None:
 
 
 # --- read (backend) -------------------------------------------------------------------------------
-_add(Tool("find_runs", READ, "Sucht Läufe nach Text, Issue, Datum, Zustand, Lauf-Merkmal (z. B. pred_len) oder Grid-Achse.", {
-    "text": _s("Teil des Namens oder der ID"), "issue": _s("Issue-ID, z. B. TIM-52"),
+_add(Tool("find_runs", READ, "Sucht Läufe nach Text (Name, ID, Kurzbeschreibung, Zweck, „Soll zeigen“), Issue, Datum, Zustand, Lauf-Merkmal (z. B. pred_len) oder Grid-Achse.", {
+    "text": _s("Teil des Namens, der ID oder der Beschreibung (short, purpose, shows)"), "issue": _s("Issue-ID, z. B. TIM-52"),
     "date_from": _s("ab Datum YYYY-MM-DD"), "date_to": _s("bis Datum YYYY-MM-DD"),
     "state": _s("finished, running oder stalled"),
     "feature": {"type": "object", "description": "Lauf-Merkmal und Wert, z. B. {\"pred_len\": \"30\"}", "additionalProperties": {"type": "string"}},
@@ -201,6 +201,19 @@ def deliverable_target(project: Project, title: str) -> str:
     return f"{base}/{now().date().isoformat()} {title}".replace("//", "/")
 
 
+def _text_matches(run, info: dict, text: str) -> bool:
+    """The search text is part of the run ID or of its description (`short`, `purpose`, `shows`)."""
+    needle = text.lower()
+    if needle in info["id"].lower() or needle in (info.get("short") or "").lower():
+        return True
+    if not info.get("has_description"):
+        return False
+    description = store.read_description(run.path) or {}
+    shows = description.get("shows") or []
+    hay = [str(description.get("purpose") or ""), *(str(x) for x in (shows if isinstance(shows, list) else [shows]))]
+    return needle in " ".join(hay).lower()
+
+
 def run_tool(project: Project, name: str, args: dict) -> Any:
     """Answers a backend tool. Raises ValueError with a German message for the agent."""
     if name == "find_runs":
@@ -210,7 +223,7 @@ def run_tool(project: Project, name: str, args: dict) -> Any:
         for r in runs:
             info = run_listing(project, r, candidates)
             started = str(info.get("started") or "")[:10]
-            if args.get("text") and args["text"].lower() not in info["id"].lower():
+            if args.get("text") and not _text_matches(r, info, str(args["text"])):
                 continue
             if args.get("issue") and (info.get("issue") or "").lower() != str(args["issue"]).lower():
                 continue
@@ -225,7 +238,7 @@ def run_tool(project: Project, name: str, args: dict) -> Any:
             cfg = info.get("config_values") or {}
             if any(not any(k.split(".", 1)[-1] == f and str(v) == str(want) for k, v in cfg.items()) for f, want in (args.get("feature") or {}).items()):
                 continue
-            out.append({k: info.get(k) for k in ("id", "name", "issue", "started", "state", "axes", "cells", "planned", "best", "merkmal")})
+            out.append({k: info.get(k) for k in ("id", "name", "issue", "short", "started", "state", "axes", "cells", "planned", "best", "merkmal")})
         out.sort(key=lambda i: str(i["started"] or ""), reverse=True)
         limit = int(args.get("limit") or 20)
         return {"count": len(out), "runs": out[:limit]}

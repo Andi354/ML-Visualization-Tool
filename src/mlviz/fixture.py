@@ -160,6 +160,11 @@ RUNS = [
             "time_embedding": ["calendar", "none"],
         },
         replicates={"shuffle_seed": [1, 2, 3]},
+        # incomplete on purpose: `shows` is missing, so the description comes back with a problem
+        description={
+            "short": "Lernrate und Epochen gemeinsam mit LSTM und Zeit-Embedding variieren",
+            "purpose": "Klären, ob eine höhere Lernrate die kürzere Trainingszeit ausgleicht.",
+        },
     ),
     dict(
         experiment="TIM-52_best_30",
@@ -169,6 +174,11 @@ RUNS = [
         config={"data": {"pred_len": 30}},
         sweep={"forecaster": ["rep-net", "sarima", "ets", "prophet", "snaive"]},
         replicates={"shuffle_seed": [1, 2, 3], "cv_fold": [0, 1]},
+        description={
+            "short": "Erster Lauf der Baselines mit Horizont 30, Folds noch fehlerhaft",
+            "purpose": "Alle Forecaster auf demselben Horizont vergleichen.",
+            "shows": ["Rangfolge der Forecaster"],
+        },
     ),
     dict(
         experiment="TIM-52_best_30",
@@ -178,6 +188,11 @@ RUNS = [
         config={"data": {"pred_len": 30}},
         sweep={"forecaster": ["rep-net", "sarima", "ets", "prophet", "snaive"]},
         replicates={"shuffle_seed": [1, 2, 3], "cv_fold": [0, 1]},
+        description={
+            "short": "Wiederholung von TIM-52_best_30 mit korrigierten Folds",
+            "purpose": "Der erste Lauf nutzte falsche Folds.\nDieser Lauf wiederholt ihn mit den korrigierten.",
+            "shows": ["Ob sich die Rangfolge der Forecaster ändert"],
+        },
     ),
     dict(
         experiment="TIM-52_best_90",
@@ -187,6 +202,15 @@ RUNS = [
         config={"data": {"pred_len": 90}},
         sweep={"forecaster": ["rep-net", "sarima", "ets", "prophet", "snaive"]},
         replicates={"shuffle_seed": [1, 2, 3], "cv_fold": [0, 1]},
+        description={
+            "short": "Bestes Setup aus dem Grid mit Horizont 90 gegen die Baselines",
+            "purpose": "Prüfen, ob das beste REP-Net-Setup aus dem Grid auch bei 90 Tagen Horizont vorn liegt.\n"
+            "Dazu läuft es mit allen Baselines unter denselben Bedingungen.",
+            "shows": ["REP-Net gegen sarima, ets, prophet und snaive", "Abstand je Horizont-Abschnitt"],
+            "notes": ["Gleiche Folds wie TIM-52_best_30"],
+            "expectation": "REP-Net bleibt vorn, der Abstand schrumpft mit dem Horizont.",
+            "compare_to": ["2026-10-08_1120_TIM-52_best_30", "TIM-99_gibt_es_nicht"],
+        },
     ),
     dict(
         experiment="TIM-71_example",
@@ -197,6 +221,11 @@ RUNS = [
         sweep={"forecaster": ["rep-net", "ets"], "lstm_layer": [0, 1]},
         replicates={"shuffle_seed": [1, 2], "cv_fold": [0, 1]},
         extras=True,
+        description={
+            "short": "Beispiel-Lauf mit Extras: Prognosen für alle Fenster, Kurven und Checkpoints, dazu ein sehr langer Satz",
+            "purpose": "Zeigt, wie ein vollständiger Lauf nach den ds-init-Konventionen aussieht.",
+            "shows": ["Kurven", "Vorhersagen"],
+        },
     ),
     dict(
         experiment="TIM-83_running_sweep",
@@ -274,6 +303,8 @@ def _write_run(root: Path, r: dict) -> None:
     if r.get("migrated"):
         config["run"] = {"keep_checkpoints": "all", "predictions": "none"}
     (folder / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False, allow_unicode=True))
+    if r.get("description"):
+        (folder / "description.yaml").write_text(yaml.safe_dump(r["description"], sort_keys=False, allow_unicode=True))
 
     combos = _combos(r["sweep"])
     rep_keys = list(r["replicates"])

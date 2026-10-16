@@ -24,7 +24,7 @@ export function matchRun(run: RunRow, issues: Record<string, IssueInfo>, f: Filt
   if (f.epoch !== "all" && run.epoch !== f.epoch) return false;
   const q = f.q.trim().toLowerCase();
   if (!q) return true;
-  const hay = [run.name, run.id, run.issue ?? "", run.issue ? (issues[run.issue]?.title ?? "") : "", ...run.axes];
+  const hay = [run.name, run.id, run.issue ?? "", run.issue ? (issues[run.issue]?.title ?? "") : "", ...run.axes, run.short ?? ""];
   return hay.join(" ").toLowerCase().includes(q);
 }
 

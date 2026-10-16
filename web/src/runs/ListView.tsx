@@ -76,6 +76,11 @@ function Row({
           </a>
           <Flags run={run} current={current} />
         </span>
+        {run.short && (
+          <span class="short-line" data-testid="short" title={run.short}>
+            {run.short}
+          </span>
+        )}
         <span class="sub mono">{secondLine(run, standalone)}</span>
         {hasOlder && (
           <button

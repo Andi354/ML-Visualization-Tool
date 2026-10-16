@@ -40,6 +40,9 @@ export interface RunInfo {
   has_curves: boolean;
   has_predictions: boolean;
   commit: string | null;
+  /** One-line description (at most 100 characters), null for a run without description. */
+  short: string | null;
+  has_description: boolean;
 }
 
 export interface RunRow extends RunInfo {
