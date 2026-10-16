@@ -82,6 +82,10 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `POST /api/agent/chats` | a new empty chat (`Neuer Chat`) |
 | `GET /api/agent/chats/{id}` | one chat with its messages (404 for an unknown or malformed id) |
 | `POST /api/agent/chats/{id}/messages` | appends a message of the user, `{text}` (empty text is a 400); the first one names a new chat |
+| `GET /api/own-widgets?scope=` | own widgets kept in the project as catalog entries (`key` `own:<slug>`, `settings` from the params, `width`, `own: true`) with their `definition` |
+| `POST /api/own-widgets` | keeps a description under its name (the same name overwrites); 400 with `detail.errors` when it is not valid |
+| `POST /api/own-widgets/validate` | `{errors}` for a description, nothing is written |
+| `DELETE /api/own-widgets/{slug}` | removes a kept widget (404 if there is none) |
 | `PUT /api/agent/mode` | `{mode}`: Direkt, Gemischt or Bestätigen, kept per project |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
 
@@ -190,6 +194,31 @@ first write, nothing else is written into the project): `chats/<id>.json` (one c
 cache chip are computed in the browser from `tokens`, `last_turn_at` and `cache_ttl_s` against the clock of the
 tool (`model.contextUse`, `model.cacheState`), never by asking the agent. `.mlviz/` can be committed (templates and
 own widgets will live there too) or put into the project's `.gitignore`.
+
+## Widget width, order and own widgets (v0.2)
+
+**Width and order.** Every tile has a width, `half` or `full` (a full tile starts a new row; catalog default:
+the comparison table is full, all others half) and a position; the arrows ↑ ↓ in the tile header move it one place,
+"Einstellen" has "Breite Halb | Ganz". Both are part of the board (`web/src/widgets/board.ts`, stored per project and
+scope, so templates can carry them). Boards stored before widths existed take the default width of their type.
+
+**Own widgets (feature E).** A widget the agent writes is a description, not code: Vega-Lite with a thin wrapper
+(`own_widgets.py`; the fields are listed in its docstring). `validate` refuses what the tool cannot theme: colours
+and fonts (the theme draws them from the tokens, `web/src/widgets/own-theme.ts`), `data`/`datasets`/`config`, and any
+mark but bar, line, point, area, rect, text, tick. `{{param.<name>}}` in `filter` values and in any string of the
+spec is replaced by the value of the param. The datasets (`own_data.py`: `cells`, `channels`, `curves`,
+`predictions`, `runs`) are aggregated over the replicates and keyed by the axes; `filter` is a mapping column -> value
+(or list); a row cap (20 000) asks for a narrower filter. A kept widget is `<project>/.mlviz/widgets/<slug>.json`;
+`own:<slug>` goes through `/api/widgets/{key}` like a built-in widget (so the save dialog and templates need no
+special case), `own-draft` takes the description in the request. A description that cannot be drawn gives
+`unavailable: "Widget kann nicht gezeichnet werden: <reason>"` (the agent sees the same text). The frontend loads
+Vega when the first own widget is drawn (`OwnChart`, SVG renderer); it marks itself `data-pending` while drawing and
+the image export waits for that (`settle`).
+
+**Draft.** A draft is part of the board (`board.draft`, in the browser like the rest of the board): the first row, the
+tile at its own width, "Beschreibung" (read-only JSON), "Verwerfen", "Behalten" (saves the widget and makes a tile of it
+at the position of the draft). Only one draft per board; a new one replaces it. The agent creates drafts through the
+tools of feature C.
 
 ## Code
 

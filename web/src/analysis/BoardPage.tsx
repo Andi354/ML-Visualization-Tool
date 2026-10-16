@@ -1,8 +1,9 @@
 import type { ComponentChildren } from "preact";
-import { useEffect, useReducer, useState } from "preact/hooks";
-import type { CatalogEntry, ProjectInfo, RunInfo, WidgetRequest } from "../api";
+import { useEffect, useReducer, useRef, useState } from "preact/hooks";
+import { deleteOwnWidget, getOwnWidgets, keepOwnWidget, OwnWidgetRefused, type CatalogEntry, type ProjectInfo, type RunInfo, type WidgetRequest } from "../api";
 import { boardReducer, loadBoard, makeBoard, newId, saveBoard, type Width } from "../widgets/board";
 import { WidgetTile } from "../widgets/WidgetTile";
+import { DraftRow } from "./DraftRow";
 import { SaveDialog } from "./SaveDialog";
 
 interface Props {
@@ -29,6 +30,14 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
   const widths = Object.fromEntries(catalog.map((c) => [c.key, c.width])) as Record<string, Width>;
   const [board, dispatch] = useReducer(boardReducer, null, () => loadBoard(project.name, scope, known, makeBoard(scope, defaults, widths), widths));
   useEffect(() => saveBoard(project.name, board), [project.name, board]);
+  // effects run after paint: flush on leaving so a quick reload cannot lose the last change (as in the frame)
+  const latestBoard = useRef(board);
+  latestBoard.current = board;
+  useEffect(() => {
+    const flush = () => saveBoard(project.name, latestBoard.current);
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, [project.name]);
 
   const [menu, setMenu] = useState<"widgets" | "add" | null>(null);
   const [dialog, setDialog] = useState<{ initial: string[] } | null>(null);
@@ -38,6 +47,30 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
     const t = setTimeout(() => setToast(null), 4000);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // own widgets: descriptions kept in the project, offered under "Eigene"
+  const [own, setOwn] = useState<CatalogEntry[]>([]);
+  const refreshOwn = () => getOwnWidgets(scope).then(setOwn).catch(() => {});
+  useEffect(() => {
+    refreshOwn();
+  }, [scope]);
+  const everything = [...catalog, ...own]; // what a tile or the save dialog can look up
+  const [keepError, setKeepError] = useState<string | null>(null);
+  useEffect(() => setKeepError(null), [board.draft]);
+  const keep = async () => {
+    if (!board.draft) return;
+    try {
+      const entry = await keepOwnWidget(board.draft.definition);
+      dispatch({ type: "keep-draft", key: entry.key, id: newId(entry.key) });
+      refreshOwn();
+    } catch (e) {
+      setKeepError(e instanceof OwnWidgetRefused ? `Nicht behalten: ${e.errors.join("; ")}` : "Das Widget konnte nicht gespeichert werden.");
+    }
+  };
+  const removeOwn = async (key: string) => {
+    await deleteOwnWidget(key).catch(() => {});
+    refreshOwn();
+  };
 
   const present = known.filter((k) => board.widgets.some((w) => w.type === k));
   const toggleType = (key: string) => {
@@ -71,6 +104,18 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
         </button>
       </div>
       <div class="analysis-scroll">
+        {board.draft && (
+          <DraftRow
+            draft={board.draft}
+            req={req}
+            run={run}
+            project={project}
+            keepError={keepError}
+            onWidth={(width) => dispatch({ type: "draft-width", width })}
+            onDiscard={() => dispatch({ type: "discard-draft" })}
+            onKeep={keep}
+          />
+        )}
         <div class="board-grid" data-testid="board">
           {board.widgets.map((w, i) => (
             <WidgetTile
@@ -80,7 +125,7 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
               last={i === board.widgets.length - 1}
               onMove={(dir) => dispatch({ type: "move", id: w.id, dir })}
               onWidth={(width) => dispatch({ type: "width", id: w.id, width })}
-              def={catalog.find((c) => c.key === w.type)}
+              def={everything.find((c) => c.key === w.type)}
               run={run}
               project={project}
               req={req}
@@ -97,6 +142,7 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
           </button>
           {menu === "add" && (
             <div class="popover left" data-testid="add-widget-menu">
+              <div class="pop-head muted tiny">Katalog</div>
               {catalog.map((c) => (
                 <button
                   key={c.key}
@@ -112,6 +158,36 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
                   <span class="muted small">{c.question}</span>
                 </button>
               ))}
+              <div class="pop-section" data-testid="add-widget-own-head">
+                Eigene
+              </div>
+              {own.length === 0 && (
+                <div class="pop-empty" data-testid="add-widget-own-empty">
+                  Noch keine. Beschreib dem Agenten ein Widget, und behalte es.
+                </div>
+              )}
+              {own.map((c) => (
+                <div class="pop-row" key={c.key}>
+                  <button
+                    class="pop-choice"
+                    data-testid="add-widget-own-item"
+                    data-widget={c.key}
+                    onClick={() => {
+                      dispatch({ type: "add", widget: c.key, id: newId(c.key), width: c.width });
+                      setMenu(null);
+                    }}
+                  >
+                    <span class="w-label">
+                      {c.label}
+                      <span class="own-tag">eigen</span>
+                    </span>
+                    <span class="muted small">{c.question}</span>
+                  </button>
+                  <button class="pop-delete" title="Eigenes Widget löschen" aria-label={`${c.label} löschen`} data-testid="own-delete" onClick={() => removeOwn(c.key)}>
+                    ×
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -126,7 +202,7 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
           defaultTitle={defaultTitle}
           defaultIssue={defaultIssue}
           widgets={board.widgets}
-          catalog={catalog}
+          catalog={everything}
           initial={dialog.initial}
           onClose={() => setDialog(null)}
           onSaved={({ path, count }) => {

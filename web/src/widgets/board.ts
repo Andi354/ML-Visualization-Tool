@@ -12,9 +12,29 @@ export interface BoardWidget {
   width: Width;
 }
 
+/** Description of an own widget (Vega-Lite with a thin wrapper), see own_widgets.py. */
+export interface OwnDefinition {
+  name: string;
+  question: string;
+  scope: "one" | "two" | "project";
+  width?: Width;
+  title?: string;
+  subtitle?: string;
+  params?: { name: string; label?: string; options: string[]; default: string }[];
+  data: { source: string; filter?: Record<string, unknown> };
+  spec: Record<string, unknown>;
+}
+
+/** A widget the agent proposed: shown first on the board until it is kept or discarded. */
+export interface Draft {
+  definition: OwnDefinition;
+  width: Width;
+}
+
 export interface Board {
   scope: string;
   widgets: BoardWidget[];
+  draft?: Draft | null;
 }
 
 export type BoardAction =
@@ -24,6 +44,12 @@ export type BoardAction =
   | { type: "width"; id: string; width: Width }
   /** One position earlier (-1) or later (+1) in the order of the board. */
   | { type: "move"; id: string; dir: -1 | 1 }
+  /** A new draft replaces an open one; it starts with the width its description asks for. */
+  | { type: "set-draft"; definition: OwnDefinition }
+  | { type: "draft-width"; width: Width }
+  | { type: "discard-draft" }
+  /** The draft was kept as the own widget `key`: it becomes a tile in the first position, same width. */
+  | { type: "keep-draft"; key: string; id: string }
   | { type: "reset"; board: Board };
 
 export function boardReducer(b: Board, a: BoardAction): Board {
@@ -44,6 +70,15 @@ export function boardReducer(b: Board, a: BoardAction): Board {
       [widgets[i], widgets[j]] = [widgets[j], widgets[i]];
       return { ...b, widgets };
     }
+    case "set-draft":
+      return { ...b, draft: { definition: a.definition, width: a.definition.width ?? "half" } };
+    case "draft-width":
+      return b.draft ? { ...b, draft: { ...b.draft, width: a.width } } : b;
+    case "discard-draft":
+      return { ...b, draft: null };
+    case "keep-draft":
+      if (!b.draft) return b;
+      return { ...b, draft: null, widgets: [{ id: a.id, type: a.key, settings: {}, width: b.draft.width }, ...b.widgets] };
     case "reset":
       return a.board;
   }
@@ -60,20 +95,31 @@ export const makeBoard = (scope: string, types: string[], widths: Record<string,
 
 const isWidth = (v: unknown): v is Width => v === "half" || v === "full";
 
+/** Own widgets are kept as files of the project, so their keys are not in the built-in catalog. */
+export const isOwn = (type: string) => type.startsWith("own:");
+
+function validDraft(v: unknown): Draft | null {
+  if (!v || typeof v !== "object") return null;
+  const d = v as Record<string, unknown>;
+  const def = d.definition as Record<string, unknown> | undefined;
+  if (!def || typeof def !== "object" || typeof def.name !== "string" || !def.spec || typeof def.spec !== "object" || !def.data) return null;
+  return { definition: def as unknown as OwnDefinition, width: isWidth(d.width) ? d.width : "half" };
+}
+
 function validate(scope: string, known: string[], widths: Record<string, Width>) {
   return (v: unknown): Board | null => {
     if (!v || typeof v !== "object") return null;
     const o = v as Record<string, unknown>;
     if (!Array.isArray(o.widgets)) return null;
     const widgets = o.widgets
-      .filter((w): w is BoardWidget => !!w && typeof w === "object" && typeof (w as BoardWidget).id === "string" && known.includes((w as BoardWidget).type))
+      .filter((w): w is BoardWidget => !!w && typeof w === "object" && typeof (w as BoardWidget).id === "string" && (known.includes((w as BoardWidget).type) || isOwn((w as BoardWidget).type)))
       .map((w) => ({
         id: w.id,
         type: w.type,
         settings: w.settings && typeof w.settings === "object" ? w.settings : {},
         width: isWidth(w.width) ? w.width : (widths[w.type] ?? "half"),
       }));
-    return { scope, widgets };
+    return { scope, widgets, draft: validDraft(o.draft) };
   };
 }
 

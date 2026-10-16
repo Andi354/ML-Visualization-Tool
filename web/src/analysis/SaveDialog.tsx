@@ -152,7 +152,7 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
           />,
           host,
         );
-        await settle();
+        await settle(host);
         const data = await rasterize(host.firstElementChild as HTMLElement, { pixelRatio: 2 });
         render(null, host);
         host.remove();

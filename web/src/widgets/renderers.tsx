@@ -3,6 +3,7 @@ import type { ConfigInfo } from "../api";
 import { ConfigBlocks, ConfigView, Legend as ConfigLegend, type ConfigMode } from "../config/ConfigView";
 import { formatMetric } from "../experiment/model";
 import { formatNumber } from "../format";
+import { OwnChart } from "./own";
 import { bandPath, centredStart, linePath, linear, niceTicks, pad, shortDate, spread } from "./charts";
 import { AllCombos, BestConfig, ConfigDiff, ParamEffect, ParamMap, ProjectBest, RankJumps, RankStability, RegionsAB, ScopeErrors, WhoWins } from "./renderers-compare";
 
@@ -419,6 +420,7 @@ export function StabilityChart({ data }: { data: any }) {
 // --- Registry ------------------------------------------------------------------------------------
 export function renderWidget(type: string, result: WidgetResult, ctx: Ctx) {
   const d = result.data;
+  if (type === "own-draft" || type.startsWith("own:")) return <OwnChart data={d} />;
   switch (type) {
     case "curves":
       return <CurvesChart data={d} />;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import { getCatalog, NotFound, postWidget, type CatalogEntry, type ProjectInfo, type RunInfo, type SettingDef, type WidgetRequest, type WidgetResult } from "../api";
-import type { BoardWidget, Width } from "./board";
+import { isOwn, type BoardWidget, type Width } from "./board";
 import { renderWidget, type Ctx } from "./renderers";
 
 export function useCatalog(scope = ""): CatalogEntry[] {
@@ -120,16 +120,19 @@ export function WidgetFigure({ type, result, ctx, title, hideTitle = false, hint
 export function WidgetTile({ widget, def, run, project, req, onSettings, onRemove, onSave, selection, onMove, first, last, onWidth }: Props) {
   const [result, setResult] = useState<WidgetResult | null>(null);
   const [error, setError] = useState(false);
+  const [gone, setGone] = useState(false); // an own widget that was deleted: the tile says so
   const [showSettings, setShowSettings] = useState(false);
   const key = JSON.stringify([widget.type, req, widget.settings]);
   useEffect(() => {
     const ctl = new AbortController();
     setError(false);
+    setGone(false);
     postWidget(widget.type, { ...req, settings: widget.settings }, ctl.signal)
       .then(setResult)
       .catch((e) => {
         if (e?.name === "AbortError") return;
-        if (!(e instanceof NotFound)) setError(true);
+        if (e instanceof NotFound) setGone(isOwn(widget.type));
+        else setError(true);
       });
     return () => ctl.abort();
   }, [key]);
@@ -140,7 +143,10 @@ export function WidgetTile({ widget, def, run, project, req, onSettings, onRemov
     <section class={"w-tile" + (widget.width === "full" ? " full" : "")} data-testid="widget-tile" data-widget={widget.type} data-width={widget.width}>
       <header class="w-head">
         <div class="w-name">
-          <span class="w-label">{def?.label ?? widget.type}</span>
+          <span class="w-label">
+            {def?.label ?? (isOwn(widget.type) ? "Eigenes Widget" : widget.type)}
+            {isOwn(widget.type) && <span class="own-tag">eigen</span>}
+          </span>
           <span class="muted small w-question">{def?.question}</span>
         </div>
         {onMove && (
@@ -177,7 +183,12 @@ export function WidgetTile({ widget, def, run, project, req, onSettings, onRemov
       )}
       <div class="w-body">
         {error && <div class="notice">Das Widget konnte nicht geladen werden.</div>}
-        {!result && !error && <div class="loading-row" />}
+        {gone && (
+          <div class="w-unavailable" data-testid="widget-gone">
+            Widget gelöscht
+          </div>
+        )}
+        {!result && !error && !gone && <div class="loading-row" />}
         {result?.unavailable && (
           <div class="w-unavailable" data-testid="widget-unavailable">
             {result.unavailable}
