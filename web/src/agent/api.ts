@@ -1,4 +1,5 @@
 import { getJson } from "../api";
+import type { Command } from "./commands";
 import type { AgentMode, Chat, ChatInfo } from "./model";
 
 export interface AgentOverview {
@@ -28,6 +29,8 @@ export interface RunSnapshot {
   chat: Chat;
   busy: boolean;
   limits: Limits | null;
+  /** Instead of a chat state: the agent asks the open tool to do something (see commands.ts). */
+  command?: Command;
 }
 
 const send = async <T,>(method: string, url: string, body?: unknown): Promise<T> => {
@@ -72,3 +75,9 @@ async function stream(url: string, body: unknown, onSnapshot: (s: RunSnapshot) =
 export const runMessage = (id: string, body: { text: string; context: string; resend?: boolean }, onSnapshot: (s: RunSnapshot) => void) =>
   stream(`/api/agent/chats/${id}/run`, body, onSnapshot);
 export const compactChat = (id: string, onSnapshot: (s: RunSnapshot) => void) => stream(`/api/agent/chats/${id}/compact`, {}, onSnapshot);
+
+/** A click on a confirmation card (`approve`) or a run card (`choice`). */
+export const decide = (cid: string, body: { approve?: boolean; choice?: string }) => send<{ accepted: boolean }>("POST", `/api/agent/commands/${cid}/decision`, body);
+/** After Rückgängig / Wiederholen: the action line shows its new state. */
+export const markAction = (chatId: string, cid: string, state: "done" | "reverted", text: string) =>
+  send<Chat>("POST", `/api/agent/chats/${chatId}/actions/${cid}`, { state, text });

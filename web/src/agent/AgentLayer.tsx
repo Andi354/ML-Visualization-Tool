@@ -2,7 +2,9 @@
 import type { RefObject } from "preact";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { AgentIcon, MicIcon } from "../frame/icons";
-import { compactChat, getAgent, getChat, getSetup, newChat, runMessage, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
+import { carryOut } from "./commands";
+import { undoFor } from "./bus";
+import { compactChat, decide, getAgent, markAction, getChat, getSetup, newChat, runMessage, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
 import { defaultRect, fit, moved, resized, type Bounds, type Rect } from "./geometry";
 import {
   cacheState,
@@ -174,6 +176,11 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
   const busy = !!chat && busyChat === chat.id;
 
   const onSnapshot = (snap: RunSnapshot) => {
+    if (snap.command) {
+      carryOut(snap.command); // the agent asks the open tool to do something
+      return;
+    }
+    if (!snap.chat) return;
     setChat((c) => (c && c.id !== snap.chat.id ? c : snap.chat)); // not if the user has opened another chat meanwhile
     if (snap.limits) setLimits(snap.limits);
   };
@@ -189,12 +196,25 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
       /* the chat on disk shows what arrived */
     }
     setBusyChat(null);
+    const next = queued.current;
+    queued.current = null;
+    if (next) start(next, { target }).catch(() => {});
     getChat(target.id).then((c) => setChat((cur) => (cur && cur.id !== c.id ? cur : c))).catch(() => {});
     refresh().catch(() => {});
   };
+  const cards = (chat?.messages ?? []).filter((m) => (m.k === "confirm" || m.k === "choice") && m.cid);
+  /** A message typed while a card is open rejects the card; the message is sent as soon as the agent has gone on. */
+  const queued = useRef<string | null>(null);
   const send = () => {
     const text = draft.trim();
-    if (!text || busy || !ready) return;
+    if (!text || !ready) return;
+    if (busy) {
+      if (!cards.length) return;
+      queued.current = text;
+      setDraft("");
+      cards.forEach((c) => decide(c.cid!, { approve: false }).catch(() => {}));
+      return;
+    }
     if (chat && needsColdHint(chat, nowMs())) {
       setHint({ text }); // check before any call: nothing is sent
       return;
@@ -227,6 +247,15 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     await compactChat(chat.id, onSnapshot).catch(() => {});
     setBusyChat(null);
     refresh().catch(() => {});
+  };
+  const answer = (c: { cid?: string }, body: { approve?: boolean; choice?: string }) => c.cid && decide(c.cid, body).catch(() => {});
+  /** Rückgängig / Wiederholen of an action line: the view does it, the line shows the new state. */
+  const flip = async (cid: string, to: "done" | "reverted") => {
+    const entry = undoFor(cid);
+    if (!entry || !chat) return;
+    const text = (await (to === "reverted" ? entry.undo() : entry.redo?.())) ?? "";
+    const updated = await markAction(chat.id, cid, to, to === "reverted" ? `↶ ${text}` : text).catch(() => null);
+    if (updated) setChat(updated);
   };
   const copySession = () => {
     if (chat?.session_id) navigator.clipboard?.writeText(chat.session_id).catch(() => {});
@@ -357,13 +386,66 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
                 {msg.t}
               </div>
             );
-          if (msg.k === "action")
+          if (msg.k === "confirm")
             return (
-              <div key={i} class="agent-action" data-testid="agent-action">
-                <span class="agent-action-icon">✓</span>
-                <span class="agent-action-text">{msg.t}</span>
+              <div key={i} class="agent-card" data-testid="agent-confirm">
+                <div class="agent-card-head">
+                  <span class="agent-card-label">Bestätigen</span>
+                  <span>{msg.t}</span>
+                </div>
+                {msg.details?.length ? (
+                  <div class="agent-card-detail mono" data-testid="agent-confirm-detail">
+                    {msg.details.map((d) => (
+                      <div key={d}>{d}</div>
+                    ))}
+                  </div>
+                ) : null}
+                <div class="agent-hint-buttons">
+                  <button class="agent-btn primary" onClick={() => answer(msg, { approve: true })} data-testid="agent-confirm-ok">
+                    {msg.save ? "Speichern" : "Ausführen"}
+                  </button>
+                  <button class="agent-btn quiet" onClick={() => answer(msg, { approve: false })} data-testid="agent-confirm-no">
+                    Ablehnen
+                  </button>
+                  <span class="agent-grow" />
+                  {i === (chat?.messages.length ?? 0) - 1 && <span class="agent-card-key">Enter = ausführen</span>}
+                </div>
               </div>
             );
+          if (msg.k === "choice")
+            return (
+              <div key={i} class="agent-choice" data-testid="agent-choice">
+                <div class="agent-choice-q">{msg.t}</div>
+                {(msg.runs ?? []).map((r) => (
+                  <button key={r.id} class="agent-run-card" onClick={() => answer(msg, { choice: r.id })} data-testid="agent-run-card" data-run={r.id}>
+                    <span class="mono agent-run-name">{r.name}</span>
+                    <span class="agent-run-sub">{[r.started?.slice(0, 10), r.state, r.axes.length ? r.axes.join(", ") : null].filter(Boolean).join(" · ")}</span>
+                  </button>
+                ))}
+              </div>
+            );
+          if (msg.k === "action") {
+            const reverted = msg.state === "reverted";
+            const state = msg.rejected ? "rejected" : reverted ? "reverted" : "done";
+            const entry = msg.undo_id ? undoFor(msg.undo_id) : undefined;
+            return (
+              <div key={i} class={"agent-action " + state} data-testid="agent-action" data-state={state}>
+                <span class="agent-action-icon">{state === "rejected" ? "✕" : reverted ? "↶" : "✓"}</span>
+                <span class="agent-action-text">{msg.t}</span>
+                {state === "done" && msg.auto && <span class="agent-action-how">direkt</span>}
+                {entry && state === "done" && (
+                  <button class="agent-action-btn" onClick={() => flip(msg.undo_id!, "reverted")} data-testid="agent-undo">
+                    Rückgängig
+                  </button>
+                )}
+                {entry?.redo && reverted && (
+                  <button class="agent-action-btn" onClick={() => flip(msg.undo_id!, "done")} data-testid="agent-redo">
+                    Wiederholen
+                  </button>
+                )}
+              </div>
+            );
+          }
           return (
             <div key={i} class={"agent-info" + (msg.error ? " error" : "")} data-testid={msg.error ? "agent-error" : "agent-info"}>
               {msg.t}
@@ -430,7 +512,9 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.isComposing) {
                 e.preventDefault();
-                send();
+                const last = chat?.messages[chat.messages.length - 1];
+                if (!draft.trim() && last?.k === "confirm") answer(last, { approve: true }); // Enter on an open card executes it
+                else send();
               } else if (e.key === "Tab" && e.shiftKey) {
                 e.preventDefault(); // Shift+Tab cycles the mode instead of moving the focus
                 pickMode(nextMode(mode));

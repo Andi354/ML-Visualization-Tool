@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import Body, FastAPI, HTTPException
+from fastapi import Body, FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -104,6 +104,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     # --- agent (chats and settings, stored in <project>/.mlviz/) -------------------------------
     agent = AgentStore(project)
     runner = agent_run.AgentRunner(project, agent)
+    app.state.agent_runner = runner
 
     def _chat_or_404(chat_id: str) -> dict:
         try:
@@ -139,7 +140,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
         return agent_run.setup_check()
 
     @app.post("/api/agent/chats/{chat_id}/run")
-    def api_agent_run(chat_id: str, payload: dict = Body(...)) -> StreamingResponse:
+    def api_agent_run(chat_id: str, request: Request, payload: dict = Body(...)) -> StreamingResponse:
         """Sends a message to the agent; the answer streams back as server-sent events (`data: {chat, busy, limits}`)."""
         text = str(payload.get("text") or "").strip()
         resend = bool(payload.get("resend"))
@@ -151,7 +152,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
 
         def events():
             try:
-                for snap in runner.run(chat_id, text, str(payload.get("context") or ""), resend):
+                for snap in runner.run(chat_id, text, str(payload.get("context") or ""), resend, base_url=f"http://127.0.0.1:{request.url.port or 80}"):
                     yield f"data: {json.dumps(snap, ensure_ascii=False)}\n\n"
             except agent_run.Busy:
                 yield f"data: {json.dumps({'error': 'busy'})}\n\n"
@@ -175,6 +176,41 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
                 yield f"data: {json.dumps({'error': 'busy'})}\n\n"
 
         return StreamingResponse(events(), media_type="text/event-stream", headers={"cache-control": "no-cache"})
+
+    @app.post("/mcp/{chat_id}")
+    def mcp_post(chat_id: str, message: dict = Body(...), authorization: str | None = Header(None)) -> Response:
+        """The MCP server of the tool (JSON-RPC over HTTP), for the `claude` the tool started; the secret of this start is required."""
+        if not runner.authorised(authorization):
+            raise HTTPException(401, "unauthorised")
+        reply = runner.handle_mcp(chat_id, message)
+        if reply is None:
+            return Response(status_code=202)
+        return JSONResponse(reply)
+
+    @app.get("/mcp/{chat_id}")
+    def mcp_get(chat_id: str) -> Response:
+        return Response(status_code=405)  # no server-initiated stream
+
+    @app.post("/api/agent/commands/{cid}/result")
+    def api_agent_command_result(cid: str, payload: dict = Body(...)) -> dict:
+        """The open tool reports a command of the agent: `{ok, summary?, data?, error?, undoable?}`."""
+        return {"accepted": runner.answer(cid, {**payload, "ok": bool(payload.get("ok"))})}
+
+    @app.post("/api/agent/commands/{cid}/decision")
+    def api_agent_command_decision(cid: str, payload: dict = Body(...)) -> dict:
+        """A click on a confirmation card (`{approve}`) or a run card (`{choice}`)."""
+        return {"accepted": runner.answer(cid, {"approve": bool(payload.get("approve")), "choice": payload.get("choice")})}
+
+    @app.post("/api/agent/chats/{chat_id}/actions/{cid}")
+    def api_agent_action(chat_id: str, cid: str, payload: dict = Body(...)) -> dict:
+        """After Rückgängig / Wiederholen in the browser: the action line shows its new state (`done`, `reverted`)."""
+        state = payload.get("state")
+        if state not in ("done", "reverted"):
+            raise HTTPException(400, "state must be done or reverted")
+        try:
+            return agent.set_action(chat_id, cid, state=state, t=str(payload.get("text") or ""))
+        except ChatNotFound:
+            raise HTTPException(404, "action not found")
 
     @app.post("/api/agent/chats/{chat_id}/stop")
     def api_agent_stop(chat_id: str) -> dict:
@@ -270,6 +306,14 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
             return deliverables.save(project, payload, lambda rid: get_run(project, rid))
         except deliverables.SaveError as e:
             raise HTTPException(e.status, {"message": e.message, "conflicts": e.detail})
+
+    @app.post("/api/deliverables/undo")
+    def api_deliverables_undo(payload: dict = Body(...)) -> dict:
+        """Takes back a save of the agent: deletes the files that still are what was written (by hash)."""
+        try:
+            return deliverables.undo(project, str(payload.get("path") or ""), dict(payload.get("hashes") or {}))
+        except deliverables.SaveError as e:
+            raise HTTPException(e.status, {"message": e.message})
 
     if STATIC.is_dir():
         app.mount("/assets", StaticFiles(directory=STATIC / "assets"), name="assets")

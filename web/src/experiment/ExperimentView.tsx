@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getDims, getRuns, NotFound, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type RunRow, type TableResult, type TableRow } from "../api";
+import { provide, provideView } from "../agent/bus";
 import { DetailPanel } from "./DetailPanel";
 import { Overview } from "./Overview";
 import { Sidebar } from "./Sidebar";
@@ -9,6 +10,7 @@ import {
   chips,
   loadColumns,
   resetDim,
+  setDim,
   saveColumns,
   summary,
   toggleValue,
@@ -68,6 +70,52 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
   }, [run.id, state, sort, overview]);
 
   const dims = info?.dims ?? [];
+
+  // the agent sets filters and sorting of this run (feature C); the handler is for this run's tab
+  const mirror = useRef({ state, sort, dims });
+  mirror.current = { state, sort, dims };
+  useEffect(() => {
+    const offTool = provide(`set_run_view:${run.id}`, async (args) => {
+      for (let i = 0; i < 100 && !mirror.current.dims.length; i++) await new Promise((r) => setTimeout(r, 40)); // the dimensions are still loading
+      const { state: before, sort: sortBefore, dims: known } = mirror.current;
+      if (!known.length) throw new Error("Die Dimensionen des Laufs sind noch nicht geladen");
+      let next: DimState = { ...before };
+      const filters = (args.filters ?? {}) as Record<string, unknown>;
+      for (const [key, values] of Object.entries(filters)) {
+        const d = known.find((x) => x.key === key);
+        if (!d) throw new Error(`Der Lauf hat keine Dimension „${key}“ (vorhanden: ${known.map((x) => x.key).join(", ")})`);
+        const list = (Array.isArray(values) ? values : [values]).map(String);
+        const bad = list.filter((v) => !d.values.some((x) => x.value === v));
+        if (bad.length) throw new Error(`„${key}“ kennt ${bad.join(", ")} nicht (vorhanden: ${d.values.map((x) => x.value).join(", ")})`);
+        next = setDim(next, d, { sel: list });
+      }
+      const sortArg = args.sort as Partial<Sort> | undefined;
+      const nextSortState: Sort = sortArg?.metric
+        ? { metric: String(sortArg.metric), stat: (sortArg.stat as Sort["stat"]) ?? "mean", dir: (sortArg.dir as Sort["dir"]) ?? "asc" }
+        : sortBefore;
+      setState(next);
+      setSort(nextSortState);
+      const parts = [...Object.entries(filters).map(([k, v]) => `${k} ∈ ${([] as unknown[]).concat(v).join(", ") || "alle"}`), ...(sortArg?.metric ? [`sortiert nach ${sortArg.metric}`] : [])];
+      return {
+        summary: `Ansicht eingestellt · ${parts.join(" · ") || "unverändert"}`,
+        undo: () => {
+          setState(before);
+          setSort(sortBefore);
+          return "Ansicht zurückgesetzt";
+        },
+        redo: () => {
+          setState(next);
+          setSort(nextSortState);
+          return `Ansicht eingestellt · ${parts.join(" · ")}`;
+        },
+      };
+    });
+    const offView = provideView(`run:${run.id}`, () => ({ filters: Object.fromEntries(Object.entries(mirror.current.state).filter(([, q]) => q.sel.length).map(([k, q]) => [k, q.sel])), sort: mirror.current.sort }));
+    return () => {
+      offTool();
+      offView();
+    };
+  }, [run.id]);
   const shownChips = useMemo(() => chips(dims, state), [dims, state]);
   const visible = visibleMetrics(columns, project.metrics, info?.primary_metric ?? project.primary_metric);
   const sortMetric = result?.sort.metric ?? null;

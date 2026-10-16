@@ -7,6 +7,7 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
+from mlviz import agent_run
 from mlviz.server import create_app
 
 
@@ -50,7 +51,7 @@ def test_the_call_is_headless_in_the_project_folder_with_the_view_in_front(clien
     a = call["args"]
     assert a[a.index("-p") + 1] == "[Ansicht: Lauf · TIM-52]\nHallo"
     assert a[a.index("--output-format") + 1] == "stream-json" and "--verbose" in a
-    assert "--strict-mcp-config" in a and a[a.index("--allowedTools") + 1] == "Read,Glob,Grep"
+    assert "--strict-mcp-config" in a and a[a.index("--allowedTools") + 1] == "mcp__mlviz__*,Read,Glob,Grep"
     assert call["cwd"] == str(client.app.state.project.root)
     assert "--resume" not in a
 
@@ -155,9 +156,22 @@ def test_setup_check(client, monkeypatch):
     assert s["ready"] is False and s["problem"]
 
 
-def test_without_claude_code_the_setup_says_so(client, monkeypatch):
+def test_claude_is_found_in_the_vscode_extension_when_not_on_the_path(client, monkeypatch, tmp_path):
     monkeypatch.delenv("MLVIZ_CLAUDE")
     monkeypatch.setenv("PATH", "/nonexistent")
+    monkeypatch.setenv("HOME", str(tmp_path))
+    for v in ("2.1.9", "2.1.301"):
+        b = tmp_path / ".vscode-server/extensions" / f"anthropic.claude-code-{v}-linux-x64/resources/native-binary/claude"
+        b.parent.mkdir(parents=True)
+        b.write_text("#!/bin/sh\n")
+        b.chmod(0o755)
+    assert agent_run.command() == [str(b)]  # 2.1.301 is newer than 2.1.9
+
+
+def test_without_claude_code_the_setup_says_so(client, monkeypatch, tmp_path):
+    monkeypatch.delenv("MLVIZ_CLAUDE")
+    monkeypatch.setenv("PATH", "/nonexistent")
+    monkeypatch.setenv("HOME", str(tmp_path))
     s = client.get("/api/agent/setup").json()
     assert s["ready"] is False and "nicht installiert" in s["problem"]
 

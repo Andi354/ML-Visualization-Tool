@@ -7,7 +7,7 @@ import { rasterize, settle } from "../widgets/rasterize";
 import { FolderPicker } from "./FolderPicker";
 import { combine, defaultName, detach, groupTitle, patchImage, reorder, reselect, setLayout, singles, split, type Image } from "./images";
 
-interface Loaded {
+export interface Loaded {
   result: WidgetResult;
   configData?: ConfigInfo;
 }
@@ -35,7 +35,7 @@ interface Props {
 
 const day = (iso: string) => iso.slice(0, 10);
 
-async function load(w: BoardWidget, req: WidgetRequest): Promise<Loaded> {
+export async function load(w: BoardWidget, req: WidgetRequest): Promise<Loaded> {
   const result = await postWidget(w.type, { ...req, settings: w.settings });
   let configData: ConfigInfo | undefined;
   if (w.type === "config" && !result.unavailable && req.run) {

@@ -3,6 +3,7 @@ import { getProject, type ProjectInfo } from "./api";
 import { IconBar } from "./frame/IconBar";
 import { TabStrip } from "./frame/TabStrip";
 import { AgentLayer } from "./agent/AgentLayer";
+import { useFrameTools } from "./agent/frameTools";
 import { contextLabel } from "./agent/model";
 import { loadAgent, saveAgent, toggleFromIcon } from "./agent/state";
 import { frameReducer, initialFrame, loadFrame, saveFrame } from "./state/frame";
@@ -23,6 +24,7 @@ function Frame({ project }: { project: ProjectInfo }) {
   const [frame, dispatch] = useReducer(frameReducer, project.name, (name) => loadFrame(name) ?? initialFrame);
   const latest = useRef(frame);
   latest.current = frame;
+  useFrameTools(latest, dispatch);
   const [agent, setAgent] = useState(() => loadAgent(project.name));
   const agentLatest = useRef(agent);
   agentLatest.current = agent;
@@ -78,7 +80,7 @@ function Frame({ project }: { project: ProjectInfo }) {
             />
           </div>
           <div class="pane" hidden={frame.active !== null || frame.area !== "analysis"}>
-            <AnalysisView project={project} compare={frame.compare} request={frame.analysis} />
+            <AnalysisView project={project} compare={frame.compare} request={frame.analysis} viewRequest={frame.analysisView} />
           </div>
           {/* Every open run stays mounted, so filters, sorting and scroll survive tab switches. */}
           {frame.tabs.map((run) => (

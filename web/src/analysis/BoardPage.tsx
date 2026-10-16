@@ -1,11 +1,14 @@
 import type { ComponentChildren } from "preact";
 import { useEffect, useReducer, useRef, useState } from "preact/hooks";
-import { deleteOwnWidget, deleteTemplate, getOwnWidgets, getTemplates, keepOwnWidget, markTemplateUsed, saveTemplate, OwnWidgetRefused, type CatalogEntry, type ProjectInfo, type RunInfo, type WidgetRequest } from "../api";
-import { boardReducer, loadBoard, makeBoard, newId, saveBoard, type Width } from "../widgets/board";
+import { deleteOwnWidget, deleteTemplate, getJson, getOwnWidgets, getTemplates, keepOwnWidget, markTemplateUsed, saveTemplate, OwnWidgetRefused, type CatalogEntry, type ProjectInfo, type RunInfo, type WidgetRequest } from "../api";
+import { glow as glowElement, settled } from "../agent/commands";
+import { provide, provideView, type Outcome } from "../agent/bus";
+import { boardReducer, loadBoard, makeBoard, newId, saveBoard, type Board, type OwnDefinition, type Width } from "../widgets/board";
 import { BUILTIN, isDirty, lastUsed, loadCurrent, saveCurrent, standardWidgets, templateScope, toTemplateWidgets, widgetsFromTemplate, type StoredTemplate } from "../widgets/templates";
 import { storageKey } from "../state/storage";
 import { WidgetTile } from "../widgets/WidgetTile";
 import { DraftRow } from "./DraftRow";
+import { saveWidgets } from "./agentSave";
 import { SaveDialog } from "./SaveDialog";
 import { TemplateBar } from "./TemplateBar";
 
@@ -70,15 +73,21 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
   const everything = [...catalog, ...own]; // what a tile or the save dialog can look up
   const [keepError, setKeepError] = useState<string | null>(null);
   useEffect(() => setKeepError(null), [board.draft]);
-  const keep = async () => {
-    if (!board.draft) return;
+  /** Keeps the draft as an own widget; the error text if it does not work. */
+  const keepDraft = async (): Promise<{ error: string } | { key: string }> => {
+    if (!board.draft) return { error: "Es gibt keinen offenen Entwurf" };
     try {
       const entry = await keepOwnWidget(board.draft.definition);
       dispatch({ type: "keep-draft", key: entry.key, id: newId(entry.key) });
       refreshOwn();
+      return { key: entry.key };
     } catch (e) {
-      setKeepError(e instanceof OwnWidgetRefused ? `Nicht behalten: ${e.errors.join("; ")}` : "Das Widget konnte nicht gespeichert werden.");
+      return { error: e instanceof OwnWidgetRefused ? `Nicht behalten: ${e.errors.join("; ")}` : "Das Widget konnte nicht gespeichert werden." };
     }
+  };
+  const keep = async () => {
+    const r = await keepDraft();
+    if ("error" in r) setKeepError(r.error);
   };
   const removeOwn = async (key: string) => {
     await deleteOwnWidget(key).catch(() => {});
@@ -141,6 +150,166 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
   };
   const labelOf = (type: string) => everything.find((c) => c.key === type)?.label ?? "Widget gelöscht";
   const runLabel = (id: string) => footerRuns.find((r) => r.id === id)?.name ?? id;
+
+  // --- the tools of the agent on this board (feature C) -----------------------------------------------------
+  const mirror = useRef({ board, current, templates, everything, own, req, run, footerRuns, footerText, project, dirty: false });
+  mirror.current = { board, current, templates, everything, own, req, run, footerRuns, footerText, project, dirty };
+  const ops = useRef({ apply, saveAs, keepDraft, refreshTemplates, refreshOwn, setCurrent });
+  ops.current = { apply, saveAs, keepDraft, refreshTemplates, refreshOwn, setCurrent };
+  useEffect(() => {
+    const m = () => mirror.current;
+    const labelFor = (type: string) => m().everything.find((c) => c.key === type)?.label ?? type;
+    /** A widget of the board by id, or by type when only one of that type is there. */
+    const find = (ref: unknown) => {
+      const r = String(ref);
+      const byId = m().board.widgets.find((w) => w.id === r);
+      if (byId) return byId;
+      const byType = m().board.widgets.filter((w) => w.type === r);
+      if (byType.length === 1) return byType[0];
+      const have = m().board.widgets.map((w) => `${w.id} (${labelFor(w.type)})`).join(", ");
+      throw new Error(byType.length > 1 ? `Mehrere Widgets vom Typ „${r}“, nimm die ID: ${have}` : `Kein Widget „${r}“ im Board (vorhanden: ${have || "keine"})`);
+    };
+    /** Changes the board and returns an outcome that goes back to the board before and forward to the one after. */
+    const edit = async (summary: string, undoText: string, run: () => void | Promise<void>, glowId?: () => string | undefined, extra?: { undo?: () => Promise<void> | void; redo?: () => Promise<void> | void }): Promise<Outcome> => {
+      const before: Board = m().board;
+      const nameBefore = m().current;
+      await run();
+      await settled();
+      const after: Board = m().board;
+      const nameAfter = m().current;
+      const id = glowId?.();
+      if (id) glowElement(`[data-id="${id}"]`);
+      return {
+        summary,
+        undo: async () => {
+          dispatch({ type: "reset", board: before });
+          ops.current.setCurrent(nameBefore);
+          await extra?.undo?.();
+          return undoText;
+        },
+        redo: async () => {
+          dispatch({ type: "reset", board: after });
+          ops.current.setCurrent(nameAfter);
+          await extra?.redo?.();
+          return summary;
+        },
+      };
+    };
+    const offs = [
+      provide("add_widget", async (a) => {
+        const def = m().everything.find((c) => c.key === a.type);
+        if (!def) throw new Error(`Unbekanntes Widget „${a.type}“ (vorhanden: ${m().everything.map((c) => c.key).join(", ")})`);
+        const id = newId(def.key);
+        const width: Width = a.width === "full" || a.width === "half" ? a.width : def.width;
+        return edit(`Widget hinzugefügt · ${def.label}`, `Widget entfernt · ${def.label}`, () => {
+          dispatch({ type: "add", widget: def.key, id, width });
+          if (a.settings && typeof a.settings === "object") dispatch({ type: "settings", id, patch: a.settings });
+        }, () => id);
+      }),
+      provide("remove_widget", (a) => {
+        const w = find(a.widget);
+        return edit(`Widget entfernt · ${labelFor(w.type)}`, `Widget wieder da · ${labelFor(w.type)}`, () => dispatch({ type: "remove", id: w.id }));
+      }),
+      provide("configure_widget", (a) => {
+        const w = find(a.widget);
+        const keys = (m().everything.find((c) => c.key === w.type)?.settings ?? []).map((x) => x.key);
+        const patch = (a.settings ?? {}) as Record<string, string | null>;
+        const unknown = Object.keys(patch).filter((k) => !keys.includes(k));
+        if (unknown.length) throw new Error(`„${labelFor(w.type)}“ kennt ${unknown.join(", ")} nicht (Einstellungen: ${keys.join(", ") || "keine"})`);
+        const text = Object.entries(patch).map(([k, v]) => `${k} = ${v}`).join(", ");
+        return edit(`Widget eingestellt · ${labelFor(w.type)} · ${text}`, `Einstellung zurückgesetzt · ${labelFor(w.type)}`, () => dispatch({ type: "settings", id: w.id, patch }), () => w.id);
+      }),
+      provide("move_widget", (a) => {
+        const w = find(a.widget);
+        const dir = a.direction === "up" ? -1 : 1;
+        const steps = Math.max(1, Math.min(20, Number(a.steps) || 1));
+        return edit(`Widget verschoben · ${labelFor(w.type)} ${dir < 0 ? "↑" : "↓"}`, `Widget zurückgeschoben · ${labelFor(w.type)}`, () => {
+          for (let i = 0; i < steps; i++) dispatch({ type: "move", id: w.id, dir });
+        }, () => w.id);
+      }),
+      provide("resize_widget", (a) => {
+        const w = find(a.widget);
+        const width: Width = a.width === "full" ? "full" : "half";
+        return edit(`Widget-Breite · ${labelFor(w.type)} → ${width === "full" ? "volle" : "halbe"} Breite`, `Breite zurückgesetzt · ${labelFor(w.type)}`, () => dispatch({ type: "width", id: w.id, width }), () => w.id);
+      }),
+      provide("apply_template", (a) => {
+        const name = String(a.name);
+        const known = name.toLowerCase() === BUILTIN.toLowerCase() ? BUILTIN : m().templates?.find((t) => t.name.toLowerCase() === name.toLowerCase())?.name;
+        if (!known) throw new Error(`Keine Vorlage „${name}“ (vorhanden: ${[BUILTIN, ...(m().templates ?? []).map((t) => t.name)].join(", ")})`);
+        return edit(`Vorlage angewendet · ${known}`, "Board zurückgesetzt", () => ops.current.apply(known));
+      }),
+      provide("draft_widget", async (a) => {
+        const def = a.definition as OwnDefinition;
+        const check = await fetch("/api/own-widgets/validate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ definition: def }) }).then((r) => r.json()).catch(() => ({ errors: ["Prüfung nicht möglich"] }));
+        if (check.errors?.length) throw new Error(`Die Beschreibung ist nicht gültig: ${check.errors.join("; ")}`);
+        return edit(`Widget-Entwurf · ${def.name}`, "Entwurf verworfen", () => dispatch({ type: "set-draft", definition: def }));
+      }),
+      provide("keep_draft", async () => {
+        const draft = m().board.draft;
+        if (!draft) throw new Error("Es gibt keinen offenen Entwurf");
+        let key = "";
+        const out = await edit(`Eigenes Widget behalten · ${draft.definition.name}`, `Entwurf wieder offen · ${draft.definition.name}`, async () => {
+          const r = await ops.current.keepDraft();
+          if ("error" in r) throw new Error(r.error);
+          key = r.key;
+        }, undefined, {
+          undo: async () => {
+            await deleteOwnWidget(key).catch(() => {});
+            ops.current.refreshOwn();
+          },
+        });
+        return out;
+      }),
+      provide("save_template", async (a) => {
+        const name = String(a.name || "").trim();
+        const existing = m().templates?.find((t) => t.name.toLowerCase() === name.toLowerCase());
+        const nameBefore = m().current;
+        const err = await ops.current.saveAs(name);
+        if (err) throw new Error(err);
+        await settled();
+        return {
+          summary: `Vorlage gespeichert · ${m().current}`,
+          undo: async () => {
+            const saved = m().current;
+            if (existing) await saveTemplate(templateScope(m().req.scope ?? "run"), existing.name, existing.widgets);
+            else await deleteTemplate(templateScope(m().req.scope ?? "run"), saved);
+            ops.current.setCurrent(nameBefore);
+            ops.current.refreshTemplates();
+            return `Vorlage zurückgenommen · ${saved}`;
+          },
+        };
+      }),
+      provide("save_deliverable", async (a) => {
+        const title = String(a.title || "").trim();
+        if (!title) throw new Error("Der Titel fehlt");
+        const wanted = Array.isArray(a.widgets) && a.widgets.length ? a.widgets.map((x: unknown) => find(x)) : m().board.widgets;
+        if (!wanted.length) throw new Error("Das Board hat keine Widgets zum Speichern");
+        const out = await saveWidgets({ project: m().project, req: m().req, run: m().run, footerRuns: m().footerRuns, footerText: m().footerText, widgets: wanted, catalog: m().everything, title });
+        setToast(`${out.files.length} ${out.files.length === 1 ? "Bild" : "Bilder"} gespeichert: ${out.path}`);
+        return {
+          summary: `Gespeichert · ${out.files.length} ${out.files.length === 1 ? "Bild" : "Bilder"} → ${out.path}/`,
+          data: { path: out.path, files: out.files, skipped: out.skipped },
+          undo: async () => {
+            const r = await fetch("/api/deliverables/undo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ path: out.path, hashes: out.hashes }) }).then((x) => x.json());
+            return r.kept?.length ? "Datei wurde inzwischen geändert, nicht gelöscht" : `Gespeichertes gelöscht · ${out.path}/`;
+          },
+        };
+      }),
+    ];
+    const offView = provideView("board", () => ({
+      scope: m().req.scope,
+      runs: m().req.scope === "run" ? [m().req.run] : m().req.runs,
+      template: m().current,
+      template_changed: m().dirty,
+      widgets: m().board.widgets.map((w) => ({ id: w.id, type: w.type, label: labelFor(w.type), width: w.width, settings: w.settings })),
+      draft: m().board.draft ? m().board.draft!.definition.name : null,
+      templates: ["Standard", ...(m().templates ?? []).map((t) => t.name)],
+    }));
+    return () => {
+      offs.forEach((o) => o());
+      offView();
+    };
+  }, [scope]);
 
   const present = known.filter((k) => board.widgets.some((w) => w.type === k));
   const toggleType = (key: string) => {
