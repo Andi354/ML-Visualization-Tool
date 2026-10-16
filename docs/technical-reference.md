@@ -150,6 +150,18 @@ member, the layout is `stack` or `side`. A group has one title (default "A und B
 of their own but their subtitle and note when "Hinweise einblenden" is on (default off for a group, on for
 a single image), and one footer. Group file names are `NN_<type>+<type>.png`.
 
+## Running the tool
+
+Two ways, equal in rank. **Docker:** `docker compose up --build` (see `.env.example`). **Without Docker:**
+`make run PROJECT=<path>` for a machine without Docker rights. It creates the venv `.venv-run` (not the
+development `.venv`), installs `ds-store` from `../ds-store` (`DS_STORE=` overrides; a folder or a wheel)
+and the tool's wheel from `dist/` (the frontend is built into it, so no Node is needed), then starts
+`mlviz serve --project <path>` on `127.0.0.1:8765` (`MLVIZ_PORT`, `MLVIZ_HOST`). It needs `uv`, the wheel
+in `dist/` and the `ds-store` folder; each missing piece stops it with a message. The tool is meant for one
+person; it is not exposed in the network unless `MLVIZ_HOST` says so. `make check-run` installs into a
+temporary venv, serves the demo project and asks the API and the frontend; `tests/test_run_without_docker.py`
+covers what `make run` does, how it refuses, and that `mlviz serve` answers.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.
