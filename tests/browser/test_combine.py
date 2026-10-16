@@ -99,6 +99,7 @@ def test_members_move_up_and_down_and_the_file_name_follows(page):
     group.get_by_test_id("member").nth(1).get_by_test_id("member-up").click()
     assert members(d, 0) == [members(d, 0)[0], members(d, 0)[1]]
     expect(group.get_by_test_id("image-name")).to_have_value("01_per-region+compare-table.png")
+    expect(d.get_by_test_id("export-card").get_by_test_id("export-part")).to_have_count(2)  # the preview has drawn
     order = d.get_by_test_id("export-card").get_by_test_id("export-part").evaluate_all("els => els.map(e => e.querySelector('svg, table') !== null)")
     assert order == [True, True]
     group.get_by_test_id("member").nth(1).get_by_test_id("member-down").click()  # already last: nothing changes
