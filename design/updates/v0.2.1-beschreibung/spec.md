@@ -10,10 +10,10 @@ Prototype: prototype/ · Builds on: v0.2.0
 | G · Short description in Läufe | decided |
 | H · Description in the run tab | running |
 
-Running block: H · Description in the run tab. Proposed H1 block above the table, H2 sidebar, H3 header
-button + panel, H4 sub-tab; Tim: H1 and H3, sidebar too narrow. On the canvas: H1 · Block über der
-Tabelle (collapsible strip, fields side by side), H3 · Knopf im Kopf + Panel (520 px panel on the right).
-Field labels: Zweck, Soll zeigen, Erwartung, Notizen, Vergleichen mit. Waiting for Tim's word.
+Running block: H · Description in the run tab. Tim prefers H1; asked how description and overview
+graphs share space. Agreed: one scroll column right of the sidebar — description (collapsible), overview
+(collapsible), then the table; toolbar and table header stick to the top. On the canvas: H4 · H1, alles
+scrollt zusammen. Waiting for Tim's word.
 
 ## Goal
 Each run says why it was made: in one line in Läufe, in full in its tab.
