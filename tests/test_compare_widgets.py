@@ -173,12 +173,12 @@ def test_all_combinations_title_names_the_better_middle(project):
 # --- Regionen --------------------------------------------------------------------------------------------------------
 def test_regions_best_combination_per_channel_and_the_relative_difference(project):
     d = two(project, "regions-ab")["data"]
-    assert [x["channel"] for x in d["rows"]] == ["us", "eu", "asia", "latam"]
+    assert [x["channel"] for x in d["rows"]] == ["asia", "eu", "latam", "us"]  # ds-store sorts channels by name
     run = get_run(project, A30)
     best = means(project, A30, ["forecaster"]).idxmin()
-    ch = run.channels.merge(run.ok_cells()[["cell_id", "forecaster"]], on="cell_id")
+    ch = run.channels.drop(columns="forecaster").merge(run.ok_cells()[["row", "forecaster"]], on="row")
     va = ch[(ch["forecaster"] == best) & (ch["channel"] == "us")]["test_mape"].mean()
-    row = d["rows"][0]
+    row = next(x for x in d["rows"] if x["channel"] == "us")
     assert row["a"] == pytest.approx(va) and row["diff"] == pytest.approx((row["b"] - row["a"]) / row["a"] * 100)
 
 

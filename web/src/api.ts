@@ -27,7 +27,9 @@ export interface RunInfo {
   started: string | null;
   ended: string | null;
   /** `finished`, `running` or `stalled` (not finished and nothing written for a while). */
-  state: "finished" | "running" | "stalled";
+  state: "finished" | "running" | "stalled" | "unsupported";
+  /** Why the run cannot be shown (`unsupported`: written by a newer ds-store), else null. */
+  problem: string | null;
   running: boolean;
   migrated: boolean;
   epoch: string | null;

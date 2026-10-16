@@ -2,7 +2,7 @@
 services:
   mlviz:
     build: .
-    image: ml-visualization-tool:0.1.0
+    image: ml-visualization-tool:0.1.1
     # run as your own user, so exported files do not belong to root
     user: "${UID:-1000}:${GID:-1000}"
     volumes:

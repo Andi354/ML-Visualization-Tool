@@ -1,9 +1,10 @@
 """Synthetic demo project in the layout of a ds-init project.
 
 Used by the tests and by `mlviz demo <dir>` to try the tool without real results. All numbers are
-made up and deterministic. The layout written here is the run format of ds-init (store_version 1):
-one file per table (`plan`, `cells`, `channels`, `curves`, `predictions`), `curves` and `predictions`
-flat with `cell_id`, `config.base.yaml` next to `config.yaml`.
+made up and deterministic. The tables are written with the writers of `ds-store`, so the layout is the
+run format of ds-init (store_version 1): `plan`, `cells`, `channels`, `curves`, `predictions`, the last
+two flat with `cell_id`; `config.base.yaml` sits next to `config.yaml`. A finished run is compacted
+(one file per table), a running one keeps its part files.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yaml
+from ds_store import compact, write_part, write_plan
 
 SCALED = ["test_mse_missing", "test_mae_missing", "test_rmse_missing", "test_mape_missing"]
 REAL = [
@@ -330,7 +332,7 @@ def _write_run(root: Path, r: dict) -> None:
             orig = next(c for c in cells if c["row"] == duplicate_of)
             cells.append({**orig, **row, "finished_at": finished.isoformat(), "shard": 0})
             for ch in [c for c in chans if c["row"] == duplicate_of]:
-                chans.append({**ch, "row": i, "finished_at": finished.isoformat()})
+                chans.append({**ch, "row": i, "is_duplicate": True, "duplicate_of": duplicate_of, "finished_at": finished.isoformat()})
             continue
         failed = rng.random() < error_rate
         row["status"] = "error" if failed else "ok"
@@ -347,13 +349,26 @@ def _write_run(root: Path, r: dict) -> None:
             for ch in CHANNELS:
                 cm = _metrics(r, p["combo"], p["rep"], ch)
                 chans.append(
-                    {"row": i, "cell_id": cid, "channel": ch, **{k: cm[k] for k in SCALED + REAL}, "finished_at": finished.isoformat()}
+                    {
+                        "row": i,
+                        "cell_id": cid,
+                        **axes_row,
+                        **p["rep"],
+                        "is_duplicate": False,
+                        "duplicate_of": None,
+                        "channel": ch,
+                        **{k: cm[k] for k in SCALED + REAL},
+                        "finished_at": finished.isoformat(),
+                    }
                 )
 
     cells_df = pd.DataFrame(cells)
-    cells_df.to_parquet(folder / "cells.parquet", index=False)
-    pd.DataFrame(chans).drop(columns="row").to_parquet(folder / "channels.parquet", index=False)
-    pd.DataFrame(plan_rows).to_parquet(folder / "plan.parquet", index=False)
+    chans_df = pd.DataFrame(chans)
+    write_plan(folder, pd.DataFrame(plan_rows))
+    for shard in sorted(set(cells_df["shard"])) if len(cells_df) else []:
+        write_part(folder, "cells", int(shard), cells_df[cells_df["shard"] == shard])
+        if len(chans_df):
+            write_part(folder, "channels", int(shard), chans_df[chans_df["row"].isin(cells_df.loc[cells_df["shard"] == shard, "row"])])
     if not r.get("migrated"):  # runs from before the new format have no base config
         (folder / "config.base.yaml").write_text(yaml.safe_dump(BASE_CONFIG, sort_keys=False, allow_unicode=True))
 
@@ -402,6 +417,8 @@ def _write_run(root: Path, r: dict) -> None:
 
     if r.get("extras"):
         _write_curves_predictions(folder, cells_df, r)
+    if ended:  # a finished run is compacted, a running one keeps its parts
+        compact(folder)
 
 
 def hash_int(s: str) -> int:
@@ -431,8 +448,8 @@ def _write_curves_predictions(folder: Path, cells: pd.DataFrame, r: dict) -> Non
                 preds.append(
                     {"cell_id": cid, "date": date.date().isoformat(), "channel": ch, "y_pred": pred, "y_true": actual}
                 )
-    pd.DataFrame(curves).to_parquet(folder / "curves.parquet", index=False)
-    pd.DataFrame(preds).to_parquet(folder / "predictions.parquet", index=False)
+    write_part(folder, "curves", 0, pd.DataFrame(curves))
+    write_part(folder, "predictions", 0, pd.DataFrame(preds))
 
 
 def make_project(root: Path | str) -> Path:

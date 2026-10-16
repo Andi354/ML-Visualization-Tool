@@ -15,20 +15,28 @@ The tool knows nothing about a project except these files. Every reader tolerate
 | `.../config.base.yaml` | the merged base configs as they were at the start of the run (missing for migrated runs) |
 | tables, through `ds-store` | `plan`: `row`, `cell_id`, `duplicate_of`, axes, replicates. `cells`: one row per planned cell, those plus `is_duplicate`, `status` (`ok`/`error`), `error`, `duration_s`, `finished_at`, `shard`, metric columns. `channels`: cell x channel (`cell_id`, `channel`, metric columns). `curves`: `cell_id`, `epoch`, `metric` (`train_loss`, `val_loss`), `value`. `predictions`: `cell_id`, `date`, `channel`, `y_pred`, `y_true` (whole test period) |
 
-**Run tables are read only through `ds-store`** (`read_table`, `list_runs`, `run_status`), wrapped in
-`store.py`; the tool has no reader of its own and never opens a table file. Axis values are text (lists
-as JSON, paired axes as one label column). `curves` and `predictions` exist once per `cell_id` and carry
-no replicate columns (`read_table(..., with_cells=True)` adds them); a duplicate cell (`is_duplicate`)
-has the values of its original, so every planned combination weighs the same in a mean. A migrated run
-has no `predictions` table. `store.py` caches by the newest modification time in the run folder, so a
-running experiment shows up as it writes. Until the package is installed (it comes with the migration
-of the project, TIM-71) the tests use a stand-in (`tests/ds_store_stub.py`); without the package the API
-answers 409 and the run list shows that `ds-store` is missing. A `store_version` the package does not
-know ends in the same 409 with the package's message.
+**Run tables are read only through `ds-store`** (`read_table`, `list_runs`, `run_status`,
+`table_version`), wrapped in `store.py`; the tool has no reader of its own and never opens a table file.
+`ds-store` 0.1.0 is vendored as a wheel in `vendor/` (it is not on an index): `make setup` installs it
+before the tool, the Dockerfile installs it together with the tool's wheel. Installing the tool's wheel
+elsewhere needs `pip install vendor/ds_store-*.whl ml_visualization_tool-*.whl`. Axis values are text
+(lists as JSON, paired axes as one label column). `curves` and `predictions` exist once per `cell_id`
+and carry no replicate columns (`read_table(..., with_cells=True)` adds them). A duplicate cell
+(`is_duplicate`) has the values of its original and shares its `cell_id`, so `channels` are tied to
+`cells` by `row` (`aggregate.join_cells`), never by `cell_id`. A missing table reads as empty (the
+wrapper returns None); derived cells (`forecaster: hybrid`) leave `ensemble_*` axes empty on all other
+cells, and an empty axis value is a value of its own. The package sorts `channels` by name, so regions
+appear alphabetically, not in model order. Caches are keyed by `table_version` (and `meta.json`), so a
+running experiment shows up as it writes. Errors from the package (`UnsupportedStoreVersion`) become
+`StoreError`; without the package installed the API answers 409 and the run list shows that `ds-store`
+is missing.
 
 State and progress are `run_status`: `finished` (`ended_at` set), `running` (something written within 15
 minutes) or `stalled` (a crash, or one very long cell); `planned` is None for runs without `plan.parquet`.
-The run list shows a stalled run as unfinished with the flag "steht still".
+The run list shows a stalled run as unfinished with the flag "steht still". `list_runs` lists a run written
+by a newer package with `state: "unsupported"` and a `message`: the run list shows it with the flag
+"nicht lesbar" (the message as tooltip) and no numbers, the project widgets leave it out, and its own
+views answer 409 with the message. The status is cached for 30 seconds (the clock moves running to stalled).
 
 Run folders are named `<YYYY-MM-DD_HHMM>_<name>` (older layouts with seconds or a timestamp suffix are
 accepted too). The run name is `meta.json: name`, else the folder name without the timestamp; the issue is
@@ -142,7 +150,7 @@ a single image), and one footer. Group file names are `NN_<type>+<type>.png`.
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.
-- `src/mlviz/store.py`: the only reader of run tables (wraps `ds-store`, caches by modification time).
+- `src/mlviz/store.py`: the only reader of run tables (wraps `ds-store`, caches by `table_version`).
 - `src/mlviz/runs.py`: `Run` (meta, config, tables and state through `store.py`), `list_runs`, `get_run`. Run ids never leave `runs/`.
 - `src/mlviz/aggregate.py`: dimensions, constants and group table of one run (feature D).
 - `web/src/experiment/`: experiment view; `model.ts` holds the pure logic (dimension state, chips, columns, formatting).
@@ -155,8 +163,7 @@ a single image), and one footer. Group file names are `NN_<type>+<type>.png`.
 - `src/mlviz/linear.py`: Linear client and local issue links.
 - `web/src/runs/model.ts`: pure logic of the Läufe area (filters, blocks, texts, timeline); components next to it.
 - `src/mlviz/server.py`: FastAPI app, `/api/...`, serves `src/mlviz/static` (the built frontend).
-- `src/mlviz/fixture.py`: synthetic demo project in the run format (`mlviz demo`), the base of all tests.
-- `tests/ds_store_stub.py`: stand-in for `ds-store` in tests and in `scripts/screenshots.py`; to be replaced by the package.
+- `src/mlviz/fixture.py`: synthetic demo project in the run format, written with the writers of `ds-store` (`mlviz demo`), the base of all tests. The package's `write_example_run` (8 cells) is too small for the views; `tests/test_store.py` uses it to check that the tool reads what the package writes.
 - `web/src/state/frame.ts`: frame state (areas, tabs). Stored per project in `localStorage`
   (`mlviz:v1:<project>:...`), every access guarded.
 - `web/src/tokens.css` is generated from `design/tokens.json` (`npm run tokens`); never edit it.

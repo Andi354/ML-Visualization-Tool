@@ -94,7 +94,7 @@ def test_a_combination_acts_as_a_filter(project):
 def test_per_region_table_has_a_row_per_channel_and_marks_the_best_per_row(project):
     r = compute(project, "per-region")
     d = r["data"]
-    assert d["channels"] == ["us", "eu", "asia", "latam"] and d["series"][0] == "rep-net"
+    assert d["channels"] == ["asia", "eu", "latam", "us"] and d["series"][0] == "rep-net"
     assert d["metric"]["key"] == "test_mape" and d["format"] == "table"
     for line in d["grid"]:
         vals = [c["value"] for c in line]
@@ -106,7 +106,7 @@ def test_per_region_table_has_a_row_per_channel_and_marks_the_best_per_row(proje
 def test_per_region_values_come_from_the_channel_table(project):
     d = compute(project, "per-region")["data"]
     run = get_run(project, R52)
-    ch = run.channels.merge(run.ok_cells()[["cell_id", "forecaster"]], on="cell_id")
+    ch = run.channels.drop(columns="forecaster").merge(run.ok_cells()[["row", "forecaster"]], on="row")
     assert d["grid"][1][2]["value"] == pytest.approx(ch[(ch["channel"] == "eu") & (ch["forecaster"] == d["series"][2])]["test_mape"].mean())
 
 

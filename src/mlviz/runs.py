@@ -133,20 +133,29 @@ class Run:
 
     @property
     def has_curves(self) -> bool:
+        if self.problem:
+            return False
         df = self.table("curves")
         return df is not None and not df.empty
 
     @property
     def has_predictions(self) -> bool:
+        if self.problem:
+            return False
         df = self.table("predictions")
         return df is not None and not df.empty
 
-    # --- state and progress (ds-store: finished | running | stalled) ---------------------------
+    # --- state and progress (ds-store: finished | running | stalled | unsupported) --------------
     @property
     def status(self) -> dict:
         if self.listed is not None:
             return self.listed
         return store.run_status(self.path)
+
+    @property
+    def problem(self) -> str | None:
+        """Why the run cannot be shown (a store_version this package does not know), else None."""
+        return self.status.get("message") if self.state == "unsupported" else None
 
     @property
     def state(self) -> str:
@@ -158,6 +167,8 @@ class Run:
 
     @property
     def done_cells(self) -> int:
+        if self.problem:
+            return 0
         done = self.status.get("done")
         return int(done) if done is not None else len(self.cells)
 
@@ -216,6 +227,7 @@ class Run:
             "started": s.isoformat() if s else None,
             "ended": e.isoformat() if e else None,
             "state": self.state,
+            "problem": self.problem,
             "running": self.running,
             "migrated": self.migrated,
             "epoch": self.epoch,
@@ -262,6 +274,11 @@ def list_runs(project: Project) -> list[Run]:
     runs = [Run(p, status) for p, status in store.list_runs(base) if (p / "meta.json").exists()]
     runs.sort(key=lambda r: (r.started or datetime.min, r.id), reverse=True)
     return runs
+
+
+def readable_runs(project: Project) -> list[Run]:
+    """`list_runs` without the runs ds-store cannot read (the widgets need their tables)."""
+    return [r for r in list_runs(project) if not r.problem]
 
 
 def get_run(project: Project, run_id: str) -> Run | None:

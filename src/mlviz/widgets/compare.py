@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from ..aggregate import CHANNEL, _ordered_values, dimension_axes, has_channels
+from ..aggregate import CHANNEL, _ordered_values, dimension_axes, has_channels, join_cells
 from ..listing import flat_config
 from ..project import Metric, Project
 from ..runs import Run, get_run
@@ -287,7 +287,7 @@ def regions_ab(project: Project, req: dict) -> dict:
         ch = run.channels
         if pair.metric.key not in ch.columns:
             return {"unavailable": "Keine Metrik je Kanal"}
-        j = ch.assign(**{CHANNEL: ch[CHANNEL].map(str)}).merge(ok[["cell_id"]], on="cell_id")
+        j = join_cells(ch.assign(**{CHANNEL: ch[CHANNEL].map(str)}), ok, [])
         per[side] = j.groupby(CHANNEL, sort=False)[pair.metric.key].mean()
     channels = [c for c in per["a"].index if c in per["b"].index]
     rows = []

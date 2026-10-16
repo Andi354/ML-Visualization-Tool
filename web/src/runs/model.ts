@@ -93,7 +93,7 @@ export function stamp(iso: string | null): string {
 }
 
 /** Not finished: running, or stalled (nothing written for a while, a crash or one very long cell). */
-const unfinished = (r: RunRow) => r.state !== "finished";
+const unfinished = (r: RunRow) => r.state === "running" || r.state === "stalled";
 
 export function cellText(r: RunRow): string {
   if (unfinished(r)) return `${formatInt(r.cells)} / ${formatInt(r.planned)}`;
@@ -115,8 +115,9 @@ export function bestText(r: RunRow): { value: string; note: string } {
   return { value: v, note: parts.join(" · ") };
 }
 
-export function flags(r: RunRow, current: string | null): { text: string; kind: "running" | "warn" }[] {
-  const out: { text: string; kind: "running" | "warn" }[] = [];
+export function flags(r: RunRow, current: string | null): { text: string; kind: "running" | "warn"; title?: string }[] {
+  const out: { text: string; kind: "running" | "warn"; title?: string }[] = [];
+  if (r.problem) out.push({ text: "⚠ nicht lesbar", kind: "warn", title: r.problem });
   if (r.running) out.push({ text: "● läuft", kind: "running" });
   if (r.state === "stalled") out.push({ text: "◐ steht still", kind: "warn" });
   if (current && r.epoch && r.epoch !== current) out.push({ text: `Epoche ${r.epoch}`, kind: "warn" });

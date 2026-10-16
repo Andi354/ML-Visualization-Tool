@@ -5,7 +5,7 @@ from __future__ import annotations
 from ..aggregate import _ordered_values, dimension_axes
 from ..listing import flat_config, group_best, merkmal_candidates
 from ..project import Project
-from ..runs import Run, list_runs
+from ..runs import Run, readable_runs
 from .common import de, metric_text
 from .compare import _means
 from .registry import Widget, select, widget
@@ -55,7 +55,7 @@ def project_options(project: Project, runs: list[Run]) -> dict:
 # --- Bester Wert je Lauf ------------------------------------------------------------------------------
 @widget(Widget(key="project-best", label="Bester Wert je Lauf", question="Wird das beste Ergebnis über die Läufe besser?", scopes=SCOPES))
 def project_best(project: Project, req: dict) -> dict:
-    runs = list_runs(project)
+    runs = readable_runs(project)
     metrics = real_metrics_of(project)
     if not metrics or not runs:
         return {"unavailable": "Noch keine Läufe mit Bestwert"}
@@ -153,7 +153,7 @@ def _run_effects(run: Run, metric) -> dict[tuple[str, str], float]:
     )
 )
 def param_map(project: Project, req: dict) -> dict:
-    runs = list_runs(project)
+    runs = readable_runs(project)
     metrics = real_metrics_of(project)
     if not metrics or not runs:
         return {"unavailable": "Noch keine Läufe"}
@@ -207,7 +207,7 @@ def param_map(project: Project, req: dict) -> dict:
         "title": title,
         "subtitle": f"Wirkung = Mittel der Kombinationen mit dem Wert gegenüber dem Lauf-Mittel, {metric.label}, in Prozent",
         "note": "türkis = besser · bernstein = schlechter · gestrichelt = Achse im Lauf nicht variiert · Deckelung bei ±6 %",
-        "options": project_options(project, list_runs(project)),
+        "options": project_options(project, readable_runs(project)),
         "data": {
             "metric": {"key": metric.key, "label": metric.label, "direction": metric.direction},
             "runs": [{"id": r.id, "label": r.issue or r.name, "group": _value_of(r, key)} for r in picked],

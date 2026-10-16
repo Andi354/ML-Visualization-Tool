@@ -20,8 +20,11 @@ RUN python -m build --wheel --outdir /dist
 FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
+# ds-store reads the runs (pandas and pyarrow only, not the project): installed together with the
+# tool, so pip finds the dependency in the vendored wheel.
+COPY vendor/*.whl /tmp/vendor/
 COPY --from=wheel /dist/*.whl /tmp/
-RUN pip install --no-cache-dir /tmp/*.whl && rm /tmp/*.whl
+RUN pip install --no-cache-dir /tmp/vendor/*.whl /tmp/*.whl && rm -r /tmp/*.whl /tmp/vendor
 # The project folder is mounted here; the tool writes only below it (deliverables).
 ENV MLVIZ_PROJECT=/project MLVIZ_HOST=0.0.0.0 MLVIZ_PORT=8765
 RUN git config --system --add safe.directory '*'

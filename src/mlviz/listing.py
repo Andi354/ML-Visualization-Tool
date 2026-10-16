@@ -49,7 +49,7 @@ def merkmal_candidates(runs: list[Run]) -> list[str]:
 
 
 @lru_cache(maxsize=512)
-def _best(path: str, signature: int, metric: str, direction: str, axes: tuple[str, ...]) -> float | None:
+def _best(path: str, version: tuple, metric: str, direction: str, axes: tuple[str, ...]) -> float | None:
     run = Run(Path(path))
     ok = run.ok_cells()
     if ok.empty or metric not in ok.columns:
@@ -64,10 +64,12 @@ def _best(path: str, signature: int, metric: str, direction: str, axes: tuple[st
 
 def group_best(run: Run, metric: Metric) -> float | None:
     """Best group mean (replicates averaged) of a metric over the successful cells of a run."""
-    return _best(str(run.path), store.signature(run.path), metric.key, metric.direction, tuple(run.axes))
+    return _best(str(run.path), store.version(run.path), metric.key, metric.direction, tuple(run.axes))
 
 
 def run_listing(project: Project, run: Run, candidates: list[str]) -> dict[str, Any]:
+    if run.problem:  # a store_version this package does not know: no numbers, only the reason
+        return {**run.info(), "cells": 0, "planned": 0, "errors": 0, "best": None, "merkmal": None, "config_values": {}}
     metric = project.first_real_metric() or (project.metric(project.primary_metric or "") if project.primary_metric else None)
     best = None
     if metric is not None:

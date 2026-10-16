@@ -1,7 +1,7 @@
 .PHONY: setup web test test-web test-browser build wheel
 
 setup:
-	uv venv .venv && uv pip install -p .venv/bin/python -e ".[dev]"
+	uv venv .venv && uv pip install -p .venv/bin/python vendor/ds_store-*.whl && uv pip install -p .venv/bin/python -e ".[dev]"
 	cd web && npm ci
 
 web:
