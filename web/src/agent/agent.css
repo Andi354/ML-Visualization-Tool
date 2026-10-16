@@ -1,0 +1,402 @@
+/* Agent window and capsule (feature A), after prototype Prototyp-02.dc.html.
+   Greys the prototype uses between the tokens are local to the agent, so the look stays as designed. */
+.agent-window,
+.agent-capsule {
+  --agent-header: #161b26;
+  --agent-line: #2c3547;
+  --agent-line-soft: #1e2533;
+  --agent-grip: #3a4458;
+  --agent-off: #4a5265;
+  --agent-mute: #6b7385;
+  z-index: 20;
+}
+
+.agent-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  border: 1px solid var(--agent-line);
+  border-radius: 10px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(110, 155, 245, 0.08);
+  backdrop-filter: blur(6px);
+  font-size: var(--size-base);
+}
+
+.agent-header {
+  flex: none;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 12px;
+  background: var(--agent-header);
+  border-bottom: 1px solid var(--line);
+  border-radius: 10px 10px 0 0;
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+.agent-header > svg {
+  flex: none;
+}
+.agent-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  padding: 4px 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  color: var(--text);
+  border-radius: var(--radius-control);
+}
+.agent-caret {
+  color: var(--text-3);
+  font-weight: 400;
+}
+.agent-spacer {
+  flex: 1;
+}
+.agent-hdr-btn {
+  width: 26px;
+  height: 26px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--text-2);
+  border-radius: var(--radius-control);
+}
+
+.agent-ctx-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  white-space: nowrap;
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+}
+.agent-ctx-bar {
+  display: inline-block;
+  width: 34px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--line);
+}
+.agent-ctx-fill {
+  display: block;
+  height: 100%;
+  background: var(--best);
+}
+.agent-ctx-fill.warn {
+  background: var(--warn);
+}
+.agent-ctx-fill.error {
+  background: var(--error);
+}
+.agent-cache {
+  padding: 1px 7px;
+  font-size: var(--size-tiny);
+  white-space: nowrap;
+  border: 1px solid var(--best-line);
+  border-radius: 9px;
+  color: var(--best);
+}
+.agent-cache.cold {
+  border-color: var(--warn-line);
+  color: var(--warn);
+}
+
+.agent-popover {
+  position: absolute;
+  z-index: 3;
+  padding: 6px;
+  background: var(--raised);
+  border: 1px solid var(--accent-line);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.agent-popover-head {
+  padding: 4px 8px 6px;
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+}
+.agent-chat-list {
+  top: 40px;
+  left: 30px;
+  width: 330px;
+  max-width: calc(100% - 40px);
+}
+.agent-chat-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  text-align: left;
+  font-size: var(--size-small);
+  color: var(--text);
+  border-radius: 5px;
+}
+.agent-chat-row.current {
+  background: var(--accent-bg);
+}
+.agent-chat-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.agent-chat-meta {
+  flex: none;
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+}
+
+.agent-sees {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+  border-bottom: 1px solid var(--agent-line-soft);
+}
+.agent-ctx-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 300px;
+  padding: 2px 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #c9d3e3;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-line);
+  border-radius: 10px;
+}
+
+.agent-messages {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  overflow: auto;
+}
+.agent-msg.user {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 7px 10px;
+  line-height: 1.45;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-line);
+  border-radius: 10px 10px 2px 10px;
+  overflow-wrap: anywhere;
+}
+.agent-msg.agent {
+  max-width: 92%;
+  line-height: 1.5;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.agent-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  font-size: var(--size-small);
+  color: var(--text-2);
+  border: 1px dashed var(--agent-line);
+  border-radius: var(--radius-panel);
+}
+.agent-action-icon {
+  color: var(--best);
+}
+.agent-action-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.agent-info {
+  align-self: center;
+  padding-top: 4px;
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+  border-top: 1px solid var(--line);
+}
+
+.agent-composer {
+  flex: none;
+  padding: 10px;
+  border-top: 1px solid var(--line);
+}
+.agent-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 6px 6px 6px 10px;
+  background: var(--raised);
+  border: 1px solid var(--agent-line);
+  border-radius: 8px;
+}
+.agent-input-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 0;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 0;
+  outline: none;
+}
+.agent-input-row:focus-within {
+  border-color: var(--accent-line);
+}
+.agent-mic {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--agent-off);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: default;
+}
+.agent-mic:disabled {
+  color: var(--agent-off);
+}
+.agent-mic.round {
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+}
+.agent-send {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bg);
+  background: var(--accent);
+  border-radius: 6px;
+}
+.agent-send:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, white);
+}
+
+.agent-mode-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+}
+.agent-mode-btn {
+  padding: 2px 8px;
+  font-size: var(--size-tiny);
+  border: 1px solid var(--agent-line);
+  border-radius: 10px;
+  color: var(--accent);
+}
+.agent-mode-btn.direct {
+  color: var(--best);
+}
+.agent-mode-btn.confirm {
+  color: var(--warn);
+}
+.agent-mode-menu {
+  left: 0;
+  bottom: 26px;
+  width: 340px;
+  max-width: calc(100% - 8px);
+}
+.agent-mode-option {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 9px;
+  text-align: left;
+  color: var(--text);
+  border-radius: 5px;
+}
+.agent-mode-option.current {
+  background: var(--accent-bg);
+}
+.agent-mode-name {
+  font-size: var(--size-small);
+  font-weight: 600;
+}
+.agent-mode-desc {
+  font-size: var(--size-small);
+  line-height: 1.4;
+  color: var(--text-2);
+}
+
+.agent-grip {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  border-radius: 0 0 10px 0;
+  touch-action: none;
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    var(--agent-grip) 50%,
+    var(--agent-grip) 58%,
+    transparent 58%,
+    transparent 70%,
+    var(--agent-grip) 70%,
+    var(--agent-grip) 78%,
+    transparent 78%
+  );
+}
+
+.agent-capsule {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  background: var(--raised);
+  border: 1px solid var(--accent-line);
+  border-radius: 22px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.agent-capsule-text {
+  max-width: 260px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--size-small);
+  font-weight: 500;
+  color: var(--text);
+}
+.agent-capsule-text:hover:not(:disabled),
+.agent-capsule-open:hover:not(:disabled) {
+  background: none;
+}
+.agent-capsule-open {
+  width: 28px;
+  height: 28px;
+  color: var(--text-2);
+  border-radius: 14px;
+}

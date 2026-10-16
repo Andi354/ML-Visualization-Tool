@@ -12,9 +12,10 @@ from fastapi.staticfiles import StaticFiles
 import json
 
 from . import aggregate, configview, deliverables, linear, widgets
+from .agent_store import AgentStore, ChatNotFound
 from .store import StoreError
 from .listing import merkmal_candidates, run_listing
-from .project import Project
+from .project import Project, now
 from .runs import get_run, list_runs
 
 STATIC = Path(__file__).parent / "static"
@@ -97,6 +98,44 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
             raise HTTPException(404, "unknown widget")
         except LookupError:
             raise HTTPException(404, "run not found")
+
+    # --- agent (chats and settings, stored in <project>/.mlviz/) -------------------------------
+    agent = AgentStore(project)
+
+    def _chat_or_404(chat_id: str) -> dict:
+        try:
+            return agent.get(chat_id)
+        except ChatNotFound:
+            raise HTTPException(404, "chat not found")
+
+    @app.get("/api/agent")
+    def api_agent() -> dict:
+        """Chats of the project (newest first, without messages) and the mode of the agent."""
+        return {"chats": agent.list(), "mode": agent.mode(), "now": now().isoformat()}
+
+    @app.post("/api/agent/chats")
+    def api_agent_new_chat(payload: dict = Body(default_factory=dict)) -> dict:
+        return agent.create(str(payload.get("title") or ""))
+
+    @app.get("/api/agent/chats/{chat_id}")
+    def api_agent_chat(chat_id: str) -> dict:
+        return _chat_or_404(chat_id)
+
+    @app.post("/api/agent/chats/{chat_id}/messages")
+    def api_agent_message(chat_id: str, payload: dict = Body(...)) -> dict:
+        """Appends a message of the user to the chat (the connection to Claude Code follows in F)."""
+        text = str(payload.get("text") or "").strip()
+        if not text:
+            raise HTTPException(400, "text is empty")
+        _chat_or_404(chat_id)
+        return agent.append(chat_id, "user", text)
+
+    @app.put("/api/agent/mode")
+    def api_agent_mode(payload: dict = Body(...)) -> dict:
+        try:
+            return {"mode": agent.set_mode(str(payload.get("mode")))}
+        except ValueError as e:
+            raise HTTPException(400, str(e))
 
     @app.get("/api/folders")
     def api_folders(path: str = "") -> dict:

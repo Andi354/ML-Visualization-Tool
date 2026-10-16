@@ -78,6 +78,11 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `POST /api/widgets/{key}` | data of one widget: `{run, combo, settings}` -> `{title, subtitle, note, unavailable, options, data}` |
 | `GET /api/folders?path=` | sub-folders of a project folder (no `runs/`, no hidden folders), for the target picker |
 | `POST /api/deliverables` | writes base64 PNGs below a project folder: `{target, files: [{name, data, title}], title, issue, runs, configs, overwrite}`; 409 with the clashing names unless `overwrite` |
+| `GET /api/agent` | chats of the project (newest first, without messages), the mode of the agent (`direct`, `mixed`, `confirm`) and `now`, the clock of the tool (the cache display counts from it) |
+| `POST /api/agent/chats` | a new empty chat (`Neuer Chat`) |
+| `GET /api/agent/chats/{id}` | one chat with its messages (404 for an unknown or malformed id) |
+| `POST /api/agent/chats/{id}/messages` | appends a message of the user, `{text}` (empty text is a 400); the first one names a new chat |
+| `PUT /api/agent/mode` | `{mode}`: Direkt, Gemischt or Bestätigen, kept per project |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
 
 ## Experiment table
@@ -166,6 +171,25 @@ in `dist/` and the `ds-store` folder; each missing piece stops it with a message
 person; it is not exposed in the network unless `MLVIZ_HOST` says so. `make check-run` installs into a
 temporary venv, serves the demo project and asks the API and the frontend; `tests/test_run_without_docker.py`
 covers what `make run` does, how it refuses, and that `mlviz serve` answers.
+
+## Agent (v0.2)
+
+**Window (feature A).** `web/src/agent/`: `AgentLayer.tsx` is the window and the capsule, floating in `.app` above
+the content; the icon at the bottom of the icon bar opens and minimises it (`state.toggleFromIcon`). The rules of
+position and size are pure (`geometry.ts`): first opening 400 × 520 px and 24 px from the bottom right corner, a
+drag stays inside the area right of the icon bar and below the tab strip (4 px from the edges), the corner
+resizes down to 320 × 280 px and stops at the edge, a smaller tool pushes and shrinks the window (`fit`). Open /
+minimised / closed, position, size and the current chat are browser state per project
+(`mlviz:v1:<project>:agent`, like the frame); the context chip says what the agent sees (`model.contextLabel`).
+The microphone button is disabled until the voice update.
+
+**Chats and settings.** `src/mlviz/agent_store.py` keeps them in `<project>/.mlviz/` (the folder is created on the
+first write, nothing else is written into the project): `chats/<id>.json` (one chat = one Claude Code session:
+`title`, `updated_at`, `session_id`, `tokens` of the last turn, `last_turn_at`, `cache_ttl_s`, `messages`) and
+`agent.json` (the mode). Ids are 12 hex characters and are checked before any path is built. Context % and the
+cache chip are computed in the browser from `tokens`, `last_turn_at` and `cache_ttl_s` against the clock of the
+tool (`model.contextUse`, `model.cacheState`), never by asking the agent. `.mlviz/` can be committed (templates and
+own widgets will live there too) or put into the project's `.gitignore`.
 
 ## Code
 
