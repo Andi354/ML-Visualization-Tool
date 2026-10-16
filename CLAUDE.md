@@ -18,8 +18,8 @@ Language: chat and Linear in German, code and docs in English.
 
 ## Layout
 
-- `src/mlviz/`: backend (FastAPI), reads `runs/`; `web/`: frontend (Vite, Preact, TypeScript)
-- `tests/`: pytest (`tests/browser/` = Playwright); `web/tests/`: vitest
+- `src/mlviz/`: backend (FastAPI), reads `runs/` through `ds-store` (`store.py`); `web/`: frontend (Vite, Preact, TypeScript)
+- `tests/`: pytest (`tests/browser/` = Playwright, `tests/ds_store_stub.py` = stand-in for the `ds-store` package); `web/tests/`: vitest
 - `docs/technical-reference.md`: what the tool reads from a project and how the code is organised
 - `design/`: principles, tokens, `updates/v<version>-<shortname>/` (spec, prototype)
 - Version: `pyproject.toml` (and `src/mlviz/__init__.py`)
