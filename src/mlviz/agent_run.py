@@ -224,6 +224,9 @@ class AgentRunner:
             return
         with self._lock:
             self._procs[chat_id] = proc
+            stopped_early = chat_id in self._stopped  # stop came while `claude` was still being started
+        if stopped_early:
+            proc.terminate()
         last_tokens = 0
         window = chat.get("context_window") or DEFAULT_CONTEXT_WINDOW
         error: str | None = None
