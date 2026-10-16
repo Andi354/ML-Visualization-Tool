@@ -196,3 +196,11 @@ button:disabled,
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
 }
+
+.project-warnings {
+  padding: 8px var(--gutter);
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--warn-line);
+  color: var(--warn);
+  font-size: 12px;
+}

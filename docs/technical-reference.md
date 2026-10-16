@@ -8,8 +8,8 @@ The tool knows nothing about a project except these files. Every reader tolerate
 
 | File | Content used |
 |---|---|
-| `project.yaml` | `name`, `paths` (`runs`, `configs`), `outputs` (`analysis`, `research`, `deliverables`; `reports` is derived from `analysis`), `metrics` (`key`, `direction`, optional `label`, `unit` and `scale`: the stored value times `scale` is shown with `unit`, e.g. a MAPE stored as a share with `scale: 100`, `unit: "%"`; `viz.family` per metric), `primary_metric`, `viz` (`short` = badge, 2 letters; `own_model`). The earlier flat form (`paths.analyses`, top-level `short`, `own_model`, metric `family`) still reads |
-| `epochs.yaml` | `epochs: [{name, since, description}]` |
+| `project.yaml` | `name`, `paths` (`runs`, `configs`), `outputs` (`analysis`, `research`, `deliverables`; `reports` is derived from `analysis`), `metrics: {primary: <key>, catalog: {<key>: {direction, viz: {family: scaled\|real}, label, unit, scale}}}` (`label`, `unit`, `scale` optional: the stored value times `scale` is shown with `unit`, e.g. a MAPE stored as a share with `scale: 100`, `unit: "%"`), `viz` (`short` = badge, 2 letters; `own_model`). Earlier forms still read: `metrics` as a list of entries with `key` plus a top-level `primary_metric`, flat `paths.analyses`, top-level `short`, `own_model`, metric `family` |
+| `epochs.yaml` | a list at the top level of `{name, repo, commit, date, reason}`, shown as `name`, `since` (= `date`), `description` (= `reason`), `repo`, `commit`; the earlier form `epochs: [{name, since, description}]` still reads |
 | `runs/<YYYY-MM-DD_HHMM>_<name>/meta.json` | `name`, `store_version`, `issue`, `config`, `started_at`, `ended_at`, `axes`, `replicates`, `primary_metric`, `epoch`, `commit`, `plan: {cells, excluded, duplicates}`, `counts` (final tally, not used for progress); `migrated: true` marks converted runs |
 | `.../config.yaml` | resolved config: blocks `data`, `model`, `train`, `sweep`, `replicates`, `run`, `report` |
 | `.../config.base.yaml` | the merged base configs as they were at the start of the run (missing for migrated runs) |
@@ -44,6 +44,11 @@ views answer 409 with the message. The status is cached for 30 seconds (the cloc
 Run folders are named `<YYYY-MM-DD_HHMM>_<name>` (older layouts with seconds or a timestamp suffix are
 accepted too). The run name is `meta.json: name`, else the folder name without the timestamp; the issue is
 `meta.json: issue`, else the prefix of the name (`TIM-52_best_30` -> `TIM-52`).
+
+**Content that is present but in no known form is a warning, not silence:** a `metrics:` or `epochs.yaml` of
+an unknown shape, an entry without `name` or `key`, a primary metric outside the catalogue, a file that
+does not parse. `Project.warnings` goes to the log, to `/api/project` (`warnings`) and to a notice at the top
+of the frame (`project-warnings`). A file that does not exist is no warning (the defaults apply).
 
 ## Concepts
 
