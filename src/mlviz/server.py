@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 import json
 
 from . import aggregate, configview, deliverables, linear, widgets
+from . import own_widgets
 from .agent_store import AgentStore, ChatNotFound
 from .store import StoreError
 from .listing import merkmal_candidates, run_listing
@@ -136,6 +137,40 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
             return {"mode": agent.set_mode(str(payload.get("mode")))}
         except ValueError as e:
             raise HTTPException(400, str(e))
+
+    # --- own widgets (descriptions kept in <project>/.mlviz/widgets/) ------------------------------
+    widget_store = own_widgets.OwnWidgetStore(project)
+
+    @app.get("/api/own-widgets")
+    def api_own_widgets(scope: str | None = None) -> list[dict]:
+        """Kept own widgets as catalog entries (with `definition`), optionally of one catalog scope."""
+        out = []
+        for d in widget_store.list():
+            entry = own_widgets.catalog_entry(d)
+            if scope is None or scope in entry["scopes"]:
+                out.append({**entry, "definition": d})
+        return out
+
+    @app.post("/api/own-widgets/validate")
+    def api_own_widgets_validate(payload: dict = Body(...)) -> dict:
+        return {"errors": own_widgets.validate(payload.get("definition"))}
+
+    @app.post("/api/own-widgets")
+    def api_own_widgets_keep(payload: dict = Body(...)) -> dict:
+        """Keeps a description under its name (an existing name is overwritten); 400 with the reasons if invalid."""
+        try:
+            d = widget_store.save(payload.get("definition"))
+        except own_widgets.OwnWidgetError as e:
+            raise HTTPException(400, {"errors": e.errors})
+        return {**own_widgets.catalog_entry(d), "definition": d}
+
+    @app.delete("/api/own-widgets/{slug}")
+    def api_own_widgets_delete(slug: str) -> dict:
+        try:
+            widget_store.delete(slug)
+        except KeyError:
+            raise HTTPException(404, "widget not found")
+        return {"deleted": slug}
 
     @app.get("/api/folders")
     def api_folders(path: str = "") -> dict:
