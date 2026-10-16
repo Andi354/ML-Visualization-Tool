@@ -7,12 +7,13 @@ Prototype: prototype/ · Builds on: v0.2.0
 
 | Block | Status |
 |---|---|
-| G · Short description in Läufe | open |
+| G · Short description in Läufe | running |
 | H · Description in the run tab | open |
 
-Running block: none. Tim's last word: short description in the runs screen so the reason for a run is
-clear at a glance; a longer description with several fields in the run tab. Format: comment
-"Entscheidung: Format der Beschreibung pro Lauf" on TIM-93.
+Running block: G · Short description in Läufe. On the canvas: G1 · Statt Achsen (short replaces the
+axes line, axes only without description), G2 · Eigene Zeile (name, short, axes), G3 · In der
+Namenszeile (short grey after the name, truncated). G4 (short as main line) proposed, not built (Tim
+picked G1–G3). Waiting for Tim's word.
 
 ## Goal
 Each run says why it was made: in one line in Läufe, in full in its tab.
