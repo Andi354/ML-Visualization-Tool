@@ -7,12 +7,14 @@ interface Props {
   project: ProjectInfo;
   onBack: () => void;
   onClose: () => void;
+  onAnalyse: (combo: Record<string, string>) => void;
+  onCompareWith: (other: string) => void;
 }
 
 type Load = { state: "loading" } | { state: "missing" } | { state: "ok"; run: RunInfo };
 
 /** Content of one run tab: the experiment view of the run, or a note when the run is gone. */
-export function RunTab({ runId, project, onBack, onClose }: Props) {
+export function RunTab({ runId, project, onBack, onClose, onAnalyse, onCompareWith }: Props) {
   const [load, setLoad] = useState<Load>({ state: "loading" });
   const [gone, setGone] = useState(false);
   useEffect(() => {
@@ -43,7 +45,7 @@ export function RunTab({ runId, project, onBack, onClose }: Props) {
     );
   return (
     <div class="pane-fill" data-testid="run-body">
-      <ExperimentView run={load.run} project={project} onBack={onBack} onMissing={() => setGone(true)} />
+      <ExperimentView run={load.run} project={project} onBack={onBack} onMissing={() => setGone(true)} onAnalyse={onAnalyse} onCompareWith={onCompareWith} />
     </div>
   );
 }

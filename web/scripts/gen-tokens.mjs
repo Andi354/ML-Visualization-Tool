@@ -24,7 +24,27 @@ export function tokensToCss(t) {
   for (const [k, v] of Object.entries(t.space)) lines.push(`--${k}: ${v};`);
   for (const [k, v] of Object.entries(t.radius)) lines.push(`--radius-${k}: ${v};`);
   for (const [k, v] of Object.entries(t.size)) lines.push(`--${k}: ${v};`);
-  return `/* Generated from design/tokens.json by scripts/gen-tokens.mjs. Do not edit. */\n:root {\n  ${lines.join("\n  ")}\n}\n`;
+  const x = t["export-light"];
+  // Exported images use the light palette by default. Series roles stay: 1 teal (A), 5 violet (B).
+  const light = [
+    `--bg: ${x.card};`,
+    `--surface: ${x.card};`,
+    `--raised: ${x.head};`,
+    `--line: ${x.line};`,
+    `--text: ${x.text};`,
+    `--text-2: ${x["text-2"]};`,
+    `--text-3: ${x["text-3"]};`,
+    `--best: ${x.best};`,
+    `--best-bg: ${x["best-bg"]};`,
+    `--series-1: ${x.series[0]};`,
+    `--series-5: ${x.series[1]};`,
+    `--series-2: ${x.series[2]};`,
+    `--series-4: ${x.series[3]};`,
+  ];
+  return (
+    `/* Generated from design/tokens.json by scripts/gen-tokens.mjs. Do not edit. */\n:root {\n  ${lines.join("\n  ")}\n  --best-bg: color-mix(in srgb, var(--best) 14%, transparent);\n}\n` +
+    `.theme-light {\n  ${light.join("\n  ")}\n  color-scheme: light;\n}\n`
+  );
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

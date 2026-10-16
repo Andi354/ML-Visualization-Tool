@@ -41,4 +41,20 @@ describe("design tokens (feature A)", () => {
   it("is dark only: no light-theme override of the page colours", () => {
     expect(css).not.toContain("prefers-color-scheme");
   });
+
+  it("has the light export palette as an opt-in class for exported images", () => {
+    const light = css.slice(css.indexOf(".theme-light"));
+    for (const [name, hex] of Object.entries({
+      bg: "#FFFFFF",
+      raised: "#F1F3F6",
+      line: "#E3E6EB",
+      text: "#1A1F29",
+      best: "#0F7A52",
+      "best-bg": "#E3F4EC",
+      "series-1": "#1A8C8C",
+      "series-5": "#7262D9",
+    }))
+      expect(light).toContain(`--${name}: ${hex};`);
+    expect(css.slice(0, css.indexOf(".theme-light"))).toContain("--bg: #0D1016;"); // the app stays dark
+  });
 });

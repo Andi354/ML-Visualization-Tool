@@ -37,6 +37,13 @@ function Frame({ project }: { project: ProjectInfo }) {
         onSelect={(area) => dispatch({ type: "select-area", area })}
       />
       <div class="main">
+        {project.warnings.length > 0 && (
+          <div class="project-warnings" role="alert" data-testid="project-warnings">
+            {project.warnings.map((w) => (
+              <div key={w}>⚠ {w}</div>
+            ))}
+          </div>
+        )}
         <TabStrip
           area={frame.area}
           tabs={frame.tabs}
@@ -57,7 +64,7 @@ function Frame({ project }: { project: ProjectInfo }) {
             />
           </div>
           <div class="pane" hidden={frame.active !== null || frame.area !== "analysis"}>
-            <AnalysisView compare={frame.compare} />
+            <AnalysisView project={project} compare={frame.compare} request={frame.analysis} />
           </div>
           {/* Every open run stays mounted, so filters, sorting and scroll survive tab switches. */}
           {frame.tabs.map((run) => (
@@ -67,6 +74,8 @@ function Frame({ project }: { project: ProjectInfo }) {
                 project={project}
                 onBack={() => dispatch({ type: "focus-pinned" })}
                 onClose={() => dispatch({ type: "close-run", run })}
+                onAnalyse={(combo) => dispatch({ type: "open-analysis", run, combo })}
+                onCompareWith={(other) => dispatch({ type: "open-compare", runs: [run, other] })}
               />
             </div>
           ))}

@@ -7,7 +7,7 @@ export function Flags({ run, current }: { run: RunRow; current: string | null })
   return (
     <>
       {flags(run, current).map((f) => (
-        <span key={f.text} class={"flag " + f.kind}>
+        <span key={f.text} class={"flag " + f.kind} title={f.title}>
           {f.text}
         </span>
       ))}

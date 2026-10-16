@@ -13,6 +13,8 @@ export interface FrameState {
   runsView: RunsView;
   /** Runs ticked in Läufe for "Vergleichen" (at most two are compared in v0.1). */
   compare: string[];
+  /** "Als Analyse öffnen" in the detail panel: one run with one combination as filter. */
+  analysis: { run: string; combo: Record<string, string> } | null;
 }
 
 export type FrameAction =
@@ -22,9 +24,10 @@ export type FrameAction =
   | { type: "focus-pinned" }
   | { type: "close-run"; run: string }
   | { type: "set-runs-view"; view: RunsView }
-  | { type: "open-compare"; runs: string[] };
+  | { type: "open-compare"; runs: string[] }
+  | { type: "open-analysis"; run: string; combo: Record<string, string> };
 
-export const initialFrame: FrameState = { area: "runs", tabs: [], active: null, runsView: "list", compare: [] };
+export const initialFrame: FrameState = { area: "runs", tabs: [], active: null, runsView: "list", compare: [], analysis: null };
 
 export function frameReducer(s: FrameState, a: FrameAction): FrameState {
   switch (a.type) {
@@ -47,7 +50,9 @@ export function frameReducer(s: FrameState, a: FrameAction): FrameState {
     case "set-runs-view":
       return { ...s, runsView: a.view };
     case "open-compare":
-      return { ...s, area: "analysis", active: null, compare: a.runs };
+      return { ...s, area: "analysis", active: null, compare: a.runs, analysis: null };
+    case "open-analysis":
+      return { ...s, area: "analysis", active: null, compare: [], analysis: { run: a.run, combo: a.combo } };
   }
 }
 
@@ -59,7 +64,12 @@ function validate(v: unknown): FrameState | null {
   const runsView: RunsView = o.runsView === "issues" ? "issues" : "list";
   const active = typeof o.active === "string" && tabs.includes(o.active) ? o.active : null;
   const compare = Array.isArray(o.compare) ? o.compare.filter((t): t is string => typeof t === "string") : [];
-  return { area, tabs: [...new Set(tabs)], active, runsView, compare };
+  const an = o.analysis as { run?: unknown; combo?: unknown } | null | undefined;
+  const analysis =
+    an && typeof an.run === "string" && an.combo && typeof an.combo === "object"
+      ? { run: an.run, combo: an.combo as Record<string, string> }
+      : null;
+  return { area, tabs: [...new Set(tabs)], active, runsView, compare, analysis };
 }
 
 export const loadFrame = (project: string): FrameState =>

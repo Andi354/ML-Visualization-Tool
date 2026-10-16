@@ -55,6 +55,13 @@ describe("frame reducer (feature B)", () => {
     expect(s).toMatchObject({ area: "analysis", active: null, compare: ["x", "y"], tabs: ["a"] });
   });
 
+  it("'Als Analyse öffnen' opens the analysis area with one run and its combination", () => {
+    const s = frameReducer(open(initialFrame, "a"), { type: "open-analysis", run: "a", combo: { x: "1" } });
+    expect(s).toMatchObject({ area: "analysis", active: null, compare: [], analysis: { run: "a", combo: { x: "1" } } });
+    const c = frameReducer(s, { type: "open-compare", runs: ["a", "b"] });
+    expect(c.analysis).toBeNull();
+  });
+
   it("focusing or closing an unknown run changes nothing", () => {
     const s = open(initialFrame, "a");
     expect(frameReducer(s, { type: "focus-run", run: "x" })).toBe(s);

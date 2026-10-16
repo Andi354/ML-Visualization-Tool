@@ -6,12 +6,13 @@ import os
 from pathlib import Path
 
 from fastapi import Body, FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 import json
 
-from . import aggregate, configview, linear
+from . import aggregate, configview, deliverables, linear, widgets
+from .store import StoreError
 from .listing import merkmal_candidates, run_listing
 from .project import Project
 from .runs import get_run, list_runs
@@ -24,6 +25,11 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     project = Project.load(root)
     app = FastAPI(title="ML Visualization Tool")
     app.state.project = project
+
+    @app.exception_handler(StoreError)
+    def store_error(_, e: StoreError) -> JSONResponse:
+        """ds-store could not read a run (missing package, `store_version` too new): say it plainly."""
+        return JSONResponse({"detail": str(e), "store_error": True}, status_code=409)
 
     @app.get("/api/project")
     def api_project() -> dict:
@@ -76,6 +82,37 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
             if isinstance(parsed, dict):
                 chosen = {str(k): str(v) for k, v in parsed.items()}
         return configview.run_config(project, _run_or_404(run_id), chosen)
+
+    @app.get("/api/widgets/catalog")
+    def api_widget_catalog(scope: str | None = None) -> list[dict]:
+        """The widget catalog: key, label, question, scopes, settings."""
+        return widgets.catalog(scope)
+
+    @app.post("/api/widgets/{key}")
+    def api_widget(key: str, request: dict = Body(default_factory=dict)) -> dict:
+        """Data of one widget for a scope: `{run, combo, settings}` (more scopes follow)."""
+        try:
+            return widgets.compute(project, key, request)
+        except KeyError:
+            raise HTTPException(404, "unknown widget")
+        except LookupError:
+            raise HTTPException(404, "run not found")
+
+    @app.get("/api/folders")
+    def api_folders(path: str = "") -> dict:
+        """Sub-folders of a project folder (for choosing the target of a deliverable)."""
+        try:
+            return deliverables.list_dirs(project, path)
+        except deliverables.SaveError as e:
+            raise HTTPException(e.status, e.message)
+
+    @app.post("/api/deliverables")
+    def api_deliverables(payload: dict = Body(...)) -> dict:
+        """Write widget images (base64 PNG) into a project folder; refuses to overwrite by default."""
+        try:
+            return deliverables.save(project, payload, lambda rid: get_run(project, rid))
+        except deliverables.SaveError as e:
+            raise HTTPException(e.status, {"message": e.message, "conflicts": e.detail})
 
     if STATIC.is_dir():
         app.mount("/assets", StaticFiles(directory=STATIC / "assets"), name="assets")

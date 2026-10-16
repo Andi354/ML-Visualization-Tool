@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import { getIssues, getRuns, type IssueInfo, type ProjectInfo, type RunRow } from "../api";
+import { getIssues, getRuns, StoreProblem, type IssueInfo, type ProjectInfo, type RunRow } from "../api";
 import { formatNumber } from "../format";
 import { Best, CellBar, StatusDot } from "../runs/components";
 import { IssuesView } from "../runs/IssuesView";
@@ -52,11 +52,22 @@ export function RunsView({ project, view, onView, onOpen, onCompare }: Props) {
   const [state, setState] = useState<ListState>({ sel: new Set(), open: {}, olderOpen: {}, focus: null });
   const [issueSel, setIssueSel] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     const load = () => {
-      getRuns().then((r) => alive && setRuns(r)).catch(() => alive && setRuns((p) => p ?? []));
+      getRuns()
+        .then((r) => {
+          if (!alive) return;
+          setProblem(null);
+          setRuns(r);
+        })
+        .catch((e) => {
+          if (!alive) return;
+          setProblem(e instanceof StoreProblem ? e.message : null);
+          setRuns((p) => p ?? []);
+        });
       getIssues().then((i) => alive && setIssues(i)).catch(() => {});
     };
     load();
@@ -86,6 +97,15 @@ export function RunsView({ project, view, onView, onOpen, onCompare }: Props) {
           <div class="loading-row" />
           <div class="loading-row" />
           <div class="loading-row" />
+        </div>
+      </div>
+    );
+
+  if (problem)
+    return (
+      <div class="runs-view" data-testid="runs-view">
+        <div class="notice" data-testid="store-problem">
+          {problem}
         </div>
       </div>
     );
@@ -158,7 +178,7 @@ export function RunsView({ project, view, onView, onOpen, onCompare }: Props) {
               class={"btn-primary" + (selected.length >= 2 ? " active" : "")}
               disabled={selected.length < 2}
               data-testid="compare"
-              onClick={() => onCompare(selected.slice(0, 2).map((r) => r.id))}
+              onClick={() => onCompare(selected.map((r) => r.id))}
             >
               {selected.length >= 2 ? `Vergleichen (${selected.length})` : "Vergleichen"}
             </button>

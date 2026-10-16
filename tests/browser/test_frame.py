@@ -122,3 +122,22 @@ def test_the_runs_area_remembers_its_view_across_area_switches(page):
     page.get_by_test_id("area-analysis").click()
     page.get_by_test_id("area-runs").click()
     expect(page.get_by_test_id("view-issues")).to_have_attribute("aria-pressed", "true")
+
+
+def test_project_files_in_no_known_form_are_shown_not_dropped(page, tmp_path_factory):
+    from mlviz.fixture import make_project
+
+    from .conftest import serve
+
+    root = make_project(tmp_path_factory.mktemp("bad_epochs"))
+    (root / "epochs.yaml").write_text("some: thing\n")
+    with serve(root) as url:
+        page.goto(url)
+        warn = page.get_by_test_id("project-warnings")
+        expect(warn).to_be_visible()
+        expect(warn).to_contain_text("epochs.yaml")
+
+
+def test_no_warning_for_a_project_in_the_known_form(page):
+    expect(page.get_by_test_id("project-badge")).to_be_visible()
+    expect(page.get_by_test_id("project-warnings")).to_have_count(0)

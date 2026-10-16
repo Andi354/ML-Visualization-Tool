@@ -17,6 +17,8 @@ export interface ProjectInfo {
   epochs: { name: string; since?: string; description?: string }[];
   own_model: { axis: string; value: string } | null;
   paths: Record<string, string>;
+  /** Project file content that is present but in no known form (shown at the top of the frame). */
+  warnings: string[];
   linear: boolean;
 }
 
@@ -26,6 +28,10 @@ export interface RunInfo {
   issue: string | null;
   started: string | null;
   ended: string | null;
+  /** `finished`, `running` or `stalled` (not finished and nothing written for a while). */
+  state: "finished" | "running" | "stalled" | "unsupported";
+  /** Why the run cannot be shown (`unsupported`: written by a newer ds-store), else null. */
+  problem: string | null;
   running: boolean;
   migrated: boolean;
   epoch: string | null;
@@ -55,10 +61,16 @@ export interface IssueInfo {
 }
 
 export class NotFound extends Error {}
+/** The run store (ds-store) could not read the runs; the message is meant to be shown. */
+export class StoreProblem extends Error {}
 
 export async function getJson<T>(url: string): Promise<T> {
   const r = await fetch(url);
   if (r.status === 404) throw new NotFound(url);
+  if (r.status === 409) {
+    const body = await r.json().catch(() => null);
+    if (body?.store_error) throw new StoreProblem(String(body.detail));
+  }
   if (!r.ok) throw new Error(`${url}: ${r.status}`);
   return r.json() as Promise<T>;
 }
@@ -185,3 +197,60 @@ export const getConfig = (runId: string, combo?: Record<string, string>) =>
   getJson<ConfigInfo>(
     `/api/runs/${encodeURIComponent(runId)}/config` + (combo ? `?combo=${encodeURIComponent(JSON.stringify(combo))}` : ""),
   );
+
+// --- widgets (features F, E, G) ----------------------------------------------------------------
+export interface SettingDef {
+  key: string;
+  label: string;
+  type: "seg" | "select";
+  options?: { value: string; label: string }[];
+  default: string | null;
+}
+export interface CatalogEntry {
+  key: string;
+  label: string;
+  question: string;
+  scopes: string[];
+  settings: SettingDef[];
+  requires: string | null;
+  exportable: boolean;
+  optional: boolean;
+}
+export interface WidgetRequest {
+  run?: string;
+  runs?: string[];
+  combo?: Record<string, string>;
+  /** Scope of the board: "combination" (detail), "run", "two-runs", "project". */
+  scope?: string;
+  /** Scope parameters set in the board header (project: `color_by`). */
+  params?: Record<string, string>;
+  settings?: Record<string, string | null>;
+}
+export interface WidgetResult {
+  key: string;
+  exportable: boolean;
+  title?: string;
+  subtitle?: string | null;
+  note?: string | null;
+  unavailable?: string;
+  options?: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: any;
+}
+
+const catalogs = new Map<string, Promise<CatalogEntry[]>>();
+/** The widget catalog of a scope, in the order of its board. */
+export const getCatalog = (scope = "") =>
+  catalogs.get(scope) ?? catalogs.set(scope, getJson<CatalogEntry[]>("/api/widgets/catalog" + (scope ? `?scope=${scope}` : ""))).get(scope)!;
+
+export async function postWidget(key: string, req: WidgetRequest, signal?: AbortSignal): Promise<WidgetResult> {
+  const r = await fetch(`/api/widgets/${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(req),
+    signal,
+  });
+  if (r.status === 404) throw new NotFound(key);
+  if (!r.ok) throw new Error(`widget ${key}: ${r.status}`);
+  return r.json();
+}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { getDims, NotFound, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type TableResult } from "../api";
+import { getDims, getRuns, NotFound, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type RunRow, type TableResult, type TableRow } from "../api";
+import { DetailPanel } from "./DetailPanel";
 import { Overview } from "./Overview";
 import { Sidebar } from "./Sidebar";
 import { Table } from "./Table";
@@ -22,10 +23,12 @@ interface Props {
   project: ProjectInfo;
   onBack: () => void;
   onMissing: () => void;
+  onAnalyse: (combo: Record<string, string>) => void;
+  onCompareWith: (other: string) => void;
 }
 
 /** View of one run (feature D): sidebar of dimensions, toolbar, overview strip and group table. */
-export function ExperimentView({ run, project, onBack, onMissing }: Props) {
+export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onCompareWith }: Props) {
   const [info, setInfo] = useState<DimsInfo | null>(null);
   const [state, setState] = useState<DimState>({});
   const [sort, setSort] = useState<Sort>({ metric: null, stat: "mean", dir: null });
@@ -34,6 +37,7 @@ export function ExperimentView({ run, project, onBack, onMissing }: Props) {
   const [result, setResult] = useState<TableResult | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<TableRow | null>(null);
   const seq = useRef(0);
 
   useEffect(() => {
@@ -81,6 +85,10 @@ export function ExperimentView({ run, project, onBack, onMissing }: Props) {
           {run.name}
         </span>
         <span class="grow" />
+        <CompareWith runId={run.id} onPick={onCompareWith} />
+        <button class="btn" data-testid="analyse-run" onClick={() => onAnalyse({})}>
+          Analysieren
+        </button>
         {run.epoch && <span class="epoch-chip mono">Epoche {run.epoch}</span>}
       </div>
       <div class="exp-body">
@@ -131,6 +139,8 @@ export function ExperimentView({ run, project, onBack, onMissing }: Props) {
                   sort={sort}
                   onSort={setSort}
                   stale={loading}
+                  selectedKey={selected?.key ?? null}
+                  onRow={setSelected}
                 />
                 {result.rows.length === 0 && (
                   <div class="empty" data-testid="exp-empty">
@@ -141,7 +151,46 @@ export function ExperimentView({ run, project, onBack, onMissing }: Props) {
             )}
           </div>
         </main>
+        {selected && (
+          <DetailPanel run={run} project={project} row={selected} onClose={() => setSelected(null)} onAnalyse={onAnalyse} />
+        )}
       </div>
+    </div>
+  );
+}
+
+/** "Vergleichen mit …": choose a second run; opens the two-run analysis. */
+function CompareWith({ runId, onPick }: { runId: string; onPick: (other: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [runs, setRuns] = useState<RunRow[]>([]);
+  useEffect(() => {
+    if (open) getRuns().then(setRuns).catch(() => {});
+  }, [open]);
+  return (
+    <div class="relative">
+      <button class="btn" aria-expanded={open} data-testid="compare-with" onClick={() => setOpen(!open)}>
+        Vergleichen mit …
+      </button>
+      {open && (
+        <div class="popover right wide" data-testid="compare-with-menu">
+          {runs
+            .filter((r) => r.id !== runId)
+            .map((r) => (
+              <button
+                key={r.id}
+                class="pop-choice mono"
+                data-testid="compare-with-item"
+                data-run={r.id}
+                onClick={() => {
+                  setOpen(false);
+                  onPick(r.id);
+                }}
+              >
+                {r.id}
+              </button>
+            ))}
+        </div>
+      )}
     </div>
   );
 }
