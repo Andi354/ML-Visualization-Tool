@@ -7,18 +7,31 @@ Prototype: prototype/ · Builds on: v0.2.0
 
 | Block | Status |
 |---|---|
-| G · Short description in Läufe | running |
+| G · Short description in Läufe | decided |
 | H · Description in the run tab | open |
 
-Running block: G · Short description in Läufe. On the canvas: G1 · Statt Achsen (short replaces the
-axes line, axes only without description), G2 · Eigene Zeile (name, short, axes), G3 · In der
-Namenszeile (short grey after the name, truncated). G4 (short as main line) proposed, not built (Tim
-picked G1–G3). Waiting for Tim's word.
+Running block: none.
 
 ## Goal
 Each run says why it was made: in one line in Läufe, in full in its tab.
 
 ## Features
+
+### G · Short description in Läufe
+**What:** A run with a description shows its `short` as its own line in the runs screen, between the
+run name and the axes line, in normal sans text and brighter than the axes. Runs without a description
+look exactly as in v0.1. The same line appears in the view "Issues".
+**Behaviour:**
+- Läufe · Liste, run with description → row has three lines: name + flags (mono 13 px), `short` (IBM Plex Sans 13 px, colour between `text` and `text-2`, e.g. `#C9D3E3`), axes · extras (mono 11 px `text-3`) as before.
+- Läufe · Liste, run without description (`has["description"]` false or `short` empty) → row as in v0.1 (name, axes).
+- `short` longer than the column → one line, cut with "…"; hover → tooltip with the full text.
+- `short` longer than 100 characters in the file → the tool cuts it to 100 characters + "…" (as the TIM-93 comment says); the tooltip shows the cut text.
+- Läufe · Issues, run row inside an experiment card → `short` as the first line of the middle column, the tags (Kurven, Vorhersagen, migriert …) below it.
+- Older runs folded under "▸ n ältere Läufe" → each shows its own `short` when opened.
+- Search field in Läufe → also matches the text of `short`.
+- Agent (v0.2, C): the search tool also matches `short`, `purpose` and `shows`.
+**In the prototype:** `G2-EigeneZeile.dc.html` (list, used by the overall prototype), `F-Issues-021.dc.html` (view Issues); sample texts in `short-data.js`.
+**Rejected:** G1 (short instead of the axes line): loses the axes at a glance. G3 (short in the name line): too little room, competes with the flags. G4 (short as the main line): not built; the name stays the identity of a run.
 
 ## Changes to principles.md / tokens.json
 
