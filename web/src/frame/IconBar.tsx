@@ -1,5 +1,5 @@
 import type { Area } from "../state/frame";
-import { AnalysisIcon, RunsIcon } from "./icons";
+import { AgentIcon, AnalysisIcon, RunsIcon } from "./icons";
 
 export const AREAS: { id: Area; label: string; built: boolean; Icon: () => preact.JSX.Element }[] = [
   { id: "runs", label: "Läufe", built: true, Icon: RunsIcon },
@@ -11,9 +11,12 @@ interface Props {
   projectName: string;
   area: Area;
   onSelect: (a: Area) => void;
+  /** The agent window is open or minimised (the icon is lit). */
+  agentActive: boolean;
+  onAgent: () => void;
 }
 
-export function IconBar({ short, projectName, area, onSelect }: Props) {
+export function IconBar({ short, projectName, area, onSelect, agentActive, onAgent }: Props) {
   return (
     <nav class="icon-bar" aria-label="Bereiche">
       <div class="project-badge" title={projectName} data-testid="project-badge">
@@ -32,8 +35,17 @@ export function IconBar({ short, projectName, area, onSelect }: Props) {
           <Icon />
         </button>
       ))}
-      {/* the bottom of the bar is reserved for the agent (later update) */}
       <div class="icon-bar-bottom" />
+      <button
+        class={"icon-btn" + (agentActive ? " active" : "")}
+        title="Agent"
+        aria-label="Agent"
+        aria-pressed={agentActive}
+        data-testid="agent-icon"
+        onClick={onAgent}
+      >
+        <AgentIcon />
+      </button>
     </nav>
   );
 }

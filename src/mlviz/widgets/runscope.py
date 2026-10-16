@@ -94,6 +94,7 @@ def _filtered(req: dict, axes: list[str], axis: str, extra: list[str] | None = N
         question="Welcher Wert einer Achse ist bei welcher Metrik am besten?",
         scopes=SCOPES,
         settings=[select("rows", "Zeilen"), select("groups", "Spaltengruppen", "none")],
+        width="full",
     )
 )
 def compare_table(project: Project, req: dict) -> dict:

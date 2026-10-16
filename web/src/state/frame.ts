@@ -15,6 +15,8 @@ export interface FrameState {
   compare: string[];
   /** "Als Analyse öffnen" in the detail panel: one run with one combination as filter. */
   analysis: { run: string; combo: Record<string, string> } | null;
+  /** The agent asks the analysis for a view (`n` makes the same request count again). */
+  analysisView: { view: "run" | "two" | "project"; n: number } | null;
 }
 
 export type FrameAction =
@@ -25,9 +27,13 @@ export type FrameAction =
   | { type: "close-run"; run: string }
   | { type: "set-runs-view"; view: RunsView }
   | { type: "open-compare"; runs: string[] }
-  | { type: "open-analysis"; run: string; combo: Record<string, string> };
+  | { type: "open-analysis"; run: string; combo: Record<string, string> }
+  /** The agent shows the analysis in a view; `compare` fills "Zwei Läufe", `run` "Ein Lauf". */
+  | { type: "show-analysis-view"; view: "run" | "two" | "project"; runs?: string[] }
+  /** Undo and redo of the agent: back to an earlier state of the frame. */
+  | { type: "restore"; state: FrameState };
 
-export const initialFrame: FrameState = { area: "runs", tabs: [], active: null, runsView: "list", compare: [], analysis: null };
+export const initialFrame: FrameState = { area: "runs", tabs: [], active: null, runsView: "list", compare: [], analysis: null, analysisView: null };
 
 export function frameReducer(s: FrameState, a: FrameAction): FrameState {
   switch (a.type) {
@@ -53,6 +59,14 @@ export function frameReducer(s: FrameState, a: FrameAction): FrameState {
       return { ...s, area: "analysis", active: null, compare: a.runs, analysis: null };
     case "open-analysis":
       return { ...s, area: "analysis", active: null, compare: [], analysis: { run: a.run, combo: a.combo } };
+    case "show-analysis-view": {
+      const base = { ...s, area: "analysis" as const, active: null, analysisView: { view: a.view, n: (s.analysisView?.n ?? 0) + 1 } };
+      if (a.view === "two" && a.runs && a.runs.length >= 2) return { ...base, compare: a.runs.slice(0, 2), analysis: null };
+      if (a.view === "run" && a.runs && a.runs.length >= 1) return { ...base, compare: [], analysis: { run: a.runs[0], combo: {} } };
+      return base;
+    }
+    case "restore":
+      return a.state;
   }
 }
 
@@ -69,7 +83,7 @@ function validate(v: unknown): FrameState | null {
     an && typeof an.run === "string" && an.combo && typeof an.combo === "object"
       ? { run: an.run, combo: an.combo as Record<string, string> }
       : null;
-  return { area, tabs: [...new Set(tabs)], active, runsView, compare, analysis };
+  return { area, tabs: [...new Set(tabs)], active, runsView, compare, analysis, analysisView: null };
 }
 
 export const loadFrame = (project: string): FrameState =>

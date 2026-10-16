@@ -57,9 +57,11 @@ button:disabled,
 
 /* Frame (feature B) */
 .app {
+  position: relative; /* the agent window floats in the tool */
   display: grid;
   grid-template-columns: var(--icon-bar) minmax(0, 1fr);
   height: 100%;
+  overflow: hidden;
 }
 
 .icon-bar {

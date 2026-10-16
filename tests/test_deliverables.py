@@ -34,7 +34,9 @@ def test_images_are_written_below_the_target_with_a_readme(client, root):
     assert r.status_code == 200, r.text
     out = root / "deliverables" / "2026-10-15 Test"
     assert (out / "01_compare-table.png").read_bytes() == PNG_BYTES
-    assert r.json() == {"path": "deliverables/2026-10-15 Test", "files": ["01_compare-table.png"], "configs": [], "readme": "README.md"}
+    body = r.json()
+    assert body.pop("hashes").keys() == {"01_compare-table.png", "README.md"}
+    assert body == {"path": "deliverables/2026-10-15 Test", "files": ["01_compare-table.png"], "configs": [], "readme": "README.md"}
     readme = (out / "README.md").read_text()
     assert "# Mein Test" in readme and "Issue: TIM-52" in readme and RID in readme and "| `01_compare-table.png` | Titel |" in readme
 
@@ -117,3 +119,33 @@ def test_folder_listing_hides_runs_and_hidden_folders(client, root):
 @pytest.mark.parametrize("path", ["../x", "deliverables/../..", "/etc"])
 def test_folder_listing_cannot_leave_the_project(client, path):
     assert client.get("/api/folders", params={"path": path}).status_code in (400, 404)
+
+
+# --- taking a save back (the agent's Rückgängig) ----------------------------------------------------------
+def test_a_save_reports_the_hashes_of_what_it_wrote(client):
+    out = post(client).json()
+    assert set(out["hashes"]) == {"01_compare-table.png", "README.md"}
+
+
+def test_undo_deletes_untouched_files_and_the_empty_folder(client, root):
+    out = post(client).json()
+    r = client.post("/api/deliverables/undo", json={"path": out["path"], "hashes": out["hashes"]}).json()
+    assert sorted(r["deleted"]) == ["01_compare-table.png", "README.md"] and r["kept"] == [] and r["folder_removed"] is True
+    assert not (root / out["path"]).exists()
+
+
+def test_undo_keeps_a_file_that_changed_since(client, root):
+    out = post(client).json()
+    (root / out["path"] / "README.md").write_text("von Hand ergänzt")
+    r = client.post("/api/deliverables/undo", json={"path": out["path"], "hashes": out["hashes"]}).json()
+    assert r["deleted"] == ["01_compare-table.png"] and r["kept"] == ["README.md"] and r["folder_removed"] is False
+    assert (root / out["path"] / "README.md").read_text() == "von Hand ergänzt"
+
+
+def test_undo_never_leaves_the_target_folder(client, root):
+    (root / "wichtig.txt").write_text("bleibt")
+    out = post(client).json()
+    r = client.post("/api/deliverables/undo", json={"path": out["path"], "hashes": {"../../wichtig.txt": "x"}}).json()
+    assert r["kept"] == ["../../wichtig.txt"] and (root / "wichtig.txt").exists()
+    assert client.post("/api/deliverables/undo", json={"path": "../außen", "hashes": {}}).status_code == 400
+    assert client.post("/api/deliverables/undo", json={"path": "runs/x", "hashes": {}}).status_code == 400

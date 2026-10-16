@@ -393,6 +393,18 @@
   gap: 16px;
   align-items: start;
 }
+/* a full-width tile always starts a new row */
+.board-grid > .w-tile.full {
+  grid-column: 1 / -1;
+}
+.move-btn {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
 .add-widget-row {
   margin-top: 16px;
 }
@@ -848,4 +860,191 @@
 }
 .group-label {
   white-space: nowrap;
+}
+
+/* own widgets and the draft of one (feature E) */
+.own-chart {
+  min-width: 0;
+}
+.own-chart-host {
+  width: 100%;
+  min-height: 300px;
+}
+.own-chart-host svg {
+  max-width: 100%;
+}
+.own-tag {
+  margin-left: 6px;
+  font-size: var(--size-tiny);
+  font-weight: 400;
+  color: var(--series-5);
+}
+.draft {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--series-5) 35%, transparent);
+}
+.draft-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+  font-size: var(--size-small);
+  color: var(--text-3);
+}
+.draft-badge {
+  padding: 1px 7px;
+  font-size: var(--size-tiny);
+  color: #b9aef7;
+  border: 1px dashed var(--series-5);
+  border-radius: 3px;
+}
+.draft-title {
+  font-weight: 500;
+  color: var(--text-2);
+}
+.btn-keep {
+  padding: 3px 10px;
+  font-weight: 500;
+  color: var(--bg);
+  background: var(--series-5);
+  border-radius: var(--radius-control);
+}
+.btn-keep:hover:not(:disabled) {
+  background: var(--series-5);
+  filter: brightness(1.1);
+}
+.draft-row {
+  position: relative;
+  padding: 10px;
+  border: 1px dashed #2c3547;
+  border-radius: 8px;
+  background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(140, 124, 240, 0.035) 8px 16px);
+}
+.draft-box {
+  margin: 0 auto;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1.5px dashed #5b4fa8;
+  border-radius: var(--radius-panel);
+}
+.draft-box.half {
+  width: calc(50% - 8px);
+}
+.draft-box.full {
+  width: 100%;
+}
+.draft-hint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(25% - 4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--size-tiny);
+  text-align: center;
+  color: #4a5265;
+}
+.draft-hint.left {
+  left: 0;
+}
+.draft-hint.right {
+  right: 0;
+}
+.draft-json {
+  margin: 0;
+  padding: 10px 12px;
+  max-height: 360px;
+  overflow: auto;
+  font-size: var(--size-tiny);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  color: #c9d3e3;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.pop-section {
+  padding: 8px 10px 4px;
+  margin-top: 4px;
+  font-size: var(--size-tiny);
+  color: var(--text-3);
+  border-top: 1px solid var(--line);
+}
+.pop-empty {
+  padding: 4px 10px 8px;
+  font-size: var(--size-small);
+  color: var(--text-3);
+}
+.pop-row {
+  display: flex;
+  align-items: stretch;
+}
+.pop-row .pop-choice {
+  flex: 1;
+}
+.pop-delete {
+  width: 28px;
+  color: var(--text-3);
+  border-radius: var(--radius-control);
+}
+.pop-head {
+  padding: 4px 10px;
+}
+
+/* templates */
+.head-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+}
+.popover.wide-templates {
+  width: 420px;
+}
+.popover.save-template {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+.row-end {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.pop-choice.current {
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: var(--accent-bg);
+}
+.error-text.small {
+  font-size: var(--size-small);
+}
+@keyframes board-glow {
+  from {
+    box-shadow: 0 0 0 2px var(--accent-line), 0 0 18px var(--accent-bg);
+  }
+  to {
+    box-shadow: none;
+  }
+}
+.board-grid.glow {
+  animation: board-glow 1.6s ease-out;
+}
+
+/* the element an agent action changed glows briefly */
+@keyframes agent-glow {
+  from {
+    box-shadow: 0 0 0 2px var(--accent-line), 0 0 14px var(--accent-bg);
+  }
+  to {
+    box-shadow: none;
+  }
+}
+.agent-glow {
+  animation: agent-glow 1.5s ease-out;
 }

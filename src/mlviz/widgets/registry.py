@@ -25,6 +25,8 @@ class Widget:
     exportable: bool = True
     #: Optional widgets are off in a new board and can be added from the catalog.
     optional: bool = False
+    #: Width of a new tile in a board: `half` of the row or `full` (a full tile starts a new row).
+    width: str = "half"
 
     def to_json(self) -> dict:
         return {
@@ -36,6 +38,7 @@ class Widget:
             "requires": self.requires,
             "exportable": self.exportable,
             "optional": self.optional,
+            "width": self.width,
         }
 
 
@@ -85,6 +88,8 @@ def select(key: str, label: str, default: str | None = None) -> dict:
 
 def compute(project, key: str, request: dict) -> dict:
     """Data of one widget for a board scope. Unknown settings are ignored, missing ones defaulted."""
+    if key == "own-draft" or key.startswith("own:"):
+        return _compute_own(project, key, request)
     if key not in REGISTRY:
         raise KeyError(key)
     defn, fn = REGISTRY[key]
@@ -94,3 +99,19 @@ def compute(project, key: str, request: dict) -> dict:
             settings[k] = v
     out = fn(project, {**request, "settings": settings})
     return {"key": key, "exportable": defn.exportable, **out}
+
+
+def _compute_own(project, key: str, request: dict) -> dict:
+    """An own widget (`own:<slug>`, kept in `.mlviz/widgets/`) or a draft (`own-draft`, the description comes with the request)."""
+    from .. import own_widgets
+
+    if key == "own-draft":
+        defn = request.get("definition")
+        if not isinstance(defn, dict):
+            raise KeyError(key)
+    else:
+        try:
+            defn = own_widgets.OwnWidgetStore(project).get(key[len("own:"):])
+        except KeyError:
+            raise KeyError(key) from None
+    return {"key": key, "exportable": True, **own_widgets.compute(project, defn, request)}

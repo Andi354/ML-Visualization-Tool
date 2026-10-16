@@ -19,12 +19,14 @@ interface Props {
   compare: string[];
   /** "Als Analyse öffnen" / "Analysieren": one run, optionally with a combination as filter. */
   request: { run: string; combo: Record<string, string> } | null;
+  /** The agent asks for a view of the analysis. */
+  viewRequest: { view: View; n: number } | null;
 }
 
 const isView = (v: unknown): View | null => (v === "run" || v === "two" || v === "project" ? v : null);
 
 /** Analysis area: boards of widgets for one run, two runs or the project history (features E, G). */
-export function AnalysisView({ project, compare, request }: Props) {
+export function AnalysisView({ project, compare, request, viewRequest }: Props) {
   const catalogs = { run: useCatalog("run"), two: useCatalog("two-runs"), project: useCatalog("project") };
   const [runs, setRuns] = useState<RunRow[]>([]);
   useEffect(() => {
@@ -37,6 +39,9 @@ export function AnalysisView({ project, compare, request }: Props) {
   useEffect(() => {
     if (request) setView("run");
   }, [request]);
+  useEffect(() => {
+    if (viewRequest) setView(viewRequest.view);
+  }, [viewRequest]);
   useEffect(() => saveJson(storageKey(project.name, "analysisView"), view), [project.name, view]);
 
   const ready = runs.length > 0 && catalogs.run.length > 0 && catalogs.two.length > 0 && catalogs.project.length > 0;

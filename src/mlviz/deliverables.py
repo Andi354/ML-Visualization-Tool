@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import hashlib
 import re
 from pathlib import Path
 
@@ -118,9 +119,48 @@ def save(project: Project, payload: dict, run_lookup) -> dict:
     lines += ["| Datei | Titel |", "|---|---|"] + [f"| `{n}` | {t or ''} |" for n, _, t in decoded]
     readme.write_text("\n".join(lines) + "\n")
     rel_target = str(target.relative_to(project.root))
+    written = [n for n, _, _ in decoded] + [rel for rel, _ in configs] + ["README.md"]
     return {
         "path": rel_target,
         "files": [n for n, _, _ in decoded],
         "configs": [rel for rel, _ in configs],
         "readme": "README.md",
+        # what was written, to take it back later only if nobody has touched it since
+        "hashes": {name: _sha(target / name) for name in written},
     }
+
+
+def _sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def undo(project: Project, rel: str, hashes: dict[str, str]) -> dict:
+    """Takes back a save: deletes the files that still are what was written; changed or moved files stay.
+    Returns `{deleted, kept, folder_removed}`. The folder goes only when it is empty afterwards."""
+    target = _inside(project, rel)
+    deleted: list[str] = []
+    kept: list[str] = []
+    for name, digest in hashes.items():
+        path = (target / name).resolve()
+        if target not in path.parents:  # a name that leaves the folder is never touched
+            kept.append(name)
+            continue
+        if not path.is_file():
+            continue
+        if _sha(path) == digest:
+            path.unlink()
+            deleted.append(name)
+        else:
+            kept.append(name)
+    for sub in sorted((p for p in target.rglob("*") if p.is_dir()), reverse=True):
+        try:
+            sub.rmdir()
+        except OSError:
+            pass
+    removed = False
+    try:
+        target.rmdir()
+        removed = True
+    except OSError:
+        pass
+    return {"deleted": deleted, "kept": kept, "folder_removed": removed}

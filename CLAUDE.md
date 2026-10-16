@@ -45,3 +45,6 @@ Dieser Abschnitt gehört zum Skill `job-linear` und wird von ihm gelesen.
 Dieser Abschnitt gehört zum Skill `sw-cycle` und wird von ihm gelesen.
 
 - Version: steht in `VERSION`, bis ein Paket-Manifest (z.B. `pyproject.toml`) existiert; danach dort. Seit v0.1.0 in `pyproject.toml`.
+- Branch permission (granted by Tim): agents may push to the update branch of the current update
+  (`v<version>-<shortname>-<ISSUE-ID>`) instead of an assigned session branch, and create `main`
+  once in an empty repo. No other push to `main`.

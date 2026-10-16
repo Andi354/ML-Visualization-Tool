@@ -78,6 +78,28 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `POST /api/widgets/{key}` | data of one widget: `{run, combo, settings}` -> `{title, subtitle, note, unavailable, options, data}` |
 | `GET /api/folders?path=` | sub-folders of a project folder (no `runs/`, no hidden folders), for the target picker |
 | `POST /api/deliverables` | writes base64 PNGs below a project folder: `{target, files: [{name, data, title}], title, issue, runs, configs, overwrite}`; 409 with the clashing names unless `overwrite` |
+| `GET /api/agent` | chats of the project (newest first, without messages), the mode of the agent (`direct`, `mixed`, `confirm`) `limits` (subscription usage in percent, if Claude Code reported it) and `now`, the clock of the tool (the cache display counts from it) |
+| `POST /api/agent/chats` | a new empty chat (`Neuer Chat`) |
+| `GET /api/agent/chats/{id}` | one chat with its messages (404 for an unknown or malformed id) |
+| `POST /api/agent/chats/{id}/messages` | appends a message of the user, `{text}` (empty text is a 400); the first one names a new chat |
+| `GET /api/agent/setup` | `{ready, problem, step, api_key}`: Claude Code found and logged in (`claude auth status`); `api_key` if `ANTHROPIC_API_KEY` is set |
+| `POST /api/agent/chats/{id}/run` | `{text, context, resend?}` sends a message (a new `claude -p`); answers as server-sent events, each `data:` a snapshot `{chat, busy, limits}`; 409 while the chat is working |
+| `POST /api/agent/chats/{id}/compact` | `/compact` on the session of the chat, streamed like `run` (400 without a session) |
+| `POST /api/agent/chats/{id}/stop` | ends the running `claude` process of the chat (`{stopped}`) |
+| `POST /mcp/{chat_id}` | the MCP server of the tool (JSON-RPC over HTTP) for the `claude` the tool started; needs `Authorization: Bearer <secret of this start>` (401 otherwise) |
+| `POST /api/agent/commands/{id}/result` | the open tool reports a command of the agent: `{ok, summary?, data?, error?, undoable?}` |
+| `POST /api/agent/commands/{id}/decision` | a click on a confirmation card (`{approve}`) or a run card (`{choice}`) |
+| `POST /api/agent/chats/{id}/actions/{cid}` | after Rückgängig / Wiederholen: `{state: "done" \| "reverted", text}` for the action line |
+| `POST /api/deliverables/undo` | `{path, hashes}` deletes the files of a save that still match their hash; others stay (`{deleted, kept, folder_removed}`) |
+| `GET /api/own-widgets?scope=` | own widgets kept in the project as catalog entries (`key` `own:<slug>`, `settings` from the params, `width`, `own: true`) with their `definition` |
+| `POST /api/own-widgets` | keeps a description under its name (the same name overwrites); 400 with `detail.errors` when it is not valid |
+| `POST /api/own-widgets/validate` | `{errors}` for a description, nothing is written |
+| `DELETE /api/own-widgets/{slug}` | removes a kept widget (404 if there is none) |
+| `GET /api/templates?scope=` | stored templates (`one`, `two`, `project`), by name; the built-in "Standard" is not among them |
+| `POST /api/templates` | `{scope, name, widgets: [{type, settings, width}]}` saves a template; the same name (any case) overwrites and keeps `last_used`; "Standard" is refused (400) |
+| `POST /api/templates/used` | `{scope, name, runs}` notes the runs a template was applied to |
+| `POST /api/templates/delete` | `{scope, name}` removes a template (400 for "Standard", 404 if unknown) |
+| `PUT /api/agent/mode` | `{mode}`: Direkt, Gemischt or Bestätigen, kept per project |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
 
 ## Experiment table
@@ -166,6 +188,97 @@ in `dist/` and the `ds-store` folder; each missing piece stops it with a message
 person; it is not exposed in the network unless `MLVIZ_HOST` says so. `make check-run` installs into a
 temporary venv, serves the demo project and asks the API and the frontend; `tests/test_run_without_docker.py`
 covers what `make run` does, how it refuses, and that `mlviz serve` answers.
+
+## Agent (v0.2)
+
+**Window (feature A).** `web/src/agent/`: `AgentLayer.tsx` is the window and the capsule, floating in `.app` above
+the content; the icon at the bottom of the icon bar opens and minimises it (`state.toggleFromIcon`). The rules of
+position and size are pure (`geometry.ts`): first opening 400 × 520 px and 24 px from the bottom right corner, a
+drag stays inside the area right of the icon bar and below the tab strip (4 px from the edges), the corner
+resizes down to 320 × 280 px and stops at the edge, a smaller tool pushes and shrinks the window (`fit`). Open /
+minimised / closed, position, size and the current chat are browser state per project
+(`mlviz:v1:<project>:agent`, like the frame); the context chip says what the agent sees (`model.contextLabel`).
+The microphone button is disabled until the voice update.
+
+**Chats and settings.** `src/mlviz/agent_store.py` keeps them in `<project>/.mlviz/` (the folder is created on the
+first write, nothing else is written into the project): `chats/<id>.json` (one chat = one Claude Code session:
+`title`, `updated_at`, `session_id`, `tokens` of the last turn, `last_turn_at`, `cache_ttl_s`, `messages`) and
+`agent.json` (the mode). Ids are 12 hex characters and are checked before any path is built. Context % and the
+cache chip are computed in the browser from `tokens`, `last_turn_at` and `cache_ttl_s` against the clock of the
+tool (`model.contextUse`, `model.cacheState`), never by asking the agent. `.mlviz/` can be committed (templates and
+own widgets will live there too) or put into the project's `.gitignore`.
+
+**Connection (feature F).** `src/mlviz/agent_run.py`. One message is one call
+`claude -p "[Ansicht: <context>]\n<message>" [--resume <session_id>] --output-format stream-json --verbose --strict-mcp-config
+--allowedTools "Read,Glob,Grep"` in the project folder, with the login of the user running the tool (no Docker; the setup
+check says "nicht eingerichtet" where `claude` is missing or not logged in). The stream is read line by line: the
+`session_id` of `system/init` is stored with the chat, every text block of the answer is appended to the chat and handed
+to the browser as a snapshot, `rate_limit_event` gives the subscription usage (`unifiedWindows.five_hour/seven_day`
+`.utilization`), `result` ends the turn (`is_error` becomes an info line with `error: true` and "Erneut senden").
+`tokens` are the input tokens of the last API call of the turn (`input + cache_creation + cache_read` of the last
+assistant message; the `result` usage adds up all calls of a turn and would overstate the context), the context window
+comes from `modelUsage.*.contextWindow`, the cache lifetime is 3600 s, 300 s with `ANTHROPIC_API_KEY`. A chat runs one
+request at a time; stop terminates the process ("Abgebrochen"). A message into a chat with more than 50 000 tokens
+and a cold cache is held back in the browser before any call (`model.needsColdHint`). `/compact` works in `-p` mode
+(`system/compact_boundary` carries `pre_tokens` and `post_tokens`) and is offered while the cache is warm and the chat has
+at least 10 000 tokens. The command can be replaced with `MLVIZ_CLAUDE` (the tests use `tests/fake_claude.py`). An empty
+Claude Code session already carries tens of thousands of tokens when the user has many plugins and skills installed;
+the context bar shows that honestly.
+
+**Tools (feature C).** `src/mlviz/agent_tools.py` lists the tools with a kind each: `read`, `nav`, `change`. The mode decides
+(`needs_confirmation`): Direkt asks for nothing, Gemischt for `change`, Bestätigen for `nav` and `change`; reads never
+ask; applying a template and drafting a widget are `nav`. The tool runs its own MCP server (`POST /mcp/<chat>`, hand-written
+JSON-RPC, no extra package) and gives `claude` its URL and the secret of this start with `--mcp-config` (`--strict-mcp-config`,
+`--allowedTools mcp__mlviz__*,Read,Glob,Grep`: no Bash, no Edit/Write). Reads (`find_runs`, `read_run`, `list_widgets`,
+`list_templates`) are answered in the backend. Everything else is a *command*: `AgentRunner.call_tool` puts
+`{command: {id, tool, args}}` into the stream of the running request, the browser carries it out (`web/src/agent/commands.ts`)
+and answers on `/api/agent/commands/<id>/result`; the tool call of the agent waits for that answer (120 s). Run references
+are resolved to exact ids in the backend first; an ambiguous one is an error that points the agent to `choose_run`, which
+shows run cards and returns the clicked run. A tool that needs confirmation first appends a `confirm` card to the chat and
+waits for `/decision`; the card then becomes the action line in place (`rejected` for "Abgelehnt"). A stop, or the end of a
+request, closes open cards as rejected. In the browser the views provide handlers by tool name while they are mounted
+(`agent/bus.ts`: the frame in `frameTools.ts`, a run tab for `set_run_view`, a board in `BoardPage.tsx`); each handler returns
+the text for the action line and, if it can, `undo` and `redo` closures that go back to the state before / after (the
+closures live in the browser: after a reload the lines stay without "Rückgängig"). Saving renders the images like the save
+dialog (`analysis/agentSave.ts`) and writes them with `/api/deliverables`; its undo deletes only files whose hash is unchanged.
+`get_view` returns what the views add with `provideView` (frame, board, run tab filters). Changed elements glow for 1.5 s
+(`.agent-glow`).
+
+## Widget width, order and own widgets (v0.2)
+
+**Width and order.** Every tile has a width, `half` or `full` (a full tile starts a new row; catalog default:
+the comparison table is full, all others half) and a position; the arrows ↑ ↓ in the tile header move it one place,
+"Einstellen" has "Breite Halb | Ganz". Both are part of the board (`web/src/widgets/board.ts`, stored per project and
+scope, so templates can carry them). Boards stored before widths existed take the default width of their type.
+
+**Own widgets (feature E).** A widget the agent writes is a description, not code: Vega-Lite with a thin wrapper
+(`own_widgets.py`; the fields are listed in its docstring). `validate` refuses what the tool cannot theme: colours
+and fonts (the theme draws them from the tokens, `web/src/widgets/own-theme.ts`), `data`/`datasets`/`config`, and any
+mark but bar, line, point, area, rect, text, tick. `{{param.<name>}}` in `filter` values and in any string of the
+spec is replaced by the value of the param. The datasets (`own_data.py`: `cells`, `channels`, `curves`,
+`predictions`, `runs`) are aggregated over the replicates and keyed by the axes; `filter` is a mapping column -> value
+(or list); a row cap (20 000) asks for a narrower filter. A kept widget is `<project>/.mlviz/widgets/<slug>.json`;
+`own:<slug>` goes through `/api/widgets/{key}` like a built-in widget (so the save dialog and templates need no
+special case), `own-draft` takes the description in the request. A description that cannot be drawn gives
+`unavailable: "Widget kann nicht gezeichnet werden: <reason>"` (the agent sees the same text). The frontend loads
+Vega when the first own widget is drawn (`OwnChart`, SVG renderer); it marks itself `data-pending` while drawing and
+the image export waits for that (`settle`).
+
+**Draft.** A draft is part of the board (`board.draft`, in the browser like the rest of the board): the first row, the
+tile at its own width, "Beschreibung" (read-only JSON), "Verwerfen", "Behalten" (saves the widget and makes a tile of it
+at the position of the draft). Only one draft per board; a new one replaces it. The agent creates drafts through the
+tools of feature C.
+
+## Templates (v0.2)
+
+A template is a board without runs: `{name, scope, widgets: [{type, settings, width}], last_used: {runs, at}}`, kept in
+`<project>/.mlviz/templates.json` (`templates.py`). Scopes are `one`, `two` and `project` (the boards `run`, `two-runs`,
+`project`). "Standard" of a scope is the default board (non-optional catalog widgets in default width), computed in
+`web/src/widgets/templates.ts`, never stored. The board header (`analysis/TemplateBar.tsx`) shows the current template (kept in
+the browser per project and scope), "· geändert" when order, widgets, widths or settings differ (`isDirty`), "Vorlage
+aktualisieren" for stored templates, and "Als Vorlage speichern". Applying a template replaces the widgets (new ids), glows the
+board for 1.6 s and notes `last_used`. A scope opened for the first time starts with the template used last, else Standard.
+Types that no longer exist are dropped when applying; own widgets that were deleted show "Widget gelöscht".
 
 ## Code
 

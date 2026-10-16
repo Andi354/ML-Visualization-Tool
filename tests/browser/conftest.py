@@ -138,3 +138,10 @@ def empty_page(page, empty_url):
 @pytest.fixture
 def linear_page(page, linear_url):
     return _fresh(page, linear_url)
+
+
+@pytest.fixture
+def agent_page(page, tmp_path):
+    """The app on a project of its own with no runs, so chats written by a test stay with it."""
+    with serve(tmp_path) as url:
+        yield _fresh(page, url)

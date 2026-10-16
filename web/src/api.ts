@@ -215,6 +215,11 @@ export interface CatalogEntry {
   requires: string | null;
   exportable: boolean;
   optional: boolean;
+  /** Width of a new tile: half of the row or full. */
+  width: "half" | "full";
+  /** An own widget (a description kept in the project); `definition` is the description. */
+  own?: boolean;
+  definition?: import("./widgets/board").OwnDefinition;
 }
 export interface WidgetRequest {
   run?: string;
@@ -254,3 +259,42 @@ export async function postWidget(key: string, req: WidgetRequest, signal?: Abort
   if (!r.ok) throw new Error(`widget ${key}: ${r.status}`);
   return r.json();
 }
+
+// --- own widgets (feature E) ----------------------------------------------------------------------
+export class OwnWidgetRefused extends Error {
+  constructor(readonly errors: string[]) {
+    super(errors.join("; "));
+  }
+}
+
+export const getOwnWidgets = (scope: string) => getJson<CatalogEntry[]>(`/api/own-widgets?scope=${encodeURIComponent(scope)}`);
+
+/** Keeps a draft as an own widget under its name; the reasons come back when the description is not valid. */
+export async function keepOwnWidget(definition: unknown): Promise<CatalogEntry> {
+  const r = await fetch("/api/own-widgets", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ definition }) });
+  if (r.status === 400) {
+    const body = await r.json().catch(() => null);
+    throw new OwnWidgetRefused(body?.detail?.errors ?? ["ungültige Beschreibung"]);
+  }
+  if (!r.ok) throw new Error(`/api/own-widgets: ${r.status}`);
+  return r.json();
+}
+
+export async function deleteOwnWidget(key: string): Promise<void> {
+  const r = await fetch(`/api/own-widgets/${encodeURIComponent(key.replace(/^own:/, ""))}`, { method: "DELETE" });
+  if (!r.ok && r.status !== 404) throw new Error(`delete ${key}: ${r.status}`);
+}
+
+// --- templates of boards (feature D) ---------------------------------------------------------------
+export type StoredTemplate = import("./widgets/templates").StoredTemplate;
+
+export const getTemplates = (scope: string) => getJson<StoredTemplate[]>(`/api/templates?scope=${encodeURIComponent(scope)}`);
+
+async function postTemplate<T>(url: string, body: unknown): Promise<T> {
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error((await r.json().catch(() => null))?.detail ?? `${url}: ${r.status}`);
+  return r.json();
+}
+export const saveTemplate = (scope: string, name: string, widgets: StoredTemplate["widgets"]) => postTemplate<StoredTemplate>("/api/templates", { scope, name, widgets });
+export const markTemplateUsed = (scope: string, name: string, runs: string[]) => postTemplate<StoredTemplate>("/api/templates/used", { scope, name, runs });
+export const deleteTemplate = (scope: string, name: string) => postTemplate<{ deleted: string }>("/api/templates/delete", { scope, name });
