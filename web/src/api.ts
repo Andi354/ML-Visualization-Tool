@@ -284,3 +284,17 @@ export async function deleteOwnWidget(key: string): Promise<void> {
   const r = await fetch(`/api/own-widgets/${encodeURIComponent(key.replace(/^own:/, ""))}`, { method: "DELETE" });
   if (!r.ok && r.status !== 404) throw new Error(`delete ${key}: ${r.status}`);
 }
+
+// --- templates of boards (feature D) ---------------------------------------------------------------
+export type StoredTemplate = import("./widgets/templates").StoredTemplate;
+
+export const getTemplates = (scope: string) => getJson<StoredTemplate[]>(`/api/templates?scope=${encodeURIComponent(scope)}`);
+
+async function postTemplate<T>(url: string, body: unknown): Promise<T> {
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error((await r.json().catch(() => null))?.detail ?? `${url}: ${r.status}`);
+  return r.json();
+}
+export const saveTemplate = (scope: string, name: string, widgets: StoredTemplate["widgets"]) => postTemplate<StoredTemplate>("/api/templates", { scope, name, widgets });
+export const markTemplateUsed = (scope: string, name: string, runs: string[]) => postTemplate<StoredTemplate>("/api/templates/used", { scope, name, runs });
+export const deleteTemplate = (scope: string, name: string) => postTemplate<{ deleted: string }>("/api/templates/delete", { scope, name });

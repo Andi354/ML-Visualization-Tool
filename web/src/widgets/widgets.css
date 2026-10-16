@@ -995,3 +995,43 @@
 .pop-head {
   padding: 4px 10px;
 }
+
+/* templates */
+.head-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+}
+.popover.wide-templates {
+  width: 420px;
+}
+.popover.save-template {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+.row-end {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.pop-choice.current {
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: var(--accent-bg);
+}
+.error-text.small {
+  font-size: var(--size-small);
+}
+@keyframes board-glow {
+  from {
+    box-shadow: 0 0 0 2px var(--accent-line), 0 0 18px var(--accent-bg);
+  }
+  to {
+    box-shadow: none;
+  }
+}
+.board-grid.glow {
+  animation: board-glow 1.6s ease-out;
+}

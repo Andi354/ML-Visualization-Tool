@@ -1,10 +1,13 @@
 import type { ComponentChildren } from "preact";
 import { useEffect, useReducer, useRef, useState } from "preact/hooks";
-import { deleteOwnWidget, getOwnWidgets, keepOwnWidget, OwnWidgetRefused, type CatalogEntry, type ProjectInfo, type RunInfo, type WidgetRequest } from "../api";
+import { deleteOwnWidget, deleteTemplate, getOwnWidgets, getTemplates, keepOwnWidget, markTemplateUsed, saveTemplate, OwnWidgetRefused, type CatalogEntry, type ProjectInfo, type RunInfo, type WidgetRequest } from "../api";
 import { boardReducer, loadBoard, makeBoard, newId, saveBoard, type Width } from "../widgets/board";
+import { BUILTIN, isDirty, lastUsed, loadCurrent, saveCurrent, standardWidgets, templateScope, toTemplateWidgets, widgetsFromTemplate, type StoredTemplate } from "../widgets/templates";
+import { storageKey } from "../state/storage";
 import { WidgetTile } from "../widgets/WidgetTile";
 import { DraftRow } from "./DraftRow";
 import { SaveDialog } from "./SaveDialog";
+import { TemplateBar } from "./TemplateBar";
 
 interface Props {
   project: ProjectInfo;
@@ -28,6 +31,16 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
   const known = catalog.map((c) => c.key);
   const defaults = catalog.filter((c) => !c.optional).map((c) => c.key); // optional widgets start off
   const widths = Object.fromEntries(catalog.map((c) => [c.key, c.width])) as Record<string, Width>;
+  // a scope without a stored board starts with the template used last (else Standard), see the templates effect
+  const startsFresh = useRef(
+    (() => {
+      try {
+        return localStorage.getItem(storageKey(project.name, `board:${scope}`)) === null;
+      } catch {
+        return true;
+      }
+    })(),
+  );
   const [board, dispatch] = useReducer(boardReducer, null, () => loadBoard(project.name, scope, known, makeBoard(scope, defaults, widths), widths));
   useEffect(() => saveBoard(project.name, board), [project.name, board]);
   // effects run after paint: flush on leaving so a quick reload cannot lose the last change (as in the frame)
@@ -72,6 +85,63 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
     refreshOwn();
   };
 
+  // templates: boards without runs, kept in the project
+  const tScope = templateScope(scope);
+  const standard = standardWidgets(catalog);
+  const [templates, setTemplates] = useState<StoredTemplate[] | null>(null);
+  const [current, setCurrent] = useState<string>(() => loadCurrent(project.name, scope) ?? BUILTIN);
+  const [glow, setGlow] = useState(false);
+  const refreshTemplates = () => getTemplates(tScope).then(setTemplates).catch(() => setTemplates([]));
+  useEffect(() => {
+    refreshTemplates();
+  }, [tScope]);
+  useEffect(() => saveCurrent(project.name, scope, current), [project.name, scope, current]);
+  useEffect(() => {
+    if (!glow) return;
+    const t = setTimeout(() => setGlow(false), 1600);
+    return () => clearTimeout(t);
+  }, [glow]);
+  const runIds: string[] = req.scope === "run" ? [req.run!] : (req.runs ?? []);
+  const noteUsed = (name: string) => name !== BUILTIN && markTemplateUsed(tScope, name, runIds).then(refreshTemplates).catch(() => {});
+  const templateWidgets = (name: string) => (name === BUILTIN ? standard : templates?.find((t) => t.name === name)?.widgets);
+  const apply = (name: string) => {
+    const widgets = templateWidgets(name);
+    if (!widgets) return;
+    dispatch({ type: "reset", board: { ...board, widgets: widgetsFromTemplate(widgets, known.concat(own.map((o) => o.key))) } });
+    setCurrent(name);
+    setGlow(true);
+    noteUsed(name);
+  };
+  useEffect(() => {
+    if (!startsFresh.current || templates === null) return;
+    startsFresh.current = false;
+    const t = lastUsed(templates);
+    if (t) {
+      dispatch({ type: "reset", board: { ...board, widgets: widgetsFromTemplate(t.widgets, known.concat(own.map((o) => o.key))) } });
+      setCurrent(t.name);
+    }
+  }, [templates]);
+  const currentWidgets = templateWidgets(current) ?? standard;
+  const dirty = isDirty(board, currentWidgets);
+  const saveAs = async (name: string): Promise<string | null> => {
+    try {
+      const t = await saveTemplate(tScope, name, toTemplateWidgets(board.widgets));
+      setCurrent(t.name);
+      await noteUsed(t.name);
+      await refreshTemplates();
+      return null;
+    } catch (e) {
+      return e instanceof Error ? e.message : "Nicht gespeichert";
+    }
+  };
+  const removeTemplate = async (name: string) => {
+    await deleteTemplate(tScope, name).catch(() => {});
+    if (current === name) setCurrent(BUILTIN);
+    refreshTemplates();
+  };
+  const labelOf = (type: string) => everything.find((c) => c.key === type)?.label ?? "Widget gelöscht";
+  const runLabel = (id: string) => footerRuns.find((r) => r.id === id)?.name ?? id;
+
   const present = known.filter((k) => board.widgets.some((w) => w.type === k));
   const toggleType = (key: string) => {
     if (present.includes(key)) board.widgets.filter((w) => w.type === key).forEach((w) => dispatch({ type: "remove", id: w.id }));
@@ -82,7 +152,21 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
     <div class="analysis" data-testid="board-page" data-scope={scope}>
       <div class="view-head">
         {controls}
-        <span class="grow" />
+        <TemplateBar
+          scope={tScope}
+          current={current}
+          dirty={dirty}
+          templates={templates ?? []}
+          standard={standard}
+          label={labelOf}
+          runLabel={runLabel}
+          appliedTo={runIds.map(runLabel).join(" ↔ ") || "–"}
+          widgetCount={board.widgets.length}
+          onApply={apply}
+          onUpdate={() => saveAs(current)}
+          onSave={saveAs}
+          onDelete={removeTemplate}
+        />
         <div class="relative">
           <button class="btn" aria-expanded={menu === "widgets"} data-testid="widgets-menu" onClick={() => setMenu(menu === "widgets" ? null : "widgets")}>
             Widgets · {present.length} von {known.length}
@@ -116,7 +200,7 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
             onKeep={keep}
           />
         )}
-        <div class="board-grid" data-testid="board">
+        <div class={`board-grid${glow ? " glow" : ""}`} data-testid="board" data-glow={glow ? "true" : "false"}>
           {board.widgets.map((w, i) => (
             <WidgetTile
               key={w.id}

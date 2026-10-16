@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 import json
 
 from . import aggregate, configview, deliverables, linear, widgets
-from . import own_widgets
+from . import own_widgets, templates
 from .agent_store import AgentStore, ChatNotFound
 from .store import StoreError
 from .listing import merkmal_candidates, run_listing
@@ -171,6 +171,40 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
         except KeyError:
             raise HTTPException(404, "widget not found")
         return {"deleted": slug}
+
+    # --- templates of analysis boards (<project>/.mlviz/templates.json) ------------------------------
+    template_store = templates.TemplateStore(project)
+
+    @app.get("/api/templates")
+    def api_templates(scope: str | None = None) -> list[dict]:
+        """Stored templates (the built-in Standard of each scope is not among them), by name."""
+        return template_store.list(scope)
+
+    @app.post("/api/templates")
+    def api_template_save(payload: dict = Body(...)) -> dict:
+        """Saves a board as a template: `{scope, name, widgets: [{type, settings, width}]}`; the same name overwrites."""
+        try:
+            return template_store.save(str(payload.get("scope")), str(payload.get("name") or ""), payload.get("widgets"))
+        except templates.TemplateError as e:
+            raise HTTPException(400, str(e))
+
+    @app.post("/api/templates/used")
+    def api_template_used(payload: dict = Body(...)) -> dict:
+        """Notes the runs a template was applied to (`last_used`)."""
+        try:
+            return template_store.mark_used(str(payload.get("scope")), str(payload.get("name") or ""), list(payload.get("runs") or []))
+        except KeyError:
+            raise HTTPException(404, "template not found")
+
+    @app.post("/api/templates/delete")
+    def api_template_delete(payload: dict = Body(...)) -> dict:
+        try:
+            template_store.delete(str(payload.get("scope")), str(payload.get("name") or ""))
+        except templates.TemplateError as e:
+            raise HTTPException(400, str(e))
+        except KeyError:
+            raise HTTPException(404, "template not found")
+        return {"deleted": payload.get("name")}
 
     @app.get("/api/folders")
     def api_folders(path: str = "") -> dict:

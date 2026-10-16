@@ -86,6 +86,10 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `POST /api/own-widgets` | keeps a description under its name (the same name overwrites); 400 with `detail.errors` when it is not valid |
 | `POST /api/own-widgets/validate` | `{errors}` for a description, nothing is written |
 | `DELETE /api/own-widgets/{slug}` | removes a kept widget (404 if there is none) |
+| `GET /api/templates?scope=` | stored templates (`one`, `two`, `project`), by name; the built-in "Standard" is not among them |
+| `POST /api/templates` | `{scope, name, widgets: [{type, settings, width}]}` saves a template; the same name (any case) overwrites and keeps `last_used`; "Standard" is refused (400) |
+| `POST /api/templates/used` | `{scope, name, runs}` notes the runs a template was applied to |
+| `POST /api/templates/delete` | `{scope, name}` removes a template (400 for "Standard", 404 if unknown) |
 | `PUT /api/agent/mode` | `{mode}`: Direkt, Gemischt or Bestätigen, kept per project |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
 
@@ -219,6 +223,17 @@ the image export waits for that (`settle`).
 tile at its own width, "Beschreibung" (read-only JSON), "Verwerfen", "Behalten" (saves the widget and makes a tile of it
 at the position of the draft). Only one draft per board; a new one replaces it. The agent creates drafts through the
 tools of feature C.
+
+## Templates (v0.2)
+
+A template is a board without runs: `{name, scope, widgets: [{type, settings, width}], last_used: {runs, at}}`, kept in
+`<project>/.mlviz/templates.json` (`templates.py`). Scopes are `one`, `two` and `project` (the boards `run`, `two-runs`,
+`project`). "Standard" of a scope is the default board (non-optional catalog widgets in default width), computed in
+`web/src/widgets/templates.ts`, never stored. The board header (`analysis/TemplateBar.tsx`) shows the current template (kept in
+the browser per project and scope), "· geändert" when order, widgets, widths or settings differ (`isDirty`), "Vorlage
+aktualisieren" for stored templates, and "Als Vorlage speichern". Applying a template replaces the widgets (new ids), glows the
+board for 1.6 s and notes `last_used`. A scope opened for the first time starts with the template used last, else Standard.
+Types that no longer exist are dropped when applying; own widgets that were deleted show "Widget gelöscht".
 
 ## Code
 
