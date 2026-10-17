@@ -9,13 +9,13 @@ Prototype: prototype/ · Builds on: v0.2.4
 |---|---|
 | A · Settings screen | decided: A1 (like the Agent-Dashboard settings) |
 | B · Voice input | decided: B3 (review box with recognised project terms), recognition Weg 2 (Whisper on the server with the project vocabulary) |
-| C · Command palette | open: which commands |
+| C · Command palette | running: C1 (like VS Code: Ctrl+Shift+P commands, Ctrl+P runs and issues, @ settings, ? prefixes, agent as fallback) on the canvas, waiting for Tim |
 | D · Run notification and progress for the agent | open |
 | E · Own notes on runs | open: attached to the description, visibly Tim's own |
 
 Scope changed 17.10. (Tim): B–E added, deliverables area moved to v0.4 (TIM-96 header and decision comment).
 Canvas: Prototyp-03 (overall: settings tab, voice input B3), row A with A1 chosen, row B with B3 chosen. Tim on A: which
-settings stay is decided in use; the list in A is the starting set. Next: Tim chooses the next block (C, D or E).
+settings stay is decided in use; the list in A is the starting set. Running block: C.
 
 ## Goal
 One place in the tool to see and change how it behaves for a project.
