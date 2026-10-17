@@ -83,6 +83,10 @@ def test_rueckgaengig_and_wiederholen_revert_and_redo_the_action(tool_page):
     page.get_by_test_id("agent-undo").click()
     expect(tabs(page)).to_have_count(0)
     chat = next((page.root / ".mlviz" / "chats").glob("*.json"))
+    for _ in range(50):  # the browser reports the new state after the tab has closed
+        if json.loads(chat.read_text())["messages"][-2]["state"] == "reverted":
+            break
+        page.wait_for_timeout(100)
     assert json.loads(chat.read_text())["messages"][-2]["state"] == "reverted"
 
 
