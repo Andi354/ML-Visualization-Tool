@@ -124,7 +124,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     @app.get("/api/agent")
     def api_agent() -> dict:
         """Chats of the project (newest first, without messages) and the mode of the agent."""
-        return {"chats": agent.list(), "mode": agent.mode(), "now": now().isoformat(), "limits": runner.limits}
+        return {"chats": agent.list(), "mode": agent.mode(), "debug": agent.debug(), "now": now().isoformat(), "limits": runner.limits}
 
     @app.post("/api/agent/chats")
     def api_agent_new_chat(payload: dict = Body(default_factory=dict)) -> dict:
@@ -231,6 +231,10 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
             return {"mode": agent.set_mode(str(payload.get("mode")))}
         except ValueError as e:
             raise HTTPException(400, str(e))
+
+    @app.put("/api/agent/debug")
+    def api_agent_debug(payload: dict = Body(...)) -> dict:
+        return {"debug": agent.set_debug(payload.get("on") is True)}
 
     # --- own widgets (descriptions kept in <project>/.mlviz/widgets/) ------------------------------
     widget_store = own_widgets.OwnWidgetStore(project)

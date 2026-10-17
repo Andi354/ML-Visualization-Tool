@@ -13,6 +13,8 @@ export interface AgentMessage {
   undo_id?: string;
   /** An info line that reports an error of Claude Code (offers "Erneut senden"). */
   error?: boolean;
+  /** The error line is about a tool call of the agent (not about Claude Code): no "Erneut senden". */
+  tool?: string;
   /** Id of a card or action (confirmation, run choice); the tool answers it by this id. */
   cid?: string;
   /** Confirmation card: further lines (target path, settings) and whether the button says "Speichern". */
@@ -24,6 +26,8 @@ export interface AgentMessage {
   state?: "done" | "reverted";
   rejected?: boolean;
   auto?: boolean;
+  /** Action line of the debug display (a look-up of the agent): only shown while the debug button is on. */
+  debug?: boolean;
 }
 
 /** A chat as the list shows it (no messages). One chat is one Claude Code session. */

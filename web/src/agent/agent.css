@@ -581,3 +581,27 @@
   color: var(--accent);
   white-space: nowrap;
 }
+
+/* debug display (v0.2.2): a button in the header and muted lines for the look-ups of the agent */
+.agent-debug-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.agent-debug-btn.on {
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+.agent-action.debug {
+  border-style: dotted;
+  border-color: var(--agent-line);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: var(--size-tiny);
+}
+.agent-action.debug .agent-action-icon {
+  color: var(--text-3);
+}
+.agent-action.debug .agent-action-text {
+  color: var(--text-3);
+}

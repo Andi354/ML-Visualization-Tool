@@ -49,7 +49,7 @@ def test_the_call_is_headless_in_the_project_folder_with_the_view_in_front(clien
     run(client, cid, "Hallo", context="Lauf · TIM-52")
     (call,) = calls(client)
     a = call["args"]
-    assert a[a.index("-p") + 1] == "[Ansicht: Lauf · TIM-52]\nHallo"
+    assert a[a.index("-p") + 1] == "[Ansicht: Lauf · TIM-52, Modus: Gemischt]\nHallo"
     assert a[a.index("--output-format") + 1] == "stream-json" and "--verbose" in a
     assert "--strict-mcp-config" in a and a[a.index("--allowedTools") + 1] == "mcp__mlviz__*,Read,Glob,Grep"
     assert call["cwd"] == str(client.app.state.project.root)
@@ -70,7 +70,7 @@ def test_tokens_cache_and_window_come_from_the_usage(client):
     cid = new_chat(client)
     run(client, cid, "Hallo")
     chat = client.get(f"/api/agent/chats/{cid}").json()
-    assert chat["tokens"] == 1000 + 10 * len("Hallo")
+    assert chat["tokens"] == 1000 + 10 * len("[Modus: Gemischt]\nHallo")  # the stand-in counts the prompt
     assert chat["last_turn_at"] and chat["cache_ttl_s"] == 3600 and chat["context_window"] == 200000
 
 
@@ -188,3 +188,27 @@ def test_compact_runs_slash_compact_on_the_session_and_notes_the_sizes(client):
     a = calls(client)[-1]["args"]
     assert a[a.index("-p") + 1] == "/compact" and "--resume" in a
     assert [m["k"] for m in chat["messages"]] == ["user", "agent", "info"]  # no user message for the command
+
+
+def test_the_first_line_names_the_mode_the_agent_works_in(client):
+    for mode, label in (("direct", "Direkt"), ("mixed", "Gemischt"), ("confirm", "Bestätigen")):
+        client.put("/api/agent/mode", json={"mode": mode})
+        cid = new_chat(client)
+        run(client, cid, "Hallo", context="Läufe · Liste")
+    prompts = [c["args"][c["args"].index("-p") + 1] for c in calls(client)]
+    assert prompts == [f"[Ansicht: Läufe · Liste, Modus: {m}]\nHallo" for m in ("Direkt", "Gemischt", "Bestätigen")]
+
+
+def test_a_message_without_a_view_still_names_the_mode(client):
+    cid = new_chat(client)
+    run(client, cid, "Hallo")
+    (call,) = calls(client)
+    assert call["args"][call["args"].index("-p") + 1] == "[Modus: Gemischt]\nHallo"
+
+
+def test_the_system_prompt_sends_the_agent_to_help(client):
+    cid = new_chat(client)
+    run(client, cid, "Hallo")
+    (call,) = calls(client)
+    prompt = call["args"][call["args"].index("--append-system-prompt") + 1]
+    assert "`help`" in prompt and "faehigkeiten" in prompt and prompt == agent_run.SYSTEM_PROMPT

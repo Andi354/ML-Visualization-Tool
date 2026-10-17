@@ -311,7 +311,13 @@ def test_unknown_and_ambiguous_runs_are_an_error_for_the_agent_not_a_command(cli
     assert is_error and "Mehrere Läufe passen" in text and "choose_run" in text
     text, is_error = runner.call_tool(chat, "open_run", {"run": "gibt-es-nicht"})
     assert is_error and "keinen Lauf" in text
-    assert runner.live[chat].out.empty() and messages(client, chat) == []
+    sent = []
+    while not runner.live[chat].out.empty():
+        sent.append(runner.live[chat].out.get())
+    assert not any("command" in item for item in sent)  # nothing went to the browser
+    lines = messages(client, chat)  # but both failures are in the chat for Tim
+    assert [m["k"] for m in lines] == ["info", "info"] and all(m.get("error") for m in lines)
+    assert lines[0]["t"].startswith("open_run: Mehrere Läufe passen") and lines[1]["t"].startswith("open_run: Es gibt keinen Lauf")
 
 
 def test_find_runs_text_also_matches_the_description(runner):
@@ -324,3 +330,89 @@ def test_find_runs_text_also_matches_the_description(runner):
     assert not any("TIM-52_best_90" in r for r in find("kommt nirgends vor"))
     row = next(r for r in agent_tools.run_tool(runner.project, "find_runs", {"text": "TIM-52_best_90"})["runs"])
     assert row["short"].startswith("Bestes Setup")
+
+
+def test_help_answers_as_plain_text_through_the_tool_call(runner):
+    text, is_error = runner.call_tool("none", "help", {"topic": "modi"})
+    assert not is_error and text.startswith("# Modi und Bestätigungen") and "\\n" not in text
+    index, is_error = runner.call_tool("none", "help", {})
+    assert not is_error and "`faehigkeiten`" in index
+    text, is_error = runner.call_tool("none", "help", {"topic": "nix"})
+    assert is_error and "Kein Thema" in text
+
+
+@pytest.fixture(autouse=True)
+def debug_off_again(client):
+    yield
+    client.put("/api/agent/debug", json={"on": False})  # the project of the module is shared between the tests
+
+
+# --- v0.2.2 · what Tim sees: help, failures, and the debug display ------------------------------------
+def lines(client, chat):
+    return [(m["k"], m["t"], m.get("error", False), m.get("debug", False)) for m in messages(client, chat)]
+
+
+def test_a_look_up_that_fails_is_a_line_in_the_chat(client, runner, chat):
+    runner.live[chat] = ChatRun()
+    text, is_error = runner.call_tool(chat, "read_run", {"run": "gibt-es-nicht"})
+    assert is_error
+    ((kind, line, error, debug),) = lines(client, chat)
+    assert kind == "info" and error and not debug and line.startswith("read_run: ") and line == f"read_run: {text}"
+
+
+def test_an_unknown_tool_and_a_request_that_is_over_are_lines_too(client, runner, chat):
+    runner.call_tool(chat, "gibt_es_nicht", {})
+    runner.call_tool(chat, "open_run", {"run": "TIM-83"})  # no request is running in this chat
+    assert [(k, e) for k, _, e, _ in lines(client, chat)] == [("info", True), ("info", True)]
+    assert lines(client, chat)[0][1] == "gibt_es_nicht: Unbekanntes Werkzeug: gibt_es_nicht"
+    assert lines(client, chat)[1][1].startswith("open_run: In diesem Chat läuft gerade keine Anfrage")
+
+
+def test_help_shows_the_topic_it_looked_at_and_a_wrong_topic_is_an_error(client, runner, chat):
+    runner.call_tool(chat, "help", {"topic": "Modi"})
+    runner.call_tool(chat, "help", {})
+    runner.call_tool(chat, "help", {"topic": "nix"})
+    got = lines(client, chat)
+    assert [(k, t) for k, t, _, _ in got[:2]] == [("action", "Hilfe gelesen · modi"), ("action", "Hilfe gelesen · Inhaltsverzeichnis")]
+    assert got[2][0] == "info" and got[2][2] and got[2][1].startswith("help: Kein Thema")  # an error line, no "gelesen" line
+    assert len(got) == 3 and not any(d for *_, d in got)
+
+
+def test_other_look_ups_stay_out_of_the_chat_unless_debug_is_on(client, runner, chat):
+    runner.call_tool(chat, "find_runs", {"text": "TIM-52"})
+    assert lines(client, chat) == []
+    assert client.put("/api/agent/debug", json={"on": True}).json() == {"debug": True}
+    runner.call_tool(chat, "find_runs", {"text": "TIM-52", "limit": 1})
+    ((kind, line, error, debug),) = lines(client, chat)
+    assert kind == "action" and debug and not error
+    assert line.startswith('find_runs {"text": "TIM-52", "limit": 1} → {"count": 3') and len(line) < 330
+    runner.call_tool(chat, "list_widgets", {"scope": "one"})
+    assert lines(client, chat)[-1][1].startswith('list_widgets {"scope": "one"} → ')
+
+
+def test_debug_also_shows_what_the_agent_reads_from_the_view(client, runner, chat):
+    client.put("/api/agent/debug", json={"on": True})
+    call = Call(runner, chat, "get_view")
+    reply(client, call.next_command(), data={"area": "runs"})
+    call.finish()
+    ((kind, line, _, debug),) = lines(client, chat)
+    assert kind == "action" and debug and line == 'get_view → {"area": "runs"}'
+
+
+def test_a_failure_is_one_line_not_two_and_debug_does_not_double_it(client, runner, chat):
+    client.put("/api/agent/debug", json={"on": True})
+    runner.call_tool(chat, "read_run", {"run": "gibt-es-nicht"})
+    runner.call_tool(chat, "help", {"topic": "modi"})
+    got = lines(client, chat)
+    assert [(k, d) for k, _, _, d in got] == [("info", False), ("action", False)]
+
+
+def test_debug_is_a_setting_of_the_project_next_to_the_mode(client):
+    assert client.get("/api/agent").json()["debug"] is False
+    set_mode(client, "direct")
+    client.put("/api/agent/debug", json={"on": True})
+    set_mode(client, "confirm")  # the one setting does not wipe the other
+    overview = client.get("/api/agent").json()
+    assert overview["mode"] == "confirm" and overview["debug"] is True
+    client.put("/api/agent/debug", json={"on": False})
+    assert client.get("/api/agent").json()["debug"] is False and client.get("/api/agent").json()["mode"] == "confirm"
