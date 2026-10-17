@@ -100,6 +100,7 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `POST /api/templates/used` | `{scope, name, runs}` notes the runs a template was applied to |
 | `POST /api/templates/delete` | `{scope, name}` removes a template (400 for "Standard", 404 if unknown) |
 | `PUT /api/agent/mode` | `{mode}`: Direkt, Gemischt or Bestätigen, kept per project |
+| `PUT /api/agent/debug` | `{on}`: the debug display of the agent window (look-ups as lines in the chat), kept per project |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
 
 ## Experiment table
@@ -252,6 +253,15 @@ agent there (what it can and cannot do, "if unsure call `help` first"); the firs
 step with the code by `tests/test_agent_guide.py`:** its tool table must list exactly the tools of `agent_tools.TOOLS` with their
 kind, its mode table must match `needs_confirmation`, and the marks, datasets, scopes and the row limit of own widgets must be
 named. A change of what the agent can or may do changes the guide in the same commit (see `CLAUDE.md`).
+
+**What the chat shows of the tools (v0.2.2).** `AgentRunner.call_tool` wraps the call (`_call_tool`) and puts lines into the chat
+(`_trace`): every failure (a tool, an unknown tool, a run reference that does not resolve, a request that is over, no answer
+of the browser) as an `info` line with `error` and `tool` set, `<tool>: <message>` (no "Erneut senden", that is for errors of
+Claude Code); a look-up of `help` as the action line "Hilfe gelesen · <topic>"; and, only while the **debug button** in the header of
+the agent window is on, every other look-up the tool did not write a line for (`find_runs`, `read_run`, `list_*`, `get_view`) as an
+action line with `debug: true`: `<tool> <args> → <result>`, clipped to one line. The debug switch is a project setting next to the
+mode (`.mlviz/agent.json`, `debug`; `GET /api/agent` returns it, `PUT /api/agent/debug {on}` sets it); lines are recorded only
+while it is on, and the window hides recorded debug lines while it is off. It is meant to move into a settings screen later.
 
 ## Widget width, order and own widgets (v0.2)
 

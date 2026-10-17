@@ -132,7 +132,7 @@ def test_set_run_view_with_an_unknown_value_tells_the_agent(tool_page):
     mode(page, "direct")
     answer = tool(page, "set_run_view", run=R30, filters={"forecaster": ["gibt-es-nicht"]})
     assert "kennt gibt-es-nicht nicht" in answer.inner_text() or "kennt" in answer.inner_text()
-    expect(page.get_by_test_id("agent-info").last).to_contain_text("gibt-es-nicht")
+    expect(page.get_by_test_id("agent-error").last).to_contain_text("gibt-es-nicht")
 
 
 # --- Gemischt -----------------------------------------------------------------------------------------------------
@@ -218,7 +218,7 @@ def test_configure_move_and_resize_a_widget_with_undo(tool_page):
     page.get_by_test_id("agent-undo").last.click()
     expect(tile).to_have_attribute("data-width", "half")
     tool(page, "configure_widget", widget="axis-effect", settings={"nope": "x"})
-    expect(page.get_by_test_id("agent-info").last).to_contain_text("kennt nope nicht")
+    expect(page.get_by_test_id("agent-error").last).to_contain_text("kennt nope nicht")
 
 
 # --- Bestätigen ---------------------------------------------------------------------------------------------------
@@ -365,8 +365,10 @@ def test_the_debug_button_shows_the_look_ups_of_the_agent(tool_page):
     expect(page.get_by_test_id("agent-debug-line")).to_have_count(0)  # a look-up is not worth a line without debug
     button.click()
     expect(button).to_have_attribute("aria-pressed", "true")
+    expect(page.get_by_test_id("agent-debug-line")).to_have_count(0)  # what happened before was not recorded
+    tool(page, "find_runs", text="TIM-52")
     line = page.get_by_test_id("agent-debug-line")
-    expect(line).to_have_count(1)  # the earlier look-up shows up too: it was kept in the chat
+    expect(line).to_have_count(1)
     expect(line).to_contain_text('find_runs {"text": "TIM-52"} → {"count": 3')
     tool(page, "list_templates", scope="one")
     expect(page.get_by_test_id("agent-debug-line")).to_have_count(2)
@@ -375,8 +377,10 @@ def test_the_debug_button_shows_the_look_ups_of_the_agent(tool_page):
     expect(page.get_by_test_id("agent-debug")).to_have_attribute("aria-pressed", "true")  # kept with the project
     expect(page.get_by_test_id("agent-debug-line")).to_have_count(2)
     page.get_by_test_id("agent-debug").click()
-    expect(page.get_by_test_id("agent-debug-line")).to_have_count(0)
+    expect(page.get_by_test_id("agent-debug-line")).to_have_count(0)  # off again: the recorded lines are hidden
     expect(page.get_by_test_id("agent-debug")).to_have_attribute("aria-pressed", "false")
+    page.get_by_test_id("agent-debug").click()
+    expect(page.get_by_test_id("agent-debug-line")).to_have_count(2)  # and back when it is switched on
 
 
 def test_the_debug_button_is_small_and_only_a_symbol(tool_page):
