@@ -8,10 +8,14 @@ Prototype: prototype/ · Builds on: v0.2.4
 | Block | Status |
 |---|---|
 | A · Settings screen | decided: A1 (like the Agent-Dashboard settings) |
+| B · Voice input | open: recognition approach to decide (vocabulary, versions like 0.3.0) |
+| C · Command palette | open: which commands |
+| D · Run notification and progress for the agent | open |
+| E · Own notes on runs | open: attached to the description, visibly Tim's own |
 
-All blocks decided. Next: final check and handover (Tim's OK pending). Canvas: Prototyp-03 (overall,
-gear in the rail opens the settings tab), row A with A1 marked chosen. Tim: which settings stay or are
-missing is decided while using the tool; the list below is the starting set.
+Scope changed 17.10. (Tim): B–E added, deliverables area moved to v0.4 (TIM-96 header and decision comment).
+Canvas: Prototyp-03 (overall, gear opens the settings tab), row A with A1 chosen. Tim on A: which
+settings stay is decided in use; the list in A is the starting set. Next: Tim chooses the next block.
 
 ## Goal
 One place in the tool to see and change how it behaves for a project.
