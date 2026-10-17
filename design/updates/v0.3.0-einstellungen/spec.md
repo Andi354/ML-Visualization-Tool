@@ -8,14 +8,14 @@ Prototype: prototype/ · Builds on: v0.2.4
 | Block | Status |
 |---|---|
 | A · Settings screen | decided: A1 (like the Agent-Dashboard settings) |
-| B · Voice input | running: B1 (click to start/stop, text into the field) and B3 (review box with recognised project terms, swappable) on the canvas; recognition Weg 1/2/3 open (recommended Weg 2); waiting for Tim |
+| B · Voice input | decided: B3 (review box with recognised project terms), recognition Weg 2 (Whisper on the server with the project vocabulary) |
 | C · Command palette | open: which commands |
 | D · Run notification and progress for the agent | open |
 | E · Own notes on runs | open: attached to the description, visibly Tim's own |
 
 Scope changed 17.10. (Tim): B–E added, deliverables area moved to v0.4 (TIM-96 header and decision comment).
-Canvas: Prototyp-03 (overall, gear opens the settings tab), row A with A1 chosen. Tim on A: which
-settings stay is decided in use; the list in A is the starting set. Running block: B (Tim chose it 17.10.).
+Canvas: Prototyp-03 (overall: settings tab, voice input B3), row A with A1 chosen, row B with B3 chosen. Tim on A: which
+settings stay is decided in use; the list in A is the starting set. Next: Tim chooses the next block (C, D or E).
 
 ## Goal
 One place in the tool to see and change how it behaves for a project.
@@ -76,6 +76,10 @@ from the default are stored, per project, in `<project>/.mlviz/settings.json`.
 | Agent · Verhalten | `agent.mode` | Direkt / Gemischt / Bestätigen | Gemischt | mode of new chats (Shift+Tab in the chat still switches) |
 | | `agent.debug` | switch | off | show lookup tools with arguments and results in the chat (TIM-95) |
 | | `agent.instructions` | action "Bearbeiten …" | | project instructions (TIM-98), with character count |
+| Agent · Sprache | `agent.voiceLang` | Deutsch / Englisch / automatisch | Deutsch | language passed to the recogniser |
+| | `agent.voiceModel` | schnell / genauer | schnell | Whisper model size (`small` / `medium`) |
+| | `agent.voiceReview` | switch | on | show the review box (off: recognised text is sent at once) |
+| | `agent.voiceTerms` | action "Bearbeiten …" | | own extra terms for the recogniser, besides the project vocabulary |
 | Agent · Kontext & Kosten | `agent.cacheWarn` | 10–200k tokens, step 10 | 50 | threshold of the pre-send hint (today fixed 50 000) |
 | | `agent.quota` | switch | on | show 5 h / week quota in the chat menu when Claude Code reports it |
 | Agent · Verbindung | `agent.claude` | text | empty (PATH) | path to `claude`; overrides `MLVIZ_CLAUDE` |
@@ -94,12 +98,45 @@ Presets: "Für Meetings" (`look.scale` 115, `exp.scale` 3, `exp.hints` off), "Gr
 
 **Rejected:** none; one alternative built on Tim's wish to follow the Agent-Dashboard.
 
+### B · Voice input
+**What:** The microphone in the agent window (and in the minimised capsule) records speech. The server
+transcribes it with Whisper, primed with the project's own vocabulary, and normalises numbers and versions.
+The result shows in a review box above the input: plain text with the recognised project terms marked;
+a click on a term offers alternatives and what was actually heard. Then send, edit as text or discard.
+
+**Behaviour:**
+- Click the microphone or press Ctrl+M → recording starts: the input row turns red with "Hört zu", a level meter and the elapsed time; the microphone becomes a stop button. In the capsule, the window opens first.
+- Click stop or press Ctrl+M again → "Erkenne … mit Projektbegriffen" until the server answers, then the review box shows the text.
+- Esc while recording → the recording is discarded, nothing is sent.
+- Review box: "Gesprochen · n Projektbegriffe erkannt"; each term is a marked chip. Click a chip → a small list: the recognised term (marked "erkannt"), up to three alternatives of the same kind, and the literal heard words ("wie gehört"). Choosing one replaces the chip; a changed chip turns amber.
+- Review box → Enter or "Senden" sends the text (with any text typed in the field before it); "Als Text bearbeiten" moves the text into the input field; "Verwerfen" or Esc drops it; "+ weitersprechen" keeps the text and records more.
+- Sending spoken text goes through the same pre-send cache check as typed text (v0.2 F).
+- A spoken user message shows a small microphone; hovering it shows the heard words.
+- `agent.voiceReview` off → the recognised text is sent at once, without the review box.
+- Microphone permission denied or no microphone → the microphone button shows a tooltip with the reason and does nothing; nothing else changes.
+
+**Recognition (Weg 2):**
+- Browser records with MediaRecorder (`audio/webm;codecs=opus`) and posts the clip to a new backend endpoint (for example `POST /api/voice`), with the language from `agent.voiceLang`.
+- Backend transcribes with `faster-whisper` (model from `agent.voiceModel`, CPU int8 unless a GPU is free), `initial_prompt` built from the project vocabulary: grid axis and config keys, metric names, Lauf-Merkmal values, run folder IDs and short names, issue IDs, template and widget names, plus `agent.voiceTerms`.
+- A deterministic normaliser runs after Whisper: German number words → digits ("vierundsechzig" → 64, "null komma null null eins" → 0.001), "punkt" between numbers → "." ("null punkt drei punkt null" → `0.3.0`), "TIM 52" → `TIM-52`, space-separated known keys → snake_case (`pred len` → `pred_len`), fuzzy match of run names against the run list.
+- The response returns segments: plain text and terms with `term`, `heard`, `kind` (Lauf, Achse, Achse · Wert, Lauf-Merkmal, Metrik, Issue, Version) and up to three `alts` of the same kind (closest matches).
+- `faster-whisper` is an optional dependency (`mlviz[voice]`), installed in the Docker image; the model is downloaded on first use into a cache (in Docker a volume). Until it is ready the microphone shows "Erkennung wird geladen …".
+- The microphone works because the tool runs on `localhost` in Tim's browser (VS Code port forwarding), a secure context.
+
+**Edge cases:** recording longer than 2 minutes → stops on its own and is transcribed. Empty or silent recording → toast "Nichts verstanden", no review box.
+
+**In the prototype:** `Prototyp-03.dc.html` (`vMic`, `vStart`, `vStop`, `vSend`, `vSegs`, `vPopAlts`, `capMic`), sample in `voice-data.js` (`SEGS`), single variant `B3-Begriffe.dc.html`. Recognition is simulated: stop always yields the same sample sentence after 1.3 s.
+
+**Rejected:** B1 (text straight into the field, no term review): terms could not be checked. B2 (hold to talk) not built. Weg 1 (browser recognition): no project vocabulary, sends audio to Google in Chrome. Weg 3 (browser + Claude correction): one extra Claude call per utterance.
+
 ## Changes to principles.md / tokens.json
 - none
 
 ## Out of scope
+- Voice output (the agent does not speak), wake words, hold-to-talk.
 - The dialogs behind action rows beyond what the rows say (own-widget manager and instruction editor follow their own features; export/import is a plain file dialog).
 - Themes or recolouring: colours carry meaning (see principles.md).
 
 ## Open
+- Whisper on the server: if `faster-whisper` cannot be installed or loaded, or a 10 s clip takes longer than 10 s to transcribe with the small model, then use the browser's speech recognition (Web Speech API) with the same normaliser and review box, and the settings row "Erkennung" says which engine is active. Tell Tim.
 - Which settings stay: decided in use. If a setting turns out unused or missing, it is changed in a later patch update.
