@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>I7 · I1 + J2 (gewählt)</title>
+<script src="./support.js"></script>
+<script src="./w24-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1016}
+button{font-family:'IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',monospace}
+.chip{display:inline-flex;align-items:baseline;gap:5px;font:400 12px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:4px;border:1px solid #262E3E;background:#1A2030;color:#A1AABB;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chip b{font-weight:400;color:#E4E8EF}
+.lbl{font-size:11px;color:#8590A3;text-transform:uppercase;letter-spacing:.05em}
+table.t{border-collapse:collapse;width:100%;font:400 13px 'IBM Plex Mono',monospace}
+table.t th{font-weight:400;color:#A1AABB;text-align:right;padding:8px 12px;border-bottom:1px solid #262E3E}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t td{padding:8px 12px;text-align:right;border-bottom:1px solid #1A2030;color:#E4E8EF}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 100%; box-sizing: border-box; padding: 24px; background: #0D1016; color: #E4E8EF; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start;">
+<div style="border: 1px solid #262E3E; border-radius: 6px; background: #131720; overflow: hidden;">
+<div style="padding: 12px 16px; border-bottom: 1px solid #262E3E; display: flex; align-items: baseline; gap: 8px;"><span style="font-weight: 600;">Je Region</span><span style="color: #8590A3; font-size: 12px;">Wo gewinnt welcher Wert, Region für Region?</span><span style="flex: 1;"></span><span style="font-size: 12px; color: #8590A3; border: 1px dashed #3A4458; border-radius: 4px; padding: 2px 8px;">I1</span></div>
+<div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px;">
+<div style="font-size: 17px; font-weight: 600;">{{R.title}}</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; font-size: 13px; color: #A1AABB;"><span class="mono" style="color: #C9D3E3;">test_mse_missing</span><span>je Region × </span><span class="mono" style="color: #C9D3E3;">time_embedding</span><span style="color: #4A5265;">·</span><span title="Mittel über alle Seeds und Folds" style="display: inline-flex; align-items: center; gap: 4px; color: #8590A3;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 5h10M3 8h10M3 11h10"/></svg>{{R.agg}}</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 5px; align-items: center;"><span class="lbl" style="margin-right: 2px;" title="Achsen, die auf den besten Wert festgesetzt sind">fest</span><sc-for list="{{shown}}" as="f" hint-placeholder-count="4"><span class="chip" title="{{f.title}}">{{f.k}} <b>{{f.v}}</b></span></sc-for><button onClick="{{toggleMore}}" style="font-size: 12px; color: #6E9BF5; background: none; border: 0; cursor: pointer;">{{moreLabel}}</button></div>
+<table class="t"><thead><tr><sc-for list="{{R.cols}}" as="c" hint-placeholder-count="5"><th>{{c}}</th></sc-for></tr></thead><tbody><sc-for list="{{tableRows}}" as="r" hint-placeholder-count="4"><tr><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="5"><td style="{{c.st}}">{{c.t}}</td></sc-for></tr></sc-for></tbody></table>
+</div>
+</div>
+<div style="border: 1px solid #262E3E; border-radius: 6px; background: #131720; overflow: hidden;">
+<div style="padding: 12px 16px; border-bottom: 1px solid #262E3E; display: flex; align-items: baseline; gap: 8px;"><span style="font-weight: 600;">Config</span><span style="color: #8590A3; font-size: 12px;">Mit welcher Config wurde diese Kombination gerechnet?</span><span style="flex: 1;"></span><span style="font-size: 12px; color: #8590A3; border: 1px dashed #3A4458; border-radius: 4px; padding: 2px 8px;">J2</span></div>
+<div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; align-items: baseline; gap: 10px;"><span style="font-size: 17px; font-weight: 600;">Beste Kombination</span><span style="color: #8590A3;">{{D.config.metric}} <span class="mono" style="color: #5FD4A0;">{{D.config.value}}</span> · {{D.run}}</span></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; border-top: 1px solid #262E3E;"><sc-for list="{{combo}}" as="c" hint-placeholder-count="6"><div style="display: flex; gap: 10px; align-items: baseline; padding: 6px 2px; border-bottom: 1px solid #1A2030; font: 400 12px 'IBM Plex Mono', monospace; min-width: 0;"><span style="color: #8590A3; flex: 0 0 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{c.k}}</span><span style="{{c.vSt}} overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{c.v}}">{{c.v}}</span></div></sc-for></div>
+<div style="font-size: 12px; color: #8590A3;">darunter die ganze Config (Blöcke | YAML) wie bisher</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1480,"height":640}}'>
+class Component extends DCLogic {
+renderVals() {
+  const st = this.state || {}, set = (p) => this.setState(p), D = window.W24 || { region: { fixed: [], what: [], rows: [], cols: [] }, config: { combo: [] } };
+  const R = D.region, C = D.config;
+  const fixedChips = R.fixed.map(([k, v]) => ({ k, v, title: k + ' = ' + v }));
+  const shown = st.more ? fixedChips : fixedChips.slice(0, 4);
+  const tableRows = R.rows.map((r) => ({ cells: r.slice(0, 5).map((t, i) => ({ t, st: i === r[5] ? 'background: #11221B; color: #5FD4A0; font-weight: 500;' : '' })) }));
+  const combo = C.combo.map(([k, v, grid]) => ({ k, v: v === null ? 'null' : v, isNull: v === null,
+    vSt: v === null ? 'color: #6B7385; font-style: italic;' : 'color: #E4E8EF;', long: !!(v && v.length > 18) }));
+  return Object.assign({ R, tableRows, shown, oldSub: R.what.map((w) => w.v).join(' ') + ' · fest: ' + R.fixed.map(([k, v]) => k + ' = ' + v).join(', ') + ' · ' + R.agg,
+    toggleMore: () => set({ more: !st.more }), moreLabel: st.more ? 'weniger' : '+' + (fixedChips.length - 4) + ' weitere', }, { D, combo, oldTitle: 'Beste Config: ' + combo.map((c) => c.k + ' = ' + (c.isNull ? '' : c.v)).join(', ') });
+}
+}
+</script>
+</body>
+</html>
