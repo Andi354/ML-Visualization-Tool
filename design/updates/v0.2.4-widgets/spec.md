@@ -8,11 +8,11 @@ Prototype: prototype/ · Builds on: v0.2.3
 | Block | Status |
 |---|---|
 | I · Widget subtitle | running |
-| J · Config widget title | running |
+| J · Config widget title | decided (J1) |
 
-Running blocks: I and J (small iteration, both built at once). On the canvas: I0 (today), I1 · Was +
-feste Werte als Chips, I2 · Was + "n fest" zum Aufklappen, I3 · Bedingungen unter der Tabelle; J0
-(today), J1 · Kombination als Chips, J2 · zweispaltige Liste. Waiting for Tim's word.
+Running block: I. Tim chose J1 (short title "Beste Kombination", metric + value + run, grid values as
+chips). Asked to see I1, I2, I3 each combined with J1: on the canvas I4 · I1 + J1, I5 · I2 + J1, I6 · I3 + J1.
+Waiting for Tim's word on I.
 
 ## Goal
 Widget headers read at a glance: what is shown, under which fixed conditions, without long run-on text.
