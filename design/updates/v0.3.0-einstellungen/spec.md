@@ -8,7 +8,7 @@ Prototype: prototype/ · Builds on: v0.2.4
 | Block | Status |
 |---|---|
 | A · Settings screen | decided: A1 (like the Agent-Dashboard settings) |
-| B · Voice input | running: recognition approach (Weg 1 browser, Weg 2 Whisper on the server with project vocabulary, Weg 3 browser + Claude correction; recommended Weg 2) and interaction, waiting for Tim |
+| B · Voice input | running: B1 (click to start/stop, text into the field) and B3 (review box with recognised project terms, swappable) on the canvas; recognition Weg 1/2/3 open (recommended Weg 2); waiting for Tim |
 | C · Command palette | open: which commands |
 | D · Run notification and progress for the agent | open |
 | E · Own notes on runs | open: attached to the description, visibly Tim's own |
