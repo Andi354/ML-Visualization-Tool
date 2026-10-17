@@ -77,7 +77,12 @@ if calls:
     out({"type": "result", "subtype": "success", "is_error": False, "result": "ok", "usage": usage})
     sys.exit(0)
 last = prompt.splitlines()[-1]
-if "[blocks]" in prompt:
+if "[markdown]" in prompt:
+    say("**Ergebnis** für `find_runs`:\n\n- erster Punkt\n- zweiter Punkt mit *Betonung*\n\n| Lauf | Wert |\n|---|--:|\n| best_90 | 3,46 |\n\nMehr dazu in der [Doku](https://example.org/doku).\n\n```\nx = 1\n```")
+elif "[wide]" in prompt:
+    cols = [f"spalte_mit_langem_namen_{i}" for i in range(12)]
+    say("| " + " | ".join(cols) + " |\n|" + "---|" * len(cols) + "\n| " + " | ".join(["1,234567"] * len(cols)) + " |")
+elif "[blocks]" in prompt:
     say("Erster Teil.")
     time.sleep(0.2)
     say("Zweiter Teil.")

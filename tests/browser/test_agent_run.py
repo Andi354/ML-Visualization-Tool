@@ -182,3 +182,37 @@ def test_a_cold_chat_cannot_be_compacted(agent):
     open_seeded(agent)
     agent.get_by_test_id("agent-chats-button").click()
     expect(agent.get_by_test_id("agent-compact")).to_be_disabled()
+
+
+# --- v0.2.3 · J: the answers are formatted text ---------------------------------------------------------
+def test_an_answer_is_drawn_as_formatted_text_and_your_own_message_stays_plain(agent):
+    open_window(agent)
+    say(agent, "[markdown] **nicht fett**")
+    answer = agent.get_by_test_id("agent-msg-agent")
+    expect(answer.locator("strong")).to_have_text("Ergebnis")
+    expect(answer.locator(".md-code").first).to_have_text("find_runs")
+    items = answer.locator("ul > li")
+    expect(items).to_have_count(2)
+    assert items.nth(0).bounding_box()["y"] < items.nth(1).bounding_box()["y"]  # one below the other
+    expect(items.nth(1).locator("em")).to_have_text("Betonung")
+    expect(answer.locator("table th")).to_have_text(["Lauf", "Wert"])
+    expect(answer.locator("tbody td")).to_have_text(["best_90", "3,46"])
+    link = answer.locator("a.md-link")
+    assert link.get_attribute("href") == "https://example.org/doku" and link.get_attribute("target") == "_blank"
+    assert link.get_attribute("rel") == "noopener noreferrer"
+    expect(answer.locator("pre")).to_have_text("x = 1")
+    expect(agent.get_by_test_id("agent-msg-user")).to_have_text("[markdown] **nicht fett**")  # plain, no bold
+    assert agent.get_by_test_id("agent-msg-user").locator("strong").count() == 0
+
+
+def test_a_wide_table_scrolls_inside_the_message_instead_of_widening_the_window(agent):
+    open_window(agent)
+    say(agent, "[wide] breit")
+    table = agent.get_by_test_id("agent-msg-agent").locator(".md-table-wrap")
+    expect(table).to_be_visible()
+    window = agent.get_by_test_id("agent-window").bounding_box()
+    before = window["width"]
+    box = table.bounding_box()
+    assert box["x"] + box["width"] <= window["x"] + window["width"] + 1
+    assert table.evaluate("e => e.scrollWidth > e.clientWidth")  # the table is wider than the message and scrolls
+    assert agent.get_by_test_id("agent-window").bounding_box()["width"] == before

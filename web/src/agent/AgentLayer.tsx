@@ -2,6 +2,7 @@
 import type { RefObject } from "preact";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { AgentIcon, BugIcon, MicIcon } from "../frame/icons";
+import { Markdown } from "./Markdown";
 import { carryOut } from "./commands";
 import { undoFor } from "./bus";
 import { compactChat, decide, getAgent, markAction, getChat, getSetup, newChat, runMessage, setDebug, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
@@ -399,7 +400,7 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
           if (msg.k === "agent")
             return (
               <div key={i} class="agent-msg agent" data-testid="agent-msg-agent">
-                {msg.t}
+                <Markdown text={msg.t} />
               </div>
             );
           if (msg.k === "confirm")

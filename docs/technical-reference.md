@@ -245,6 +245,13 @@ dialog (`analysis/agentSave.ts`) and writes them with `/api/deliverables`; its u
 `get_view` returns what the views add with `provideView` (frame, board, run tab filters). Changed elements glow for 1.5 s
 (`.agent-glow`).
 
+**Formatted answers (v0.2.3).** The answers of the agent are drawn as Markdown (`web/src/agent/markdown.ts` reads the text into a tree,
+`Markdown.tsx` draws the tree with Preact elements; no library, nothing of the text becomes HTML). It reads paragraphs (a single line
+break stays a break), headings, `code`, fenced code, bold, italic, links (`[text](https://…)` and bare http(s) addresses, opened in a new
+tab with `rel="noopener noreferrer"`, other schemes stay text), nested bullet and numbered lists, quotes, rules and pipe tables (wide
+tables scroll inside the message). Marks that are not closed stay as typed, `snake_case` is no emphasis. The messages of the user stay
+plain text. The stand-in `claude` answers `[markdown]` and `[wide]` with a formatted text for the tests.
+
 **Help of the agent (v0.2.2).** `src/mlviz/agent_guide.md` (shipped in the package) is the text the agent reads through the
 tool `help`: no topic gives the index, a topic (`faehigkeiten`, `werkzeuge`, `ansichten`, `widgets`, `eigene-widgets`, `modi`,
 `rueckgaengig`) its section (`agent_guide.py` splits the file at `## <key> · <title>`). The system prompt stays short and sends the
