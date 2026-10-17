@@ -8,14 +8,14 @@ Prototype: prototype/ · Builds on: v0.2.4
 | Block | Status |
 |---|---|
 | A · Settings screen | decided: A1 (like the Agent-Dashboard settings) |
-| B · Voice input | open: recognition approach to decide (vocabulary, versions like 0.3.0) |
+| B · Voice input | running: recognition approach (Weg 1 browser, Weg 2 Whisper on the server with project vocabulary, Weg 3 browser + Claude correction; recommended Weg 2) and interaction, waiting for Tim |
 | C · Command palette | open: which commands |
 | D · Run notification and progress for the agent | open |
 | E · Own notes on runs | open: attached to the description, visibly Tim's own |
 
 Scope changed 17.10. (Tim): B–E added, deliverables area moved to v0.4 (TIM-96 header and decision comment).
 Canvas: Prototyp-03 (overall, gear opens the settings tab), row A with A1 chosen. Tim on A: which
-settings stay is decided in use; the list in A is the starting set. Next: Tim chooses the next block.
+settings stay is decided in use; the list in A is the starting set. Running block: B (Tim chose it 17.10.).
 
 ## Goal
 One place in the tool to see and change how it behaves for a project.
