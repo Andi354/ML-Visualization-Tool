@@ -6,6 +6,7 @@ call that tool, and it repeats the answer it got.
 
 import json
 import re
+import time
 
 import pytest
 from playwright.sync_api import expect
@@ -389,3 +390,76 @@ def test_the_debug_button_is_small_and_only_a_symbol(tool_page):
     box = button.bounding_box()
     assert box["width"] <= 28 and box["height"] <= 28
     assert button.get_attribute("title") and button.get_attribute("aria-label") == "Debug"
+
+
+# --- v0.2.3 · K: the agent learns how the widgets came out ----------------------------------------------------
+def posted_result(page, trigger):
+    """Runs `trigger` and returns what the open tool answered to the agent for its command (what the agent receives)."""
+    with page.expect_request(lambda r: "/api/agent/commands/" in r.url and r.url.endswith("/result"), timeout=20000) as info:
+        trigger()
+    return json.loads(info.value.post_data)
+
+
+def widget_states(result):
+    return {w["type"]: w for w in result["data"]["widgets"]}
+
+
+def test_a_widget_that_fails_is_reported_to_the_agent_and_to_the_chat(tool_page):
+    page = tool_page
+    page.route("**/api/widgets/per-region", lambda route: route.fulfill(status=500, body="boom im Backend"))
+    mode(page, "direct")
+    result = posted_result(page, lambda: tool_nowait(page, "open_analysis", scope="one", runs=[R30]))
+    states = widget_states(result)
+    assert states["per-region"]["state"] == "error"
+    assert "500" in states["per-region"]["reason"] and "boom im Backend" in states["per-region"]["reason"]
+    assert all(w["state"] == "ok" for t, w in states.items() if t != "per-region") and len(states) == 5
+    assert result["summary"] == "Analyse · Ein Lauf · 1 Widget mit Fehler"
+    line = page.get_by_test_id("agent-action").last
+    expect(line).to_contain_text("Analyse · Ein Lauf · 1 Widget mit Fehler")  # Tim sees it as well
+    expect(page.locator('[data-widget="per-region"] .notice')).to_have_text("Das Widget konnte nicht geladen werden.")
+
+
+def test_get_view_carries_the_state_of_every_widget(tool_page):
+    page = tool_page
+    page.route("**/api/widgets/per-region", lambda route: route.fulfill(status=500, body="kaputt"))
+    mode(page, "direct")
+    tool(page, "open_analysis", scope="one", runs=[R30])
+    expect(page.locator('[data-widget="per-region"] .notice')).to_be_visible()
+    result = posted_result(page, lambda: tool_nowait(page, "get_view"))
+    widgets = {w["type"]: w for w in result["data"]["board"]["widgets"]}
+    assert widgets["per-region"]["state"] == "error" and "kaputt" in widgets["per-region"]["reason"]
+    assert widgets["compare-table"]["state"] == "ok" and "reason" not in widgets["compare-table"]
+
+
+def test_a_widget_that_cannot_show_anything_is_unavailable_with_its_note(tool_page):
+    page = tool_page
+    note = "Dieser Lauf hat keine Achsen"
+    page.route("**/api/widgets/per-region", lambda route: route.fulfill(status=200, content_type="application/json", body=json.dumps({"key": "per-region", "exportable": False, "title": "Je Region", "unavailable": note})))
+    mode(page, "direct")
+    tool(page, "open_analysis", scope="one", runs=[R30])
+    result = posted_result(page, lambda: tool_nowait(page, "configure_widget", widget="stability", settings={}))
+    states = widget_states(result)
+    assert states["per-region"]["state"] == "unavailable" and states["per-region"]["reason"] == note
+    assert result["summary"].endswith("1 nicht verfügbar")
+
+
+def test_everything_in_order_leaves_the_line_as_it_was(tool_page):
+    page = tool_page
+    mode(page, "direct")
+    tool(page, "open_analysis", scope="one", runs=[R30])
+    result = posted_result(page, lambda: tool_nowait(page, "move_widget", widget="stability", direction="up"))
+    assert result["summary"] == "Widget verschoben · Stabilität ↑"
+    assert all(w["state"] == "ok" for w in result["data"]["widgets"])
+
+
+def test_a_widget_that_is_still_loading_after_the_wait_is_reported_as_loading(tool_page):
+    page = tool_page
+    page.route("**/api/widgets/axis-effect", lambda route: None)  # the request is never answered
+    mode(page, "direct")
+    t0 = time.time()
+    result = posted_result(page, lambda: tool_nowait(page, "open_analysis", scope="one", runs=[R30]))
+    assert 4.5 < time.time() - t0 < 14  # the wait ends after about five seconds
+    states = widget_states(result)
+    assert states["axis-effect"]["state"] == "loading"
+    assert all(w["state"] == "ok" for t, w in states.items() if t != "axis-effect")
+    assert result["summary"] == "Analyse · Ein Lauf · 1 lädt noch"

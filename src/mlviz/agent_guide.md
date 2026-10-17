@@ -29,6 +29,7 @@ Marken und die Datensätze der eigenen Widgets mit dem Code.
 - Bei mehreren passenden Läufen mit `choose_run` zurückfragen.
 - Was der Nutzer gerade sieht, steht in der Zeile `[Ansicht: …]` vor seiner Nachricht, genauer in `get_view`.
 - Wird eine Aktion abgelehnt, ohne sie weitermachen.
+- Nach jeder Änderung am Board die Zustände der Widgets im Ergebnis lesen (siehe `widgets`) und dem Nutzer Probleme melden, statt zu sagen, es habe geklappt.
 
 ## werkzeuge · Alle Werkzeuge
 
@@ -72,6 +73,7 @@ Art `lesen` schlägt nur nach, `Ansicht` ändert, was der Nutzer sieht, `ändern
 
 - Welche Widgets es gibt, steht nicht hier: `list_widgets` mit der Ansicht (`scope`) liefert Katalog und eigene Widgets mit Schlüsseln, Einstellungen und Breite. Einstellungen sind Texte.
 - Widgets auf dem Board nennt man mit der ID oder dem Typ aus `get_view`.
+- **Zustand eines Widgets (`state`):** `loading` (wird noch geladen), `ok` (gezeichnet), `error` (konnte nicht geladen werden, `reason` nennt den Grund), `unavailable` (das Widget kann für diese Ansicht nichts zeigen, `reason` ist sein Hinweis, zum Beispiel „Dieser Lauf hat keine Achsen“) und `gone` (ein eigenes Widget, das gelöscht wurde). `get_view` nennt den Zustand je Widget. Die Werkzeuge, die das Board ändern (`add_widget`, `remove_widget`, `configure_widget`, `move_widget`, `resize_widget`, `apply_template`, `draft_widget`, `keep_draft`) und `open_analysis` warten bis zu 5 Sekunden, bis die Widgets geladen sind, und liefern die Zustände aller Widgets im Ergebnis (`data.widgets`). Was nach 5 Sekunden noch lädt, steht als `loading` darin; dann mit `get_view` später nachsehen. Die Aktionszeile im Chat nennt Probleme ebenfalls („· 1 Widget mit Fehler“).
 - Breite: `half` (halbe Zeile) oder `full` (volle Zeile). `move_widget` verschiebt um Schritte nach oben oder unten.
 - Eine **Vorlage** ist ein Board ohne Läufe (Widgets, Einstellungen, Breite) für eine der drei Ansichten. „Standard“ ist eingebaut und lässt sich nicht überschreiben oder löschen. `save_template` mit einem vorhandenen Namen überschreibt.
 - `save_deliverable` schreibt ein Bild je Widget in einen Ordner `<Datum> <Titel>` im Deliverable-Ordner des Projekts.

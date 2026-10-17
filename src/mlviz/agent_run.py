@@ -44,7 +44,9 @@ SYSTEM_PROMPT = (
     "Fragt der Nutzer, was du kannst oder nicht kannst, oder bist du unsicher, ob etwas geht: ruf zuerst `help` auf "
     "(Thema `faehigkeiten`) und antworte nach dem Text, nicht aus dem Gedächtnis. Zahlen und Namen rätst du nie, "
     "schlag sie nach. Bei mehreren passenden Läufen frag mit `choose_run` zurück. Wird eine Aktion abgelehnt, mach "
-    "ohne sie weiter. `get_view` zeigt dir den genauen Zustand der Ansicht."
+    "ohne sie weiter. `get_view` zeigt dir den genauen Zustand der Ansicht. Nach einer Änderung am Board stehen die "
+    "Zustände der Widgets im Ergebnis (`widgets`, je `state` ok, loading, error, unavailable oder gone, mit `reason`): "
+    "Melde dem Nutzer Widgets mit Fehler oder `unavailable` und versuch eine Lösung, statt zu sagen, es habe geklappt."
 )
 #: The modes as the agent reads them in the first line of a message
 MODE_LABELS = {"direct": "Direkt", "mixed": "Gemischt", "confirm": "Bestätigen"}

@@ -5,6 +5,7 @@ test here fail until the guide says the same. That is the point of these tests.
 """
 
 import re
+from pathlib import Path
 
 import pytest
 
@@ -86,3 +87,19 @@ def test_help_is_a_silent_backend_read_for_every_mode():
 
 def test_the_guide_is_part_of_the_package():
     assert agent_guide.GUIDE.is_file() and agent_guide.GUIDE.parent.name == "mlviz"
+
+
+def test_the_states_of_a_widget_named_in_the_guide_are_the_ones_the_tiles_report():
+    source = (Path(__file__).resolve().parents[1] / "web" / "src" / "widgets" / "status.ts").read_text(encoding="utf-8")
+    union = re.search(r"export type WidgetState =([^;]+);", source).group(1)
+    states = re.findall(r'"(\w+)"', union)
+    assert states and set(states) == {"loading", "ok", "error", "unavailable", "gone"}
+    text = agent_guide.sections()["widgets"][1]
+    for state in states:
+        assert f"`{state}`" in text, f"the state {state} of a widget is not in the guide"
+
+
+def test_the_system_prompt_tells_the_agent_to_report_widgets_with_a_problem():
+    from mlviz import agent_run
+
+    assert "`widgets`" in agent_run.SYSTEM_PROMPT and "Fehler" in agent_run.SYSTEM_PROMPT and "unavailable" in agent_run.SYSTEM_PROMPT

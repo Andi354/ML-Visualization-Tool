@@ -252,6 +252,16 @@ tab with `rel="noopener noreferrer"`, other schemes stay text), nested bullet an
 tables scroll inside the message). Marks that are not closed stay as typed, `snake_case` is no emphasis. The messages of the user stay
 plain text. The stand-in `claude` answers `[markdown]` and `[wide]` with a formatted text for the tests.
 
+**State of the widgets (v0.2.3).** Every `WidgetTile` reports its state to `widgets/status.ts`: `loading`, `ok`, `error` (with the
+`reason`, which for a failed request is the status and the start of the answer), `unavailable` (the note the widget gives, for example
+"Dieser Lauf hat keine Achsen") or `gone` (a deleted own widget). The state is set in a layout effect when the settings or the request
+change, so a read right after a change never sees a stale `ok`. `get_view` returns it per widget (`state`, `reason`). The tools that
+change a board (`edit` in `BoardPage.tsx`: add, remove, configure, move, resize, `apply_template`, `draft_widget`, `keep_draft`) and
+`open_analysis` (`frameTools.ts`) wait up to 5 s (`whenLoaded`) for the widgets and return `data.widgets` (id, type, label, state,
+reason; a widget still loading after the wait is `loading`). The action line gets what is wrong: "· 1 Widget mit Fehler · 1 nicht
+verfügbar · 2 laden noch" (`problemSummary`). The guide, the system prompt and `tests/test_agent_guide.py` (which compares the states
+with `status.ts`) say the same.
+
 **Help of the agent (v0.2.2).** `src/mlviz/agent_guide.md` (shipped in the package) is the text the agent reads through the
 tool `help`: no topic gives the index, a topic (`faehigkeiten`, `werkzeuge`, `ansichten`, `widgets`, `eigene-widgets`, `modi`,
 `rueckgaengig`) its section (`agent_guide.py` splits the file at `## <key> · <title>`). The system prompt stays short and sends the

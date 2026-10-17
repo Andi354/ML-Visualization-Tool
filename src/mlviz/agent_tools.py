@@ -105,7 +105,7 @@ _add(Tool("choose_run", READ, "Fragt den Nutzer, welcher von mehreren Läufen ge
 }, ["runs"], side="backend"))
 
 # --- read (browser) -------------------------------------------------------------------------------
-_add(Tool("get_view", READ, "Der ganze aktuelle Zustand der Ansicht als JSON: Bereich, Tabs, Analyse-Ansicht, Läufe, Widgets des Boards mit IDs und Einstellungen, Vorlage, Entwurf.", silent=True))
+_add(Tool("get_view", READ, "Der ganze aktuelle Zustand der Ansicht als JSON: Bereich, Tabs, Analyse-Ansicht, Läufe, Widgets des Boards mit IDs, Einstellungen und Zustand (`state`: loading, ok, error, unavailable, gone; `reason`), Vorlage, Entwurf.", silent=True))
 
 # --- navigate ---------------------------------------------------------------------------------------
 _add(Tool("open_run", NAV, "Öffnet einen Lauf als Tab (oder fokussiert ihn, wenn er offen ist).", {"run": _RUN}, ["run"],
