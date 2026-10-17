@@ -83,7 +83,7 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `GET /api/agent/chats/{id}` | one chat with its messages (404 for an unknown or malformed id) |
 | `POST /api/agent/chats/{id}/messages` | appends a message of the user, `{text}` (empty text is a 400); the first one names a new chat |
 | `GET /api/agent/setup` | `{ready, problem, step, api_key}`: Claude Code found and logged in (`claude auth status`); `api_key` if `ANTHROPIC_API_KEY` is set |
-| `POST /api/agent/chats/{id}/run` | `{text, context, resend?}` sends a message (a new `claude -p`); answers as server-sent events, each `data:` a snapshot `{chat, busy, limits}`; 409 while the chat is working |
+| `POST /api/agent/chats/{id}/run` | `{text, context, resend?, images?}` sends a message (a new `claude -p`); answers as server-sent events, each `data:` a snapshot `{chat, busy, limits}`; 409 while the chat is working |
 | `POST /api/agent/chats/{id}/compact` | `/compact` on the session of the chat, streamed like `run` (400 without a session) |
 | `POST /api/agent/chats/{id}/stop` | ends the running `claude` process of the chat (`{stopped}`) |
 | `POST /mcp/{chat_id}` | the MCP server of the tool (JSON-RPC over HTTP) for the `claude` the tool started; needs `Authorization: Bearer <secret of this start>` (401 otherwise) |
@@ -99,6 +99,8 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `POST /api/templates` | `{scope, name, widgets: [{type, settings, width}]}` saves a template; the same name (any case) overwrites and keeps `last_used`; "Standard" is refused (400) |
 | `POST /api/templates/used` | `{scope, name, runs}` notes the runs a template was applied to |
 | `POST /api/templates/delete` | `{scope, name}` removes a template (400 for "Standard", 404 if unknown) |
+| `POST /api/agent/attachments` | keeps an image for the agent: `{name, data}` (base64) -> `{file, name, size, url}`; 400 with a reason for something that is no image, over 5 MB or empty |
+| `GET /api/agent/attachments/{file}` | a kept image (404 for any other name) |
 | `PUT /api/agent/mode` | `{mode}`: Direkt, Gemischt or Bestätigen, kept per project |
 | `PUT /api/agent/debug` | `{on}`: the debug display of the agent window (look-ups as lines in the chat), kept per project |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
@@ -251,6 +253,17 @@ break stays a break), headings, `code`, fenced code, bold, italic, links (`[text
 tab with `rel="noopener noreferrer"`, other schemes stay text), nested bullet and numbered lists, quotes, rules and pipe tables (wide
 tables scroll inside the message). Marks that are not closed stay as typed, `snake_case` is no emphasis. The messages of the user stay
 plain text. The stand-in `claude` answers `[markdown]` and `[wide]` with a formatted text for the tests.
+
+**Images for the agent (v0.2.3).** The user pastes (Ctrl+V into the input), drops or picks (paper clip) up to 4 images, PNG, JPEG, WebP
+or GIF, at most 5 MB each (`agent/attachments.ts` checks before the upload and names what is refused). `POST /api/agent/attachments`
+(`{name, data}` with base64) keeps an image in `<project>/.mlviz/attachments/<hash>.<ext>` (`agent_attachments.py`: named after the first 16
+hex digits of its SHA-256, so the same image is kept once; the kind comes from the first bytes, never from the name or the browser's
+type; the files stay until someone deletes them, put the folder into the project's `.gitignore` if the images should not be committed).
+`GET /api/agent/attachments/<file>` serves it (only names of that form). `run` takes `images: [{file, name}]` (at most 4, each must be a
+kept file, else 400; the text may be empty with an image). The message to `claude` gets one line per image, `[Bild n: .mlviz/attachments/…]`
+(a path relative to the project folder `claude` runs in), the system prompt tells the agent to open them with `Read`, and the chat keeps
+`images` on the user message (thumbnails that survive a reload; a chat that starts with an image alone is named "Bild"). A resend sends the
+images again; a message that waits behind a card or a cold-cache hint keeps its images. The images go to the API like the rest of the chat.
 
 **State of the widgets (v0.2.3).** Every `WidgetTile` reports its state to `widgets/status.ts`: `loading`, `ok`, `error` (with the
 `reason`, which for a failed request is the status and the start of the answer), `unavailable` (the note the widget gives, for example

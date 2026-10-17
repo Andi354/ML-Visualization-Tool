@@ -76,6 +76,12 @@ if calls:
         say(f"{name}: {res['content'][0]['text'][:300]}")
     out({"type": "result", "subtype": "success", "is_error": False, "result": "ok", "usage": usage})
     sys.exit(0)
+images = re.findall(r"\[Bild (\d+): ([^\]]+)\]", prompt)
+if images:  # like `Read`: the path is relative to the folder `claude` runs in
+    for n, path in images:
+        say(f"Bild {n}: {path} · {os.path.getsize(path) if os.path.isfile(path) else 'fehlt'} Bytes")
+    out({"type": "result", "subtype": "success", "is_error": False, "result": "ok", "usage": usage, "modelUsage": {"fake": {"contextWindow": 200000}}})
+    sys.exit(0)
 last = prompt.splitlines()[-1]
 if "[markdown]" in prompt:
     say("**Ergebnis** für `find_runs`:\n\n- erster Punkt\n- zweiter Punkt mit *Betonung*\n\n| Lauf | Wert |\n|---|--:|\n| best_90 | 3,46 |\n\nMehr dazu in der [Doku](https://example.org/doku).\n\n```\nx = 1\n```")

@@ -15,6 +15,7 @@ Marken und die Datensätze der eigenen Widgets mit dem Code.
 - Eigene Widgets entwerfen (als Entwurf im Board, den der Nutzer behält oder verwirft) und einen offenen Entwurf behalten.
 - Widgets des Boards als Bilder im Deliverable-Ordner des Projekts speichern.
 - Projektdateien lesen (`Read`, `Glob`, `Grep`), zum Beispiel die Konfiguration oder eine `description.yaml` eines Laufs.
+- Bilder ansehen, die der Nutzer in den Chat gibt (Screenshots, Diagramme): Sie stehen als `[Bild n: Pfad]` in seiner Nachricht, mit `Read` auf diesen Pfad liest er sie. Bis zu 4 Bilder je Nachricht, PNG, JPEG, WebP oder GIF, höchstens 5 MB je Bild. Das Tool selbst kann er nicht fotografieren, nur was der Nutzer ihm schickt.
 
 **Der Agent kann nicht:**
 - Läufe starten, stoppen oder löschen, Konfigurationen oder andere Projektdateien ändern. Schreiben kann er nur über `save_deliverable` (Bilder in den Deliverable-Ordner) und über die Werkzeuge für Vorlagen und eigene Widgets.

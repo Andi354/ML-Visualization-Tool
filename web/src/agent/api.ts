@@ -75,7 +75,7 @@ async function stream(url: string, body: unknown, onSnapshot: (s: RunSnapshot) =
 }
 
 /** Sends a message (`resend`: ask again after an error, without a second question in the chat). */
-export const runMessage = (id: string, body: { text: string; context: string; resend?: boolean }, onSnapshot: (s: RunSnapshot) => void) =>
+export const runMessage = (id: string, body: { text: string; context: string; resend?: boolean; images?: { file: string; name: string }[] }, onSnapshot: (s: RunSnapshot) => void) =>
   stream(`/api/agent/chats/${id}/run`, body, onSnapshot);
 export const compactChat = (id: string, onSnapshot: (s: RunSnapshot) => void) => stream(`/api/agent/chats/${id}/compact`, {}, onSnapshot);
 
@@ -84,3 +84,16 @@ export const decide = (cid: string, body: { approve?: boolean; choice?: string }
 /** After Rückgängig / Wiederholen: the action line shows its new state. */
 export const markAction = (chatId: string, cid: string, state: "done" | "reverted", text: string) =>
   send<Chat>("POST", `/api/agent/chats/${chatId}/actions/${cid}`, { state, text });
+
+/** Keeps an image for the agent; resolves to `{file, name, size, url}` or rejects with the reason (a text for the user). */
+export async function uploadImage(file: File): Promise<{ file: string; name: string; size: number; url: string }> {
+  const data = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",", 2)[1] ?? "");
+    reader.onerror = () => reject(new Error("Das Bild ließ sich nicht lesen."));
+    reader.readAsDataURL(file);
+  });
+  const r = await fetch("/api/agent/attachments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: file.name || "Bild", data }) });
+  if (!r.ok) throw new Error((await r.json().catch(() => null))?.detail ?? `Das Bild ließ sich nicht senden (${r.status}).`);
+  return r.json();
+}

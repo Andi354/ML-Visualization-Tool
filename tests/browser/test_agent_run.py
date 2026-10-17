@@ -216,3 +216,107 @@ def test_a_wide_table_scrolls_inside_the_message_instead_of_widening_the_window(
     assert box["x"] + box["width"] <= window["x"] + window["width"] + 1
     assert table.evaluate("e => e.scrollWidth > e.clientWidth")  # the table is wider than the message and scrolls
     assert agent.get_by_test_id("agent-window").bounding_box()["width"] == before
+
+
+# --- v0.2.3 · L: images for the agent ---------------------------------------------------------------------------
+import base64  # noqa: E402
+
+from .helpers import png_bytes  # noqa: E402
+
+PASTE = """([b64, name]) => {
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const dt = new DataTransfer();
+  dt.items.add(new File([bytes], name, { type: "image/png" }));
+  const input = document.querySelector('[data-testid="agent-input"]');
+  input.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+}"""
+
+DROP = """([b64, name]) => {
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const dt = new DataTransfer();
+  dt.items.add(new File([bytes], name, { type: "image/png" }));
+  const row = document.querySelector(".agent-input-row");
+  row.dispatchEvent(new DragEvent("dragover", { dataTransfer: dt, bubbles: true, cancelable: true }));
+  row.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+}"""
+
+
+def paste_png(page, color=(200, 40, 40), name="screenshot.png"):
+    page.evaluate(PASTE, [base64.b64encode(png_bytes(color)).decode(), name])
+
+
+def kept_files(page):
+    d = page.root / ".mlviz" / "attachments"
+    return sorted(p.name for p in d.iterdir()) if d.is_dir() else []
+
+
+def test_a_pasted_screenshot_goes_with_the_message_and_the_agent_finds_the_file(agent):
+    open_window(agent)
+    paste_png(agent)
+    chip = agent.get_by_test_id("agent-image-chip")
+    expect(chip).to_have_count(1)
+    assert chip.locator("img").evaluate("e => e.complete && e.naturalWidth") > 0  # the preview is the kept image
+    assert len(kept_files(agent)) == 1
+    agent.get_by_test_id("agent-input").fill("Was zeigt das?")
+    agent.keyboard.press("Enter")
+    user = agent.get_by_test_id("agent-msg-user")
+    expect(user).to_contain_text("Was zeigt das?")
+    expect(user.get_by_test_id("agent-msg-image")).to_have_count(1)
+    assert user.get_by_test_id("agent-msg-image").evaluate("e => e.complete && e.naturalWidth") > 0
+    expect(agent.get_by_test_id("agent-images")).to_have_count(0)  # the chips are gone after sending
+    (call,) = sent(agent)
+    prompt = call[call.index("-p") + 1]
+    assert re.search(r"\[Bild 1: \.mlviz/attachments/[0-9a-f]{16}\.png\]$", prompt)
+    expect(agent.get_by_test_id("agent-msg-agent")).to_have_text(re.compile(rf"^Bild 1: \.mlviz/attachments/{kept_files(agent)[0]} · {len(png_bytes())} Bytes$"))
+
+
+def test_an_image_alone_is_a_message(agent):
+    open_window(agent)
+    paste_png(agent)
+    expect(agent.get_by_test_id("agent-image-chip")).to_have_count(1)
+    agent.get_by_test_id("agent-send").click()
+    expect(agent.get_by_test_id("agent-msg-user").get_by_test_id("agent-msg-image")).to_have_count(1)
+    expect(agent.get_by_test_id("agent-chats-button")).to_contain_text("Bild")
+    expect(agent.get_by_test_id("agent-msg-agent")).to_contain_text("Bytes")
+
+
+def test_the_paper_clip_and_a_drop_add_images_and_a_chip_can_be_removed(agent, tmp_path):
+    open_window(agent)
+    for i, color in enumerate([(1, 1, 1), (2, 2, 2)]):
+        (tmp_path / f"b{i}.png").write_bytes(png_bytes(color))
+    agent.get_by_test_id("agent-file").set_input_files([str(tmp_path / "b0.png"), str(tmp_path / "b1.png")])
+    expect(agent.get_by_test_id("agent-image-chip")).to_have_count(2)
+    agent.evaluate(DROP, [base64.b64encode(png_bytes((3, 3, 3))).decode(), "dropped.png"])
+    expect(agent.get_by_test_id("agent-image-chip")).to_have_count(3)
+    agent.get_by_test_id("agent-image-remove").first.click()
+    expect(agent.get_by_test_id("agent-image-chip")).to_have_count(2)
+    assert agent.get_by_test_id("agent-attach").get_attribute("aria-label") == "Bild anhängen"
+
+
+def test_the_fifth_image_and_a_file_that_is_no_image_are_refused_with_a_reason(agent, tmp_path):
+    open_window(agent)
+    for i in range(5):
+        paste_png(agent, (i, i, i), name=f"s{i}.png")
+        expect(agent.get_by_test_id("agent-image-chip")).to_have_count(min(i + 1, 4))
+    expect(agent.get_by_test_id("agent-image-note")).to_have_text("s4.png: höchstens 4 Bilder je Nachricht")
+    expect(agent.get_by_test_id("agent-image-chip")).to_have_count(4)
+    agent.get_by_test_id("agent-image-remove").first.click()
+    fake = tmp_path / "text.png"
+    fake.write_text("das ist kein Bild")
+    agent.get_by_test_id("agent-file").set_input_files(str(fake))  # named like an image, but it is not one
+    expect(agent.get_by_test_id("agent-image-note")).to_contain_text("kein Bild, das der Agent lesen kann")
+    expect(agent.get_by_test_id("agent-image-chip")).to_have_count(3)
+
+
+def test_the_thumbnail_in_the_chat_survives_a_reload(agent):
+    open_window(agent)
+    paste_png(agent)
+    expect(agent.get_by_test_id("agent-image-chip")).to_have_count(1)
+    agent.get_by_test_id("agent-input").fill("Merk dir das")
+    agent.keyboard.press("Enter")
+    expect(agent.get_by_test_id("agent-msg-agent")).to_be_visible()
+    agent.reload()
+    expect(agent.get_by_test_id("agent-window")).to_be_visible()
+    image = agent.get_by_test_id("agent-msg-image")
+    expect(image).to_have_count(1)
+    assert image.evaluate("e => e.complete && e.naturalWidth") > 0

@@ -159,7 +159,8 @@ class AgentStore:
             chat["messages"].append({"k": kind, "t": text, "at": stamp, **extra})
             chat["updated_at"] = stamp
             if kind == "user" and chat["title"] == NEW_CHAT_TITLE and len(chat["messages"]) == 1:
-                chat["title"] = text.strip().splitlines()[0][:48] or NEW_CHAT_TITLE
+                first = (text.strip().splitlines() or [""])[0][:48]
+                chat["title"] = first or ("Bild" if extra.get("images") else NEW_CHAT_TITLE)
             return self.save(chat)
 
     def list(self) -> list[dict[str, Any]]:
