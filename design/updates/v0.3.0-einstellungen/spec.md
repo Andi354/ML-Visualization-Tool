@@ -7,10 +7,13 @@ Prototype: prototype/ · Builds on: v0.2.4
 
 | Block | Status |
 |---|---|
-| A · Settings screen (content and frame) | running: content to be agreed with Tim |
+| A · Settings screen (content and frame) | running: S1 on the canvas, waiting for Tim |
 
-Running block: A. Candidate contents proposed in chat (from the code on main v0.2.2): project, agent,
-analysis defaults, export, Linear, display. Waiting for Tim's choice of contents.
+Running block: A. Tim: look like the Agent-Dashboard settings (VS Code-like); include the agent debug
+toggle (TIM-95) and appearance. On the canvas: A1 (`S1-Einstellungen.dc.html`, data `settings-data.js`):
+category rail (Darstellung, Läufe & Experiment, Analyse & Widgets, Export, Agent, Daten & Erweitert, Über),
+search `/`, "Geändert n" filter, presets, undo/redo, reset per row, only changed values stored in
+`.mlviz/settings.json`. Waiting for Tim's feedback on contents and look.
 
 ## Goal
 One place in the tool to see and change how it behaves for a project.
