@@ -209,7 +209,7 @@ tool (`model.contextUse`, `model.cacheState`), never by asking the agent. `.mlvi
 own widgets will live there too) or put into the project's `.gitignore`.
 
 **Connection (feature F).** `src/mlviz/agent_run.py`. One message is one call
-`claude -p "[Ansicht: <context>]\n<message>" [--resume <session_id>] --output-format stream-json --verbose --strict-mcp-config
+`claude -p "[Ansicht: <context>, Modus: <mode>]\n<message>" [--resume <session_id>] --output-format stream-json --verbose --strict-mcp-config
 --allowedTools "Read,Glob,Grep"` in the project folder, with the login of the user running the tool (no Docker; the setup
 check says "nicht eingerichtet" where `claude` is missing or not logged in). The stream is read line by line: the
 `session_id` of `system/init` is stored with the chat, every text block of the answer is appended to the chat and handed
@@ -243,6 +243,15 @@ closures live in the browser: after a reload the lines stay without "Rückgängi
 dialog (`analysis/agentSave.ts`) and writes them with `/api/deliverables`; its undo deletes only files whose hash is unchanged.
 `get_view` returns what the views add with `provideView` (frame, board, run tab filters). Changed elements glow for 1.5 s
 (`.agent-glow`).
+
+**Help of the agent (v0.2.2).** `src/mlviz/agent_guide.md` (shipped in the package) is the text the agent reads through the
+tool `help`: no topic gives the index, a topic (`faehigkeiten`, `werkzeuge`, `ansichten`, `widgets`, `eigene-widgets`, `modi`,
+`rueckgaengig`) its section (`agent_guide.py` splits the file at `## <key> · <title>`). The system prompt stays short and sends the
+agent there (what it can and cannot do, "if unsure call `help` first"); the first line of every message also names the mode
+(`[Ansicht: …, Modus: Gemischt]`, set by the backend, not by the browser; `/compact` is sent as it is). **The guide is kept in
+step with the code by `tests/test_agent_guide.py`:** its tool table must list exactly the tools of `agent_tools.TOOLS` with their
+kind, its mode table must match `needs_confirmation`, and the marks, datasets, scopes and the row limit of own widgets must be
+named. A change of what the agent can or may do changes the guide in the same commit (see `CLAUDE.md`).
 
 ## Widget width, order and own widgets (v0.2)
 

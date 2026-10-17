@@ -329,3 +329,15 @@ def test_unknown_widgets_and_runs_are_reported_to_the_agent(tool_page):
     assert "Unbekanntes Widget" in tool(page, "add_widget", type="gibt-es-nicht").inner_text()
     assert "Kein Widget" in tool(page, "remove_widget", widget="gibt-es-nicht").inner_text()
     assert "Mehrere Läufe passen" in tool(page, "open_run", run="TIM-52").inner_text()
+
+
+# --- v0.2.2 · help ----------------------------------------------------------------------------------
+def test_help_answers_through_the_mcp_server_without_an_action_line(tool_page):
+    page = tool_page
+    reply = tool(page, "help", topic="modi")
+    expect(reply).to_contain_text("help: # Modi und Bestätigungen")
+    expect(page.get_by_test_id("agent-action")).to_have_count(0)  # a look-up is not an action
+    reply = tool(page, "help")
+    expect(reply).to_contain_text("Themen der Agent-Hilfe")
+    reply = tool(page, "help", topic="nix")
+    expect(reply).to_contain_text("Kein Thema")

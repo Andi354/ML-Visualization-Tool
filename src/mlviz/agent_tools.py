@@ -16,7 +16,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from . import aggregate, configview, own_widgets, store, widgets
+from . import agent_guide, aggregate, configview, own_widgets, store, widgets
 from .listing import merkmal_candidates, run_listing
 from .project import Project
 from .runs import get_run, list_runs
@@ -83,6 +83,10 @@ def _add(tool: Tool) -> None:
 
 
 # --- read (backend) -------------------------------------------------------------------------------
+_add(Tool("help", READ, "Erklärt, was der Agent im Tool kann und was nicht, und wie die Teile des Tools zusammenhängen. Ohne Thema das Inhaltsverzeichnis; "
+          "zum Einstieg das Thema faehigkeiten. Aufrufen, wenn der Nutzer fragt, was du kannst, oder wenn du unsicher bist.", {
+    "topic": _s("Thema aus dem Inhaltsverzeichnis, z. B. faehigkeiten, widgets, eigene-widgets, modi"),
+}, side="backend", silent=True))
 _add(Tool("find_runs", READ, "Sucht Läufe nach Text (Name, ID, Kurzbeschreibung, Zweck, „Soll zeigen“), Issue, Datum, Zustand, Lauf-Merkmal (z. B. pred_len) oder Grid-Achse.", {
     "text": _s("Teil des Namens, der ID oder der Beschreibung (short, purpose, shows)"), "issue": _s("Issue-ID, z. B. TIM-52"),
     "date_from": _s("ab Datum YYYY-MM-DD"), "date_to": _s("bis Datum YYYY-MM-DD"),
@@ -115,7 +119,7 @@ _add(Tool("open_analysis", NAV, "Öffnet die Analyse in einer Ansicht und mit de
     "scope": _SCOPE, "runs": {"type": "array", "items": {"type": "string"}, "description": "Lauf-IDs"},
 }, ["scope"], describe=lambda a: {"one": "Analyse · Ein Lauf", "two": "Analyse · Zwei Läufe", "project": "Analyse · Projektverlauf"}.get(a.get("scope"), "Analyse öffnen") + (
     " · " + " ↔ ".join(_short(r) for r in a.get("runs") or []) if a.get("runs") else "")))
-_add(Tool("set_run_view", NAV, "Stellt in einem Lauf-Tab Filter, Sortierung und Details ein. filters: Dimension → Liste gewählter Werte (leere Liste = Filter entfernen).", {
+_add(Tool("set_run_view", NAV, "Stellt in einem Lauf-Tab Filter und Sortierung ein. filters: Dimension → Liste gewählter Werte (leere Liste = Filter entfernen).", {
     "run": _RUN, "filters": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "string"}}},
     "sort": {"type": "object", "properties": {"metric": {"type": "string"}, "stat": {"type": "string"}, "dir": {"type": "string", "enum": ["asc", "desc"]}}},
 }, ["run"], describe=lambda a: f"Ansicht einstellen · {_short(a.get('run'))}"))
@@ -216,6 +220,8 @@ def _text_matches(run, info: dict, text: str) -> bool:
 
 def run_tool(project: Project, name: str, args: dict) -> Any:
     """Answers a backend tool. Raises ValueError with a German message for the agent."""
+    if name == "help":
+        return agent_guide.read(args.get("topic"))
     if name == "find_runs":
         runs = list_runs(project)
         candidates = merkmal_candidates(runs)

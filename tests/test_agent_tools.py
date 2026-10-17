@@ -324,3 +324,12 @@ def test_find_runs_text_also_matches_the_description(runner):
     assert not any("TIM-52_best_90" in r for r in find("kommt nirgends vor"))
     row = next(r for r in agent_tools.run_tool(runner.project, "find_runs", {"text": "TIM-52_best_90"})["runs"])
     assert row["short"].startswith("Bestes Setup")
+
+
+def test_help_answers_as_plain_text_through_the_tool_call(runner):
+    text, is_error = runner.call_tool("none", "help", {"topic": "modi"})
+    assert not is_error and text.startswith("# Modi und Bestätigungen") and "\\n" not in text
+    index, is_error = runner.call_tool("none", "help", {})
+    assert not is_error and "`faehigkeiten`" in index
+    text, is_error = runner.call_tool("none", "help", {"topic": "nix"})
+    assert is_error and "Kein Thema" in text

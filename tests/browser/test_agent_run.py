@@ -58,10 +58,10 @@ def test_a_message_is_answered_and_the_view_goes_along(agent):
     expect(agent.get_by_test_id("agent-msg-agent")).to_have_text("Antwort auf: Wie sieht es aus?")
     expect(agent.get_by_test_id("agent-working")).to_have_count(0)
     (call,) = sent(agent)
-    assert call[call.index("-p") + 1].startswith("[Ansicht: Läufe · Liste]\n")
+    assert call[call.index("-p") + 1].startswith("[Ansicht: Läufe · Liste, Modus: ")
     # the numbers behind the header come from the usage of that turn
     expect(agent.get_by_test_id("agent-cache")).to_have_text(re.compile("Cache warm"))
-    assert agent.get_by_test_id("agent-context-meter").get_attribute("title") == "Kontext: 1k von 200k Tokens"
+    assert agent.get_by_test_id("agent-context-meter").get_attribute("title") == "Kontext: 2k von 200k Tokens"  # the stand-in counts the prompt, with its first line
 
 
 def test_while_working_the_send_button_is_a_stop_button_and_the_capsule_says_so(agent):

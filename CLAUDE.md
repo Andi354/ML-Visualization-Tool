@@ -23,6 +23,7 @@ Language: chat and Linear in German, code and docs in English.
 - `src/mlviz/`: backend (FastAPI), reads `runs/` through `ds-store` (`store.py`); `web/`: frontend (Vite, Preact, TypeScript)
 - `tests/`: pytest (`tests/browser/` = Playwright); `web/tests/`: vitest
 - `docs/technical-reference.md`: what the tool reads from a project and how the code is organised
+- `src/mlviz/agent_guide.md`: the help the agent reads (tool `help`). When what the agent can or may do changes (tools, modes, rules for own widgets), change this file in the same commit; `tests/test_agent_guide.py` fails when its tables differ from the code
 - `design/`: principles, tokens, `updates/v<version>-<shortname>/` (spec, prototype)
 - Version: `pyproject.toml` (and `src/mlviz/__init__.py`)
 

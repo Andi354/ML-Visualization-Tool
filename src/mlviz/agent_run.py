@@ -37,12 +37,17 @@ DEFAULT_CONTEXT_WINDOW = 200_000
 
 SYSTEM_PROMPT = (
     "Du bist der Agent im ML Visualization Tool, einer lokalen Ergebnis-Ansicht für Data-Science-Projekte "
-    "(Läufe, Experimente, Vergleiche, Deliverables). Die erste Zeile jeder Nachricht beschreibt, was der Nutzer "
-    "gerade sieht. Antworte knapp und auf Deutsch. Du bedienst das Tool nur über die Werkzeuge des MCP-Servers "
-    "`mlviz` (Läufe suchen und lesen, navigieren, Ansicht einstellen, Analyse ändern, speichern); Projektdateien "
-    "darfst du nur lesen. Bei mehreren passenden Läufen frag mit `choose_run` zurück. Wird eine Aktion abgelehnt, "
-    "mach ohne sie weiter. `get_view` zeigt dir den genauen Zustand der Ansicht."
+    "(Läufe, Experimente, Vergleiche, Deliverables). Antworte knapp und auf Deutsch. Die erste Zeile jeder "
+    "Nachricht beschreibt, was der Nutzer gerade sieht und in welchem Modus du arbeitest. Du bedienst das Tool nur "
+    "über die Werkzeuge des MCP-Servers `mlviz` (Läufe suchen und lesen, navigieren, Ansicht einstellen, Analyse "
+    "ändern, Bilder speichern); Projektdateien darfst du nur lesen, Läufe nicht starten und nichts löschen. "
+    "Fragt der Nutzer, was du kannst oder nicht kannst, oder bist du unsicher, ob etwas geht: ruf zuerst `help` auf "
+    "(Thema `faehigkeiten`) und antworte nach dem Text, nicht aus dem Gedächtnis. Zahlen und Namen rätst du nie, "
+    "schlag sie nach. Bei mehreren passenden Läufen frag mit `choose_run` zurück. Wird eine Aktion abgelehnt, mach "
+    "ohne sie weiter. `get_view` zeigt dir den genauen Zustand der Ansicht."
 )
+#: The modes as the agent reads them in the first line of a message
+MODE_LABELS = {"direct": "Direkt", "mixed": "Gemischt", "confirm": "Bestätigen"}
 #: How long the tool waits for the open browser to carry out a command
 COMMAND_TIMEOUT_S = 120
 
@@ -213,7 +218,11 @@ class AgentRunner:
 
     def _call(self, cmd: list[str], chat_id: str, text: str, context: str, compact: bool, base_url: str, live: ChatRun) -> Iterator[dict[str, Any]]:
         chat = self.store.get(chat_id)
-        prompt = f"[Ansicht: {context}]\n{text}" if context else text
+        mode = MODE_LABELS.get(self.store.mode(), "Gemischt")
+        if compact:  # a slash command stands alone
+            prompt = text
+        else:
+            prompt = f"[Ansicht: {context}, Modus: {mode}]\n{text}" if context else f"[Modus: {mode}]\n{text}"
         args = [
             *cmd,
             "-p",
@@ -372,7 +381,8 @@ class AgentRunner:
             return f"Unbekanntes Werkzeug: {name}", True
         if tool.side == "backend" and name != "choose_run":
             try:
-                return json.dumps(agent_tools.run_tool(self.project, name, args), ensure_ascii=False, default=str), False
+                result = agent_tools.run_tool(self.project, name, args)
+                return (result if isinstance(result, str) else json.dumps(result, ensure_ascii=False, default=str)), False
             except ValueError as e:
                 return str(e), True
         with self._lock:
