@@ -35,6 +35,8 @@ function run(over: Partial<RunRow> = {}): RunRow {
     has_curves: false,
     has_predictions: false,
     commit: null,
+    short: null,
+    has_description: false,
     cells: 10,
     planned: 10,
     errors: 0,
@@ -51,6 +53,14 @@ const project = {
   ],
 } as ProjectInfo;
 const issues = { "TIM-52": { title: "Beste Config zusammenführen" } };
+
+describe("short description", () => {
+  it("is searched like the name", () => {
+    const r = run({ short: "Horizont 90 gegen die Baselines", has_description: true });
+    expect(matchRun(r, issues, { ...noFilters, q: "baselines" })).toBe(true);
+    expect(matchRun(run(), issues, { ...noFilters, q: "baselines" })).toBe(false);
+  });
+});
 
 describe("filters", () => {
   const a = run({ issue: "TIM-52", name: "TIM-52_best_30", axes: ["lstm_layer"] });

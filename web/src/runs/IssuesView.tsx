@@ -26,11 +26,11 @@ export function issueEntries(blocks: Block[]): Entry[] {
   return entries;
 }
 
-/** Search in the Issues view: issue ID, issue title, run names and axis names. */
+/** Search in the Issues view: issue ID, issue title, run names, axis names and the short description. */
 export function entryMatches(e: Entry, issues: Record<string, IssueInfo>, q: string): boolean {
   const s = q.trim().toLowerCase();
   if (!s) return true;
-  const hay = [e.key, issues[e.key]?.title ?? "", ...e.runs.map((r) => `${r.id} ${r.axes.join(" ")}`)];
+  const hay = [e.key, issues[e.key]?.title ?? "", ...e.runs.map((r) => `${r.id} ${r.axes.join(" ")} ${r.short ?? ""}`)];
   return hay.join(" ").toLowerCase().includes(s);
 }
 
@@ -179,9 +179,16 @@ export function IssuesView(p: Props) {
                     <span class="mono">{relTime(p.project.now, r.started)}</span>
                     <span class="mono muted tiny">{stamp(r.started)}</span>
                   </span>
-                  <span class="tags">
-                    <Flags run={r} current={p.current} />
-                    {r.migrated && <span class="flag">migriert</span>}
+                  <span class="tags-col">
+                    {r.short && (
+                      <span class="short-line" data-testid="short" title={r.short}>
+                        {r.short}
+                      </span>
+                    )}
+                    <span class="tags">
+                      <Flags run={r} current={p.current} />
+                      {r.migrated && <span class="flag">migriert</span>}
+                    </span>
                   </span>
                   <CellBar run={r} />
                   <Best run={r} />

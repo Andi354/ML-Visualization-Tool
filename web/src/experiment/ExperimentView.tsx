@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { getDims, getRuns, NotFound, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type RunRow, type TableResult, type TableRow } from "../api";
+import { getDescription, getDims, getRuns, NotFound, type Description, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type RunRow, type TableResult, type TableRow } from "../api";
 import { provide, provideView } from "../agent/bus";
+import { DescriptionBlock, OverviewLine } from "./Description";
+import { loadFolds, saveFolds, type Folds } from "./description";
 import { DetailPanel } from "./DetailPanel";
 import { Overview } from "./Overview";
 import { Sidebar } from "./Sidebar";
@@ -27,10 +29,11 @@ interface Props {
   onMissing: () => void;
   onAnalyse: (combo: Record<string, string>) => void;
   onCompareWith: (other: string) => void;
+  onOpenRun: (run: string) => void;
 }
 
 /** View of one run (feature D): sidebar of dimensions, toolbar, overview strip and group table. */
-export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onCompareWith }: Props) {
+export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onCompareWith, onOpenRun }: Props) {
   const [info, setInfo] = useState<DimsInfo | null>(null);
   const [state, setState] = useState<DimState>({});
   const [sort, setSort] = useState<Sort>({ metric: null, stat: "mean", dir: null });
@@ -41,6 +44,36 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<TableRow | null>(null);
   const seq = useRef(0);
+  const [description, setDescription] = useState<Description | null>(null);
+  const [folds, setFolds] = useState<Folds>(() => loadFolds(project.name));
+  const [toolbarHeight, setToolbarHeight] = useState(49);
+  const toolbarBox = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setDescription(null);
+    getDescription(run.id)
+      .then((d) => alive && setDescription(d))
+      .catch(() => {}); // a description that cannot be loaded is shown as none
+    return () => {
+      alive = false;
+    };
+  }, [run.id]);
+  const toggleDescription = () => {
+    const next = { ...folds, [run.id]: !folds[run.id] };
+    setFolds(next);
+    saveFolds(project.name, next); // at once: a reload right after the click must keep it
+  };
+
+  // the toolbar sticks to the top of the scroll column and the table header right below it: measure its height
+  useEffect(() => {
+    const el = toolbarBox.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setToolbarHeight(el.offsetHeight));
+    ro.observe(el);
+    setToolbarHeight(el.offsetHeight);
+    return () => ro.disconnect();
+  }, [info !== null]);
 
   useEffect(() => {
     getDims(run.id).then(setInfo).catch((e) => (e instanceof NotFound ? onMissing() : setError(true)));
@@ -141,18 +174,16 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
       </div>
       <div class="exp-body">
         {info ? <Sidebar info={info} state={state} onState={setState} /> : <aside class="exp-sidebar" />}
-        <main class="exp-main">
-          <Toolbar
-            overview={overview}
-            onOverview={setOverview}
-            columns={columns}
-            onColumns={setColumns}
-            metrics={project.metrics}
-            primary={primary}
-            chips={shownChips}
-            onChip={(c) => setState((s) => resetDim(s, c.dim))}
-            summary={result ? summary(result.groups, result.cells, result.shown) : ""}
-          />
+        <main class="exp-main" data-testid="exp-main" style={{ "--toolbar-h": `${toolbarHeight}px` }}>
+          {description && (
+            <DescriptionBlock
+              description={description}
+              open={!folds[run.id]}
+              onToggle={toggleDescription}
+              onOpenRun={onOpenRun}
+            />
+          )}
+          <OverviewLine open={overview} onToggle={() => setOverview(!overview)} />
           {overview && result?.overview && result.overview.cards.length + 1 > 0 && (
             <Overview
               cards={result.overview.cards}
@@ -164,6 +195,19 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
               }}
             />
           )}
+          <div class="exp-toolbar-box" ref={toolbarBox}>
+          <Toolbar
+            overview={overview}
+            onOverview={setOverview}
+            columns={columns}
+            onColumns={setColumns}
+            metrics={project.metrics}
+            primary={primary}
+            chips={shownChips}
+            onChip={(c) => setState((s) => resetDim(s, c.dim))}
+            summary={result ? summary(result.groups, result.cells, result.shown) : ""}
+          />
+          </div>
           <div class="exp-table-wrap">
             {error && (
               <div class="notice" data-testid="table-error">

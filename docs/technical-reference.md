@@ -280,6 +280,36 @@ aktualisieren" for stored templates, and "Als Vorlage speichern". Applying a tem
 board for 1.6 s and notes `last_used`. A scope opened for the first time starts with the template used last, else Standard.
 Types that no longer exist are dropped when applying; own widgets that were deleted show "Widget gelöscht".
 
+## Run descriptions (v0.2.1)
+
+A run folder may hold `description.yaml` (optional; a run without it stays valid). It is read **only through
+`ds-store`** (`store.read_description`), after TIM-71 delivers the functions: `list_runs` then returns per
+run `short` and `has["description"]`, `read_description(run_dir)` returns `None` without a file, else the
+fields `short`, `purpose`, `shows`, `notes`, `expectation`, `compare_to` and a list `problems`. With a
+`ds-store` that does not have them yet, every run counts as "no description". The tests install a stand-in
+(`tests/ds_store_shim.py`) while the package lacks the functions; the demo project writes a few
+`description.yaml`.
+
+- **`short` (Läufe):** `Run.short` is the `short` of the run list, one line, cut to `store.SHORT_MAX` (100)
+  characters plus "…" (`store.cut_short`); empty counts as none. `/api/runs` carries `short` and
+  `has_description`. The run list shows it as its own line (`.short-line`) between name and axes, the view
+  Issues above the tags; the search of Läufe and the Issues view also matches it. The agent's `find_runs`
+  (`text`) matches the run id, `short`, `purpose` and `shows`.
+- **Description (run tab):** `GET /api/runs/{id}/description` answers `{description}`: `null` without
+  `description.yaml`, else `descriptions.describe`: `short`, `purpose` and `expectation` (text), `shows` and
+  `notes` (lists), `compare_to` (`{name, run}`, `run` = the folder the name resolves to, by folder name first,
+  else the newest run of that name, `null` if unknown) and `problems`. Empty fields stay empty, nothing is
+  interpreted as Markdown. A description that cannot be read at all comes back as a problem, not an error.
+  `experiment/Description.tsx` shows it above the overview in `ExperimentView`: the line "BESCHREIBUNG ·
+  short · zuklappen" (folded state per run in the browser storage, written on the click), the fields side
+  by side in the fixed order Zweck (1.5 parts), Soll zeigen, Erwartung, Notizen, then the chips "Vergleichen
+  mit" (a known run opens as a tab or gets the focus, an unknown one is struck through and does nothing).
+  `problems` show a warning box above the fields.
+- **One scroll column:** `.exp-main` scrolls (description, overview line and graphs, toolbar, table; wide
+  tables scroll horizontally in it). The toolbar (`.exp-toolbar-box`) is `position: sticky; top: 0`, its height
+  is measured (`ResizeObserver`) into `--toolbar-h`, and the table head (`thead`, both rows as one block)
+  sticks at `top: var(--toolbar-h)`. The detail panel stays beside the column.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.

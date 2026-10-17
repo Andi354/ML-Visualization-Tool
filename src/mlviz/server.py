@@ -18,6 +18,7 @@ from .agent_store import AgentStore, ChatNotFound
 from .store import StoreError
 from .listing import merkmal_candidates, run_listing
 from .project import Project, now
+from .descriptions import describe
 from .runs import get_run, list_runs
 
 STATIC = Path(__file__).parent / "static"
@@ -56,6 +57,14 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
         if run is None:
             raise HTTPException(404, "run not found")
         return run.info()
+
+    @app.get("/api/runs/{run_id}/description")
+    def api_run_description(run_id: str) -> dict:
+        """The description of a run (`null` for a run without one), see `descriptions.py`."""
+        run = get_run(project, run_id)
+        if run is None:
+            raise HTTPException(404, "run not found")
+        return {"description": describe(project, run)}
 
     def _run_or_404(run_id: str):
         run = get_run(project, run_id)
