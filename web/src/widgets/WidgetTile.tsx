@@ -1,7 +1,8 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useState } from "preact/hooks";
 import { getCatalog, NotFound, postWidget, type CatalogEntry, type ProjectInfo, type RunInfo, type SettingDef, type WidgetRequest, type WidgetResult } from "../api";
 import { isOwn, type BoardWidget, type Width } from "./board";
 import { renderWidget, type Ctx } from "./renderers";
+import { clearStatus, setStatus } from "./status";
 
 export function useCatalog(scope = ""): CatalogEntry[] {
   const [cat, setCat] = useState<CatalogEntry[]>([]);
@@ -123,16 +124,32 @@ export function WidgetTile({ widget, def, run, project, req, onSettings, onRemov
   const [gone, setGone] = useState(false); // an own widget that was deleted: the tile says so
   const [showSettings, setShowSettings] = useState(false);
   const key = JSON.stringify([widget.type, req, widget.settings]);
+  const label = def?.label ?? (isOwn(widget.type) ? "Eigenes Widget" : widget.type);
+  // the state goes out at once when something changes (a layout effect), so the agent never reads a stale "ok"
+  useLayoutEffect(() => {
+    setStatus(widget.id, { state: "loading", type: widget.type, label });
+  }, [key]);
+  useLayoutEffect(() => () => clearStatus(widget.id), [widget.id]);
   useEffect(() => {
     const ctl = new AbortController();
     setError(false);
     setGone(false);
+    const report = (state: "ok" | "error" | "unavailable" | "gone", reason?: string) => setStatus(widget.id, { state, reason, type: widget.type, label });
     postWidget(widget.type, { ...req, settings: widget.settings }, ctl.signal)
-      .then(setResult)
+      .then((r) => {
+        setResult(r);
+        if (r.unavailable) report("unavailable", r.unavailable);
+        else report("ok");
+      })
       .catch((e) => {
         if (e?.name === "AbortError") return;
-        if (e instanceof NotFound) setGone(isOwn(widget.type));
-        else setError(true);
+        if (e instanceof NotFound && isOwn(widget.type)) {
+          setGone(true);
+          report("gone", "Das eigene Widget wurde gelöscht");
+        } else {
+          setError(true);
+          report("error", String(e?.message ?? "Das Widget konnte nicht geladen werden"));
+        }
       });
     return () => ctl.abort();
   }, [key]);

@@ -274,7 +274,10 @@ export async function postWidget(key: string, req: WidgetRequest, signal?: Abort
     signal,
   });
   if (r.status === 404) throw new NotFound(key);
-  if (!r.ok) throw new Error(`widget ${key}: ${r.status}`);
+  if (!r.ok) {
+    const body = (await r.text().catch(() => "")).replace(/\s+/g, " ").trim().slice(0, 200);
+    throw new Error(`widget ${key}: ${r.status}${body ? " · " + body : ""}`);
+  }
   return r.json();
 }
 

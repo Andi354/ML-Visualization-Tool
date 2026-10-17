@@ -83,7 +83,7 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `GET /api/agent/chats/{id}` | one chat with its messages (404 for an unknown or malformed id) |
 | `POST /api/agent/chats/{id}/messages` | appends a message of the user, `{text}` (empty text is a 400); the first one names a new chat |
 | `GET /api/agent/setup` | `{ready, problem, step, api_key}`: Claude Code found and logged in (`claude auth status`); `api_key` if `ANTHROPIC_API_KEY` is set |
-| `POST /api/agent/chats/{id}/run` | `{text, context, resend?}` sends a message (a new `claude -p`); answers as server-sent events, each `data:` a snapshot `{chat, busy, limits}`; 409 while the chat is working |
+| `POST /api/agent/chats/{id}/run` | `{text, context, resend?, images?}` sends a message (a new `claude -p`); answers as server-sent events, each `data:` a snapshot `{chat, busy, limits}`; 409 while the chat is working |
 | `POST /api/agent/chats/{id}/compact` | `/compact` on the session of the chat, streamed like `run` (400 without a session) |
 | `POST /api/agent/chats/{id}/stop` | ends the running `claude` process of the chat (`{stopped}`) |
 | `POST /mcp/{chat_id}` | the MCP server of the tool (JSON-RPC over HTTP) for the `claude` the tool started; needs `Authorization: Bearer <secret of this start>` (401 otherwise) |
@@ -99,6 +99,10 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `POST /api/templates` | `{scope, name, widgets: [{type, settings, width}]}` saves a template; the same name (any case) overwrites and keeps `last_used`; "Standard" is refused (400) |
 | `POST /api/templates/used` | `{scope, name, runs}` notes the runs a template was applied to |
 | `POST /api/templates/delete` | `{scope, name}` removes a template (400 for "Standard", 404 if unknown) |
+| `POST /api/agent/attachments` | keeps an image for the agent: `{name, data}` (base64) -> `{file, name, size, url}`; 400 with a reason for something that is no image, over 5 MB or empty |
+| `GET /api/agent/attachments/{file}` | a kept image (404 for any other name) |
+| `GET /api/agent/instructions` | the instructions of the project for the agent: `{text, max}` |
+| `PUT /api/agent/instructions` | `{text, expect?}` replaces them (400 over 4000 characters, 409 if `expect` no longer matches); `{text: ""}` deletes them |
 | `PUT /api/agent/mode` | `{mode}`: Direkt, Gemischt or Bestätigen, kept per project |
 | `PUT /api/agent/debug` | `{on}`: the debug display of the agent window (look-ups as lines in the chat), kept per project |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
@@ -244,6 +248,46 @@ closures live in the browser: after a reload the lines stay without "Rückgängi
 dialog (`analysis/agentSave.ts`) and writes them with `/api/deliverables`; its undo deletes only files whose hash is unchanged.
 `get_view` returns what the views add with `provideView` (frame, board, run tab filters). Changed elements glow for 1.5 s
 (`.agent-glow`).
+
+**Formatted answers (v0.2.3).** The answers of the agent are drawn as Markdown (`web/src/agent/markdown.ts` reads the text into a tree,
+`Markdown.tsx` draws the tree with Preact elements; no library, nothing of the text becomes HTML). It reads paragraphs (a single line
+break stays a break), headings, `code`, fenced code, bold, italic, links (`[text](https://…)` and bare http(s) addresses, opened in a new
+tab with `rel="noopener noreferrer"`, other schemes stay text), nested bullet and numbered lists, quotes, rules and pipe tables (wide
+tables scroll inside the message). Marks that are not closed stay as typed, `snake_case` is no emphasis. The messages of the user stay
+plain text. The stand-in `claude` answers `[markdown]` and `[wide]` with a formatted text for the tests.
+
+**Instructions of the project (v0.2.3).** `<project>/.mlviz/agent_instructions.md` holds what the user wants from the agent in this
+project (format, tone, terms, preferred widgets; at most 4000 characters, it starts empty and is deleted when it becomes empty).
+`AgentRunner.system_prompt()` reads it before every message and appends it to the fixed `SYSTEM_PROMPT` under "Anweisungen des Nutzers
+für dieses Projekt:"; the fixed part comes first and wins on a conflict, so the instructions cannot lift the limits (read only, the
+modes). `GET/PUT /api/agent/instructions` read and write it (`PUT {text, expect?}`: with `expect` only if the text is still that one, else
+409; over the limit 400) and are what a settings screen will use. The agent changes it with `set_instructions` (the whole new text), a tool
+with `always_confirm`: **it asks in every mode, also in Direkt** (`agent_tools.asks`), checks the length before anything is shown (`check`),
+and its card shows the whole new and the old text (`_instruction_details`). The browser writes through `PUT` and offers Rückgängig and
+Wiederholen (conditional with `expect`, so an undo never overwrites a text somebody changed in between; the window says why when it
+cannot). A change applies to the next message and makes the cache of the chat cold once. The system prompt tells the agent to change the
+instructions only when the user explicitly wants it; the guide has the topic `anweisungen`.
+
+**Images for the agent (v0.2.3).** The user pastes (Ctrl+V into the input), drops or picks (paper clip) up to 4 images, PNG, JPEG, WebP
+or GIF, at most 5 MB each (`agent/attachments.ts` checks before the upload and names what is refused). `POST /api/agent/attachments`
+(`{name, data}` with base64) keeps an image in `<project>/.mlviz/attachments/<hash>.<ext>` (`agent_attachments.py`: named after the first 16
+hex digits of its SHA-256, so the same image is kept once; the kind comes from the first bytes, never from the name or the browser's
+type; the files stay until someone deletes them, put the folder into the project's `.gitignore` if the images should not be committed).
+`GET /api/agent/attachments/<file>` serves it (only names of that form). `run` takes `images: [{file, name}]` (at most 4, each must be a
+kept file, else 400; the text may be empty with an image). The message to `claude` gets one line per image, `[Bild n: .mlviz/attachments/…]`
+(a path relative to the project folder `claude` runs in), the system prompt tells the agent to open them with `Read`, and the chat keeps
+`images` on the user message (thumbnails that survive a reload; a chat that starts with an image alone is named "Bild"). A resend sends the
+images again; a message that waits behind a card or a cold-cache hint keeps its images. The images go to the API like the rest of the chat.
+
+**State of the widgets (v0.2.3).** Every `WidgetTile` reports its state to `widgets/status.ts`: `loading`, `ok`, `error` (with the
+`reason`, which for a failed request is the status and the start of the answer), `unavailable` (the note the widget gives, for example
+"Dieser Lauf hat keine Achsen") or `gone` (a deleted own widget). The state is set in a layout effect when the settings or the request
+change, so a read right after a change never sees a stale `ok`. `get_view` returns it per widget (`state`, `reason`). The tools that
+change a board (`edit` in `BoardPage.tsx`: add, remove, configure, move, resize, `apply_template`, `draft_widget`, `keep_draft`) and
+`open_analysis` (`frameTools.ts`) wait up to 5 s (`whenLoaded`) for the widgets and return `data.widgets` (id, type, label, state,
+reason; a widget still loading after the wait is `loading`). The action line gets what is wrong: "· 1 Widget mit Fehler · 1 nicht
+verfügbar · 2 laden noch" (`problemSummary`). The guide, the system prompt and `tests/test_agent_guide.py` (which compares the states
+with `status.ts`) say the same.
 
 **Help of the agent (v0.2.2).** `src/mlviz/agent_guide.md` (shipped in the package) is the text the agent reads through the
 tool `help`: no topic gives the index, a topic (`faehigkeiten`, `werkzeuge`, `ansichten`, `widgets`, `eigene-widgets`, `modi`,

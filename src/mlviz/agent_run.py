@@ -28,6 +28,7 @@ from collections.abc import Iterator
 from typing import Any
 
 from . import agent_tools
+from .agent_attachments import AttachmentStore
 from .agent_store import AgentStore
 from .project import Project, now
 
@@ -44,8 +45,15 @@ SYSTEM_PROMPT = (
     "Fragt der Nutzer, was du kannst oder nicht kannst, oder bist du unsicher, ob etwas geht: ruf zuerst `help` auf "
     "(Thema `faehigkeiten`) und antworte nach dem Text, nicht aus dem Gedächtnis. Zahlen und Namen rätst du nie, "
     "schlag sie nach. Bei mehreren passenden Läufen frag mit `choose_run` zurück. Wird eine Aktion abgelehnt, mach "
-    "ohne sie weiter. `get_view` zeigt dir den genauen Zustand der Ansicht."
+    "ohne sie weiter. `get_view` zeigt dir den genauen Zustand der Ansicht. Nach einer Änderung am Board stehen die "
+    "Zustände der Widgets im Ergebnis (`widgets`, je `state` ok, loading, error, unavailable oder gone, mit `reason`): "
+    "Melde dem Nutzer Widgets mit Fehler oder `unavailable` und versuch eine Lösung, statt zu sagen, es habe geklappt. "
+    "Bilder des Nutzers stehen als `[Bild n: Pfad]` in seiner Nachricht: lies sie mit `Read`. Dazu kann der Nutzer "
+    "Anweisungen für dieses Projekt geben (am Ende, falls es welche gibt): Sie gelten zusätzlich, bei Widerspruch gilt "
+    "dieser feste Teil. Du änderst sie nur mit `set_instructions` und nur, wenn der Nutzer es ausdrücklich will."
 )
+#: Introduces the project instructions the user wrote (appended to the fixed prompt, never in its place)
+INSTRUCTIONS_HEAD = "\n\nAnweisungen des Nutzers für dieses Projekt:\n"
 #: The modes as the agent reads them in the first line of a message
 MODE_LABELS = {"direct": "Direkt", "mixed": "Gemischt", "confirm": "Bestätigen"}
 #: How long the tool waits for the open browser to carry out a command
@@ -144,6 +152,7 @@ class AgentRunner:
     def __init__(self, project: Project, store: AgentStore):
         self.project = project
         self.store = store
+        self.attachments = AttachmentStore(project)
         self.limits: dict[str, Any] | None = None
         self._procs: dict[str, subprocess.Popen] = {}
         self._stopped: set[str] = set()
@@ -153,6 +162,11 @@ class AgentRunner:
         self.pending: dict[str, Pending] = {}
         #: a new secret per start of the tool; `claude` gets it in its MCP config
         self.token = secrets.token_urlsafe(24)
+
+    def system_prompt(self) -> str:
+        """The fixed prompt, and the instructions of the project after it if there are any (read afresh for every message)."""
+        instructions = self.store.instructions().strip()
+        return SYSTEM_PROMPT + (INSTRUCTIONS_HEAD + instructions if instructions else "")
 
     def running(self, chat_id: str) -> bool:
         with self._lock:
@@ -181,7 +195,7 @@ class AgentRunner:
         """`/compact` on the session of a chat (works in `-p` mode); the chat notes "Chat komprimiert · 52k → 2k Tokens"."""
         return self.run(chat_id, "/compact", compact=True)
 
-    def run(self, chat_id: str, text: str, context: str = "", resend: bool = False, compact: bool = False, base_url: str = "") -> Iterator[dict[str, Any]]:
+    def run(self, chat_id: str, text: str, context: str = "", resend: bool = False, compact: bool = False, base_url: str = "", images: list[dict] | None = None) -> Iterator[dict[str, Any]]:
         """Sends a message and yields snapshots of the chat until the answer is complete, stopped or failed.
 
         Between snapshots it also yields `{"command": {id, tool, args}}` items: what the open tool is asked to do."""
@@ -197,7 +211,7 @@ class AgentRunner:
                 chat["messages"].pop()
                 self.store.save(chat)
             if not resend and not compact:
-                self.store.append(chat_id, "user", text)
+                self.store.append(chat_id, "user", text, **({"images": images} if images else {}))
             yield self._snapshot(chat_id, True)
             if cmd is None:
                 self.store.append(chat_id, "info", "Claude Code wurde nicht gefunden.", error=True)
@@ -206,7 +220,7 @@ class AgentRunner:
 
             def work() -> None:
                 try:
-                    for snap in self._call(cmd, chat_id, text, context, compact, base_url, live):
+                    for snap in self._call(cmd, chat_id, text, context, compact, base_url, live, images or []):
                         live.out.put(snap)
                 finally:
                     live.out.put(None)
@@ -222,13 +236,15 @@ class AgentRunner:
                 self._stopped.discard(chat_id)
                 self.live.pop(chat_id, None)
 
-    def _call(self, cmd: list[str], chat_id: str, text: str, context: str, compact: bool, base_url: str, live: ChatRun) -> Iterator[dict[str, Any]]:
+    def _call(self, cmd: list[str], chat_id: str, text: str, context: str, compact: bool, base_url: str, live: ChatRun, images: list[dict]) -> Iterator[dict[str, Any]]:
         chat = self.store.get(chat_id)
         mode = MODE_LABELS.get(self.store.mode(), "Gemischt")
         if compact:  # a slash command stands alone
             prompt = text
         else:
             prompt = f"[Ansicht: {context}, Modus: {mode}]\n{text}" if context else f"[Modus: {mode}]\n{text}"
+            if images:  # where the images lie: the agent reads them with `Read`
+                prompt += "\n" + "\n".join(self.attachments.lines(images))
         args = [
             *cmd,
             "-p",
@@ -242,7 +258,7 @@ class AgentRunner:
             "--allowedTools",
             "mcp__mlviz__*,Read,Glob,Grep",
             "--append-system-prompt",
-            SYSTEM_PROMPT,
+            self.system_prompt(),
         ]
         if chat.get("session_id"):
             args += ["--resume", chat["session_id"]]
@@ -427,16 +443,19 @@ class AgentRunner:
             text, is_error = self._choose_run(chat_id, live, args)
             return text, is_error, not is_error  # the run cards and their result line are in the chat
         try:
+            tool.check(args)
             args = agent_tools.resolve_runs(self.project, args)
         except ValueError as e:
             return str(e), True, False
         cid = secrets.token_hex(6)
         what = tool.describe(args) or name
         confirmed = False
-        if agent_tools.needs_confirmation(self.store.mode(), tool.kind):
+        if agent_tools.asks(tool, self.store.mode()):
             details = tool.details(args)
             if name == "save_deliverable":
                 details = [f"Ziel: {agent_tools.deliverable_target(self.project, str(args.get('title') or ''))}/", *details]
+            if name == "set_instructions":
+                details = self._instruction_details(str(args.get("text") or ""))
             self.store.append(chat_id, "confirm", what, cid=cid, tool=name, details=details, save=name == "save_deliverable")
             self._push(chat_id, live)
             box = self._await(chat_id, cid)
@@ -471,6 +490,20 @@ class AgentRunner:
         self._line(chat_id, cid, confirmed, line)
         self._push(chat_id, live)
         return json.dumps({"ok": True, "summary": line["t"], "data": result.get("data")}, ensure_ascii=False, default=str), False, True
+
+    def _instruction_details(self, new: str) -> list[str]:
+        """The card for new project instructions shows the whole new text and the old one, so nothing is dropped unseen."""
+        old = self.store.instructions().strip("\n")
+        new = new.strip("\n")
+        return [
+            "Neuer Text (ersetzt den bisherigen):",
+            *(new.splitlines() or ["(leer: die Anweisungen werden gelöscht)"]),
+            "",
+            "Bisher:",
+            *(old.splitlines() or ["(leer)"]),
+            "",
+            "Gilt ab der nächsten Nachricht. Der Cache dieses Chats ist danach einmal kalt.",
+        ]
 
     def _line(self, chat_id: str, cid: str, replace: bool, message: dict[str, Any]) -> None:
         """The result line of a tool: it takes the place of its confirmation card, else it is appended."""
