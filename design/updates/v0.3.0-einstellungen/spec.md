@@ -123,6 +123,8 @@ a click on a term offers alternatives and what was actually heard. Then send, ed
 - `faster-whisper` is an optional dependency (`mlviz[voice]`), installed in the Docker image; the model is downloaded on first use into a cache (in Docker a volume). Until it is ready the microphone shows "Erkennung wird geladen …".
 - The microphone works because the tool runs on `localhost` in Tim's browser (VS Code port forwarding), a secure context.
 
+- `src/mlviz/agent_guide.md`: the line "Mit Sprache arbeiten (der Mikrofon-Knopf ist noch ohne Funktion)" goes; the agent only receives text, a spoken message is marked as spoken.
+
 **Edge cases:** recording longer than 2 minutes → stops on its own and is transcribed. Empty or silent recording → toast "Nichts verstanden", no review box.
 
 **In the prototype:** `Prototyp-03.dc.html` (`vMic`, `vStart`, `vStop`, `vSend`, `vSegs`, `vPopAlts`, `capMic`), sample in `voice-data.js` (`SEGS`), single variant `B3-Begriffe.dc.html`. Recognition is simulated: stop always yields the same sample sentence after 1.3 s.
