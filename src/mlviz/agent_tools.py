@@ -19,6 +19,7 @@ from typing import Any, Callable
 from . import agent_guide, aggregate, configview, own_widgets, store, widgets
 from .listing import merkmal_candidates, run_listing
 from .project import Project
+from .agent_store import MAX_INSTRUCTIONS
 from .runs import get_run, list_runs
 from .templates import TemplateStore
 
@@ -33,6 +34,11 @@ def needs_confirmation(mode: str, kind: str) -> bool:
     if mode == "confirm":
         return True
     return kind == CHANGE  # mixed (and anything unknown): ask for changes only
+
+
+def asks(tool: "Tool", mode: str) -> bool:
+    """Does this call wait for a click? The mode decides, except for a tool that always asks."""
+    return tool.always_confirm or needs_confirmation(mode, tool.kind)
 
 
 @dataclass
@@ -50,6 +56,10 @@ class Tool:
     details: Callable[[dict], list[str]] = lambda a: []
     #: not an action of the agent worth a line in the chat (looking at the view)
     silent: bool = False
+    #: asks for a click in every mode, also in Direkt (what outlives the chat, like the project instructions)
+    always_confirm: bool = False
+    #: checks the arguments before anything is shown or done; raises ValueError with a message for the agent
+    check: Callable[[dict], None] = lambda a: None
 
     def schema(self) -> dict:
         return {
@@ -150,6 +160,20 @@ _add(Tool("save_deliverable", CHANGE, "Speichert Widgets des Boards als Bilder i
     "title": _s("Titel des Ordners"), "widgets": {"type": "array", "items": {"type": "string"}, "description": "Widget-IDs oder -Typen (leer = alle)"},
 }, ["title"], describe=lambda a: f"Deliverable speichern · {a.get('title')}",
           details=lambda a: [f"Titel: {a.get('title')}"] + ([f"Widgets: {', '.join(a['widgets'])}"] if a.get("widgets") else ["Widgets: alle"])))
+
+
+def _check_instructions(a: dict) -> None:
+    text = a.get("text")
+    if not isinstance(text, str):
+        raise ValueError("text fehlt: der ganze neue Text der Anweisungen")
+    if len(text.strip()) > MAX_INSTRUCTIONS:
+        raise ValueError(f"Die Anweisungen dürfen höchstens {MAX_INSTRUCTIONS} Zeichen haben (hier {len(text.strip())}). Fass sie kürzer.")
+
+
+_add(Tool("set_instructions", CHANGE, "Schreibt die Projekt-Anweisungen des Nutzers neu (der ganze neue Text ersetzt den bisherigen, leerer Text löscht sie). "
+          "Nur auf ausdrücklichen Wunsch des Nutzers im Chat, nie von dir aus. Fragt in jedem Modus nach. Siehe help, Thema anweisungen.", {
+    "text": _s(f"der ganze neue Text, höchstens {MAX_INSTRUCTIONS} Zeichen"),
+}, ["text"], describe=lambda a: "Projekt-Anweisungen ändern", always_confirm=True, check=_check_instructions))
 
 
 def catalog() -> list[dict]:

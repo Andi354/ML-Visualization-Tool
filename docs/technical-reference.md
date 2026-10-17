@@ -101,6 +101,8 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `POST /api/templates/delete` | `{scope, name}` removes a template (400 for "Standard", 404 if unknown) |
 | `POST /api/agent/attachments` | keeps an image for the agent: `{name, data}` (base64) -> `{file, name, size, url}`; 400 with a reason for something that is no image, over 5 MB or empty |
 | `GET /api/agent/attachments/{file}` | a kept image (404 for any other name) |
+| `GET /api/agent/instructions` | the instructions of the project for the agent: `{text, max}` |
+| `PUT /api/agent/instructions` | `{text, expect?}` replaces them (400 over 4000 characters, 409 if `expect` no longer matches); `{text: ""}` deletes them |
 | `PUT /api/agent/mode` | `{mode}`: Direkt, Gemischt or Bestätigen, kept per project |
 | `PUT /api/agent/debug` | `{on}`: the debug display of the agent window (look-ups as lines in the chat), kept per project |
 | `GET /api/issues` | per issue ID found in the runs: title, status, URL (with key), report and deliverable path |
@@ -253,6 +255,18 @@ break stays a break), headings, `code`, fenced code, bold, italic, links (`[text
 tab with `rel="noopener noreferrer"`, other schemes stay text), nested bullet and numbered lists, quotes, rules and pipe tables (wide
 tables scroll inside the message). Marks that are not closed stay as typed, `snake_case` is no emphasis. The messages of the user stay
 plain text. The stand-in `claude` answers `[markdown]` and `[wide]` with a formatted text for the tests.
+
+**Instructions of the project (v0.2.3).** `<project>/.mlviz/agent_instructions.md` holds what the user wants from the agent in this
+project (format, tone, terms, preferred widgets; at most 4000 characters, it starts empty and is deleted when it becomes empty).
+`AgentRunner.system_prompt()` reads it before every message and appends it to the fixed `SYSTEM_PROMPT` under "Anweisungen des Nutzers
+für dieses Projekt:"; the fixed part comes first and wins on a conflict, so the instructions cannot lift the limits (read only, the
+modes). `GET/PUT /api/agent/instructions` read and write it (`PUT {text, expect?}`: with `expect` only if the text is still that one, else
+409; over the limit 400) and are what a settings screen will use. The agent changes it with `set_instructions` (the whole new text), a tool
+with `always_confirm`: **it asks in every mode, also in Direkt** (`agent_tools.asks`), checks the length before anything is shown (`check`),
+and its card shows the whole new and the old text (`_instruction_details`). The browser writes through `PUT` and offers Rückgängig and
+Wiederholen (conditional with `expect`, so an undo never overwrites a text somebody changed in between; the window says why when it
+cannot). A change applies to the next message and makes the cache of the chat cold once. The system prompt tells the agent to change the
+instructions only when the user explicitly wants it; the guide has the topic `anweisungen`.
 
 **Images for the agent (v0.2.3).** The user pastes (Ctrl+V into the input), drops or picks (paper clip) up to 4 images, PNG, JPEG, WebP
 or GIF, at most 5 MB each (`agent/attachments.ts` checks before the upload and names what is refused). `POST /api/agent/attachments`

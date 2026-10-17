@@ -25,6 +25,8 @@ STATE_DIR = ".mlviz"
 MODES = ("direct", "mixed", "confirm")
 DEFAULT_MODE = "mixed"
 NEW_CHAT_TITLE = "Neuer Chat"
+#: Longest text of the project instructions the agent may be given (and may write).
+MAX_INSTRUCTIONS = 4000
 MESSAGE_KINDS = ("user", "agent", "action", "info", "confirm", "choice")
 _ID = re.compile(r"^[0-9a-f]{12}$")
 #: Prompt cache lifetime with a subscription; 5 minutes if the run used an API key.
@@ -33,6 +35,10 @@ CACHE_TTL_S = 3600
 
 class ChatNotFound(LookupError):
     pass
+
+
+class InstructionsChanged(ValueError):
+    """The instructions are not the text the caller expected (somebody changed them in between)."""
 
 
 def _atomic_write(path: Path, data: dict) -> None:
@@ -81,6 +87,37 @@ class AgentStore:
     def set_debug(self, on: bool) -> bool:
         self._put_setting("debug", bool(on))
         return bool(on)
+
+    # --- instructions of the project (v0.2.3) ----------------------------------------------------
+    @property
+    def _instructions_file(self) -> Path:
+        return self.dir / "agent_instructions.md"
+
+    def instructions(self) -> str:
+        """What the user wants the agent to do in this project, in his own words ("" if there is nothing)."""
+        try:
+            return self._instructions_file.read_text(encoding="utf-8")
+        except OSError:
+            return ""
+
+    def set_instructions(self, text: str, expect: str | None = None) -> str:
+        """Replaces the instructions. With `expect` only if they are still that text (else ValueError)."""
+        if not isinstance(text, str):
+            raise ValueError("text must be a string")
+        text = text.replace("\r\n", "\n").strip("\n")
+        if len(text) > MAX_INSTRUCTIONS:
+            raise ValueError(f"Die Anweisungen dürfen höchstens {MAX_INSTRUCTIONS} Zeichen haben (hier {len(text)}).")
+        with self._lock:
+            if expect is not None and self.instructions().strip("\n") != expect.replace("\r\n", "\n").strip("\n"):
+                raise InstructionsChanged("Die Anweisungen wurden inzwischen geändert.")
+            if text:
+                self._instructions_file.parent.mkdir(parents=True, exist_ok=True)
+                tmp = self._instructions_file.with_suffix(".tmp")
+                tmp.write_text(text + "\n", encoding="utf-8")
+                os.replace(tmp, self._instructions_file)
+            else:
+                self._instructions_file.unlink(missing_ok=True)
+        return text
 
     # --- chats --------------------------------------------------------------------------------
     def _file(self, chat_id: str) -> Path:

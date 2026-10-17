@@ -97,3 +97,11 @@ export async function uploadImage(file: File): Promise<{ file: string; name: str
   if (!r.ok) throw new Error((await r.json().catch(() => null))?.detail ?? `Das Bild ließ sich nicht senden (${r.status}).`);
   return r.json();
 }
+
+/** The instructions of the project for the agent (`.mlviz/agent_instructions.md`); `expect` makes the change conditional (409 if somebody changed them). */
+export const getInstructions = () => getJson<{ text: string; max: number }>("/api/agent/instructions");
+export async function putInstructions(text: string, expect?: string): Promise<string> {
+  const r = await fetch("/api/agent/instructions", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, ...(expect === undefined ? {} : { expect }) }) });
+  if (!r.ok) throw new Error((await r.json().catch(() => null))?.detail ?? `Die Anweisungen ließen sich nicht speichern (${r.status}).`);
+  return (await r.json()).text;
+}

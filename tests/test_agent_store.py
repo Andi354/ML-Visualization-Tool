@@ -127,3 +127,49 @@ def test_api_mode(client):
     assert client.put("/api/agent/mode", json={"mode": "direct"}).json() == {"mode": "direct"}
     assert client.get("/api/agent").json()["mode"] == "direct"
     assert client.put("/api/agent/mode", json={"mode": "x"}).status_code == 400
+
+
+# --- v0.2.3 · M: instructions of the project ---------------------------------------------------------
+def test_the_instructions_start_empty_and_are_one_file_in_the_state_folder(tmp_path):
+    from mlviz.agent_store import AgentStore
+    from mlviz.project import Project
+
+    store = AgentStore(Project.load(tmp_path))
+    assert store.instructions() == ""
+    assert store.set_instructions("Tabellen bevorzugen.\nKurz antworten.") == "Tabellen bevorzugen.\nKurz antworten."
+    assert (tmp_path / ".mlviz" / "agent_instructions.md").read_text() == "Tabellen bevorzugen.\nKurz antworten.\n"
+    assert store.instructions().strip() == "Tabellen bevorzugen.\nKurz antworten."
+    assert store.set_instructions("") == "" and not (tmp_path / ".mlviz" / "agent_instructions.md").exists()
+
+
+def test_the_instructions_have_a_limit_and_the_mode_file_is_not_touched(tmp_path):
+    import pytest
+
+    from mlviz.agent_store import MAX_INSTRUCTIONS, AgentStore
+    from mlviz.project import Project
+
+    store = AgentStore(Project.load(tmp_path))
+    store.set_mode("direct")
+    store.set_instructions("x" * MAX_INSTRUCTIONS)
+    with pytest.raises(ValueError, match=str(MAX_INSTRUCTIONS)):
+        store.set_instructions("x" * (MAX_INSTRUCTIONS + 1))
+    with pytest.raises(ValueError):
+        store.set_instructions(None)  # type: ignore[arg-type]
+    assert len(store.instructions().strip()) == MAX_INSTRUCTIONS and store.mode() == "direct"
+
+
+def test_a_change_with_expect_only_goes_through_if_nobody_changed_the_text(tmp_path):
+    import pytest
+
+    from mlviz.agent_store import AgentStore, InstructionsChanged
+    from mlviz.project import Project
+
+    store = AgentStore(Project.load(tmp_path))
+    store.set_instructions("alt")
+    store.set_instructions("neu", expect="alt")
+    with pytest.raises(InstructionsChanged):
+        store.set_instructions("wieder alt", expect="alt")
+    assert store.instructions().strip() == "neu"
+    store.set_instructions("", expect="neu")
+    store.set_instructions("von null", expect="")  # an empty file counts as "" for expect
+    assert store.instructions().strip() == "von null"

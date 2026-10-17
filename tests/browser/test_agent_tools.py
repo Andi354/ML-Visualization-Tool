@@ -463,3 +463,80 @@ def test_a_widget_that_is_still_loading_after_the_wait_is_reported_as_loading(to
     assert states["axis-effect"]["state"] == "loading"
     assert all(w["state"] == "ok" for t, w in states.items() if t != "axis-effect")
     assert result["summary"] == "Analyse · Ein Lauf · 1 lädt noch"
+
+
+# --- v0.2.3 · M: project instructions -----------------------------------------------------------------------------
+def instructions_file(page):
+    return page.root / ".mlviz" / "agent_instructions.md"
+
+
+def test_the_agent_changes_the_instructions_only_after_a_click_in_every_mode_also_direkt(tool_page):
+    page = tool_page
+    mode(page, "direct")
+    tool_nowait(page, "set_instructions", text="Antworte mit Tabellen.\nKurz.")
+    card = page.get_by_test_id("agent-confirm")
+    expect(card).to_contain_text("Projekt-Anweisungen ändern")  # even in Direkt
+    detail = card.get_by_test_id("agent-confirm-detail")
+    expect(detail).to_contain_text("Neuer Text (ersetzt den bisherigen):")
+    expect(detail).to_contain_text("Antworte mit Tabellen.")
+    expect(detail).to_contain_text("Bisher:")
+    expect(detail).to_contain_text("(leer)")
+    expect(detail).to_contain_text("Der Cache dieses Chats ist danach einmal kalt.")
+    expect(card.get_by_test_id("agent-confirm-ok")).to_have_text("Ausführen")
+    assert not instructions_file(page).exists()  # nothing before the click
+    card.get_by_test_id("agent-confirm-ok").click()
+    line = page.get_by_test_id("agent-action").last
+    expect(line).to_contain_text("Projekt-Anweisungen gespeichert · 28 Zeichen")
+    assert instructions_file(page).read_text() == "Antworte mit Tabellen.\nKurz.\n"
+    expect(page.get_by_test_id("agent-confirm")).to_have_count(0)  # the card became the line
+
+
+def test_instructions_can_be_taken_back_and_done_again(tool_page):
+    page = tool_page
+    mode(page, "direct")
+    tool_nowait(page, "set_instructions", text="Eins.")
+    page.get_by_test_id("agent-confirm-ok").click()
+    expect(page.get_by_test_id("agent-action").last).to_contain_text("gespeichert")
+    tool_nowait(page, "set_instructions", text="Zwei.")
+    expect(page.get_by_test_id("agent-confirm-detail")).to_contain_text("Eins.")  # the old text is on the card
+    page.get_by_test_id("agent-confirm-ok").click()
+    expect(page.get_by_test_id("agent-action")).to_have_count(2)  # the card became the second line
+    expect(page.get_by_test_id("agent-action").last).to_contain_text("gespeichert")
+    assert instructions_file(page).read_text() == "Zwei.\n"
+    page.get_by_test_id("agent-undo").last.click()
+    expect(page.get_by_test_id("agent-action").last).to_contain_text("↶ Projekt-Anweisungen zurückgesetzt")
+    assert instructions_file(page).read_text() == "Eins.\n"
+    page.get_by_test_id("agent-redo").last.click()
+    expect(page.get_by_test_id("agent-action").last).to_contain_text("gespeichert")
+    assert instructions_file(page).read_text() == "Zwei.\n"
+
+
+def test_rejecting_the_card_leaves_the_instructions_alone(tool_page):
+    page = tool_page
+    mode(page, "direct")
+    tool_nowait(page, "set_instructions", text="Nicht doch.")
+    page.get_by_test_id("agent-confirm-no").click()
+    expect(page.get_by_test_id("agent-action").last).to_contain_text("Abgelehnt · Projekt-Anweisungen ändern")
+    assert not instructions_file(page).exists()
+
+
+def test_an_undo_does_not_overwrite_what_somebody_changed_in_the_meantime(tool_page):
+    page = tool_page
+    mode(page, "direct")
+    tool_nowait(page, "set_instructions", text="Vom Agenten.")
+    page.get_by_test_id("agent-confirm-ok").click()
+    expect(page.get_by_test_id("agent-action").last).to_contain_text("gespeichert")
+    instructions_file(page).write_text("Von Hand geändert.\n")  # somebody edits the file
+    page.get_by_test_id("agent-undo").last.click()
+    expect(page.get_by_test_id("agent-action-error")).to_have_text("Rückgängig ging nicht: Die Anweisungen wurden inzwischen geändert.")  # the user is told
+    expect(page.get_by_test_id("agent-action").last).not_to_contain_text("zurückgesetzt")
+    assert instructions_file(page).read_text() == "Von Hand geändert.\n"
+
+
+def test_a_text_that_is_too_long_is_an_error_line_and_no_card(tool_page):
+    page = tool_page
+    mode(page, "direct")
+    tool(page, "set_instructions", text="x" * 4001)
+    expect(page.get_by_test_id("agent-error").last).to_contain_text("set_instructions: Die Anweisungen dürfen höchstens 4000 Zeichen haben")
+    expect(page.get_by_test_id("agent-confirm")).to_have_count(0)
+    assert not instructions_file(page).exists()

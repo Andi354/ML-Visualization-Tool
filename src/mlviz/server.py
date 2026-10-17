@@ -15,7 +15,7 @@ from . import aggregate, configview, deliverables, linear, widgets
 from . import own_widgets, templates
 from . import agent_attachments, agent_run
 from .agent_attachments import AttachmentError
-from .agent_store import AgentStore, ChatNotFound
+from .agent_store import MAX_INSTRUCTIONS, AgentStore, ChatNotFound, InstructionsChanged
 from .store import StoreError
 from .listing import merkmal_candidates, run_listing
 from .project import Project, now
@@ -250,6 +250,22 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     def api_agent_mode(payload: dict = Body(...)) -> dict:
         try:
             return {"mode": agent.set_mode(str(payload.get("mode")))}
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+
+    @app.get("/api/agent/instructions")
+    def api_agent_instructions() -> dict:
+        """The instructions of the project for the agent (the text of `.mlviz/agent_instructions.md`)."""
+        return {"text": agent.instructions().strip("\n"), "max": MAX_INSTRUCTIONS}
+
+    @app.put("/api/agent/instructions")
+    def api_agent_set_instructions(payload: dict = Body(...)) -> dict:
+        """Replaces the instructions: `{text, expect?}`; with `expect` only if they still are that text (409 otherwise)."""
+        expect = payload.get("expect")
+        try:
+            return {"text": agent.set_instructions(payload.get("text"), expect if isinstance(expect, str) else None), "max": MAX_INSTRUCTIONS}
+        except InstructionsChanged as e:
+            raise HTTPException(409, str(e))
         except ValueError as e:
             raise HTTPException(400, str(e))
 

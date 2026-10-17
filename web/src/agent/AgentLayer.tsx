@@ -74,6 +74,8 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
   const [uploading, setUploading] = useState(0);
   const [imageNote, setImageNote] = useState<string | null>(null);
   const [dropping, setDropping] = useState(false);
+  /** Why a Rückgängig or Wiederholen did not work (shown above the input until the next try or message). */
+  const [actionError, setActionError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const fetchedAt = useRef(Date.now());
   const messagesEnd = useRef<HTMLDivElement>(null);
@@ -240,6 +242,7 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     setDraft("");
     setImages([]);
     setImageNote(null);
+    setActionError(null);
     start(text, { images: withImages }).catch(() => {});
   };
   const sendAnyway = () => {
@@ -292,7 +295,14 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
   const flip = async (cid: string, to: "done" | "reverted") => {
     const entry = undoFor(cid);
     if (!entry || !chat) return;
-    const text = (await (to === "reverted" ? entry.undo() : entry.redo?.())) ?? "";
+    setActionError(null);
+    let text: string;
+    try {
+      text = (await (to === "reverted" ? entry.undo() : entry.redo?.())) ?? "";
+    } catch (e) {
+      setActionError(`${to === "reverted" ? "Rückgängig" : "Wiederholen"} ging nicht: ${(e as Error).message}`); // the line stays as it was
+      return;
+    }
     const updated = await markAction(chat.id, cid, to, to === "reverted" ? `↶ ${text}` : text).catch(() => null);
     if (updated) setChat(updated);
   };
@@ -459,8 +469,8 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
                 </div>
                 {msg.details?.length ? (
                   <div class="agent-card-detail mono" data-testid="agent-confirm-detail">
-                    {msg.details.map((d) => (
-                      <div key={d}>{d}</div>
+                    {msg.details.map((d, n) => (
+                      <div key={n}>{d || "\u00a0"}</div>
                     ))}
                   </div>
                 ) : null}
@@ -547,6 +557,11 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
         {setup?.ready && setup.api_key && (
           <div class="agent-notice warn small" data-testid="agent-api-key">
             Der Agent läuft über API-Key, nicht über das Abo.
+          </div>
+        )}
+        {actionError && (
+          <div class="agent-notice warn small" data-testid="agent-action-error">
+            {actionError}
           </div>
         )}
         {hint && chat && (

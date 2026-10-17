@@ -24,7 +24,7 @@ def table(section: str) -> list[list[str]]:
 
 
 def test_the_guide_has_the_topics_the_agent_is_told_about():
-    assert list(agent_guide.sections()) == ["faehigkeiten", "werkzeuge", "ansichten", "widgets", "eigene-widgets", "modi", "rueckgaengig"]
+    assert list(agent_guide.sections()) == ["faehigkeiten", "werkzeuge", "ansichten", "widgets", "eigene-widgets", "modi", "anweisungen", "rueckgaengig"]
     assert all(title and text for title, text in agent_guide.sections().values())
 
 
@@ -103,3 +103,18 @@ def test_the_system_prompt_tells_the_agent_to_report_widgets_with_a_problem():
     from mlviz import agent_run
 
     assert "`widgets`" in agent_run.SYSTEM_PROMPT and "Fehler" in agent_run.SYSTEM_PROMPT and "unavailable" in agent_run.SYSTEM_PROMPT
+
+
+def test_a_tool_that_always_asks_is_named_in_the_modes_and_its_topic_exists():
+    always = [name for name, tool in agent_tools.TOOLS.items() if tool.always_confirm]
+    assert always == ["set_instructions"]
+    modes = agent_guide.sections()["modi"][1]
+    for name in always:
+        assert f"`{name}`" in modes and "in jedem Modus" in modes
+
+
+def test_the_instructions_topic_names_the_file_the_limit_and_the_rule_for_changes():
+    from mlviz import agent_store
+
+    text = agent_guide.sections()["anweisungen"][1]
+    assert ".mlviz/agent_instructions.md" in text and str(agent_store.MAX_INSTRUCTIONS) in text and "ausdrücklich" in text
