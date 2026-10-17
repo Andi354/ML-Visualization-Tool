@@ -1,10 +1,10 @@
 // The agent window and its capsule (feature A), floating above the content.
 import type { RefObject } from "preact";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
-import { AgentIcon, MicIcon } from "../frame/icons";
+import { AgentIcon, BugIcon, MicIcon } from "../frame/icons";
 import { carryOut } from "./commands";
 import { undoFor } from "./bus";
-import { compactChat, decide, getAgent, markAction, getChat, getSetup, newChat, runMessage, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
+import { compactChat, decide, getAgent, markAction, getChat, getSetup, newChat, runMessage, setDebug, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
 import { defaultRect, fit, moved, resized, type Bounds, type Rect } from "./geometry";
 import {
   cacheState,
@@ -269,6 +269,12 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     putMode(m).catch(() => {});
   };
 
+  const debug = overview?.debug === true;
+  const toggleDebug = () => {
+    setOverview((o) => (o ? { ...o, debug: !debug } : o));
+    setDebug(!debug).catch(() => {});
+  };
+
   const info = chat ?? { tokens: 0, last_turn_at: null, cache_ttl_s: 3600 };
   const use = contextUse(info.tokens, chat?.context_window || undefined);
   const cache = cacheState(info, nowMs());
@@ -321,6 +327,16 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
           {cache.label}
         </span>
         <span class="agent-spacer" />
+        <button
+          class={"agent-hdr-btn agent-debug-btn" + (debug ? " on" : "")}
+          title={debug ? "Debug an: auch Nachschlagen und Hilfe werden im Chat gezeigt" : "Debug: auch Nachschlagen im Chat zeigen"}
+          aria-label="Debug"
+          aria-pressed={debug}
+          onClick={toggleDebug}
+          data-testid="agent-debug"
+        >
+          <BugIcon size={14} />
+        </button>
         <button class="agent-hdr-btn" title="Neuer Chat" aria-label="Neuer Chat" onClick={addChat} data-testid="agent-new">
           +
         </button>
@@ -424,13 +440,14 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
                 ))}
               </div>
             );
+          if (msg.k === "action" && msg.debug && !debug) return null; // look-ups show only with the debug button on
           if (msg.k === "action") {
             const reverted = msg.state === "reverted";
             const state = msg.rejected ? "rejected" : reverted ? "reverted" : "done";
             const entry = msg.undo_id ? undoFor(msg.undo_id) : undefined;
             return (
-              <div key={i} class={"agent-action " + state} data-testid="agent-action" data-state={state}>
-                <span class="agent-action-icon">{state === "rejected" ? "✕" : reverted ? "↶" : "✓"}</span>
+              <div key={i} class={"agent-action " + state + (msg.debug ? " debug" : "")} data-testid={msg.debug ? "agent-debug-line" : "agent-action"} data-state={state}>
+                <span class="agent-action-icon">{state === "rejected" ? "✕" : reverted ? "↶" : msg.debug ? "·" : "✓"}</span>
                 <span class="agent-action-text">{msg.t}</span>
                 {state === "done" && msg.auto && <span class="agent-action-how">direkt</span>}
                 {entry && state === "done" && (
@@ -449,7 +466,7 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
           return (
             <div key={i} class={"agent-info" + (msg.error ? " error" : "")} data-testid={msg.error ? "agent-error" : "agent-info"}>
               {msg.t}
-              {msg.error && i === (chat?.messages.length ?? 0) - 1 && !busy && (
+              {msg.error && !msg.tool && i === (chat?.messages.length ?? 0) - 1 && !busy && (
                 <button class="agent-resend" onClick={resend} data-testid="agent-resend">
                   Erneut senden
                 </button>

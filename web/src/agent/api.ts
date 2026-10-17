@@ -5,6 +5,8 @@ import type { AgentMode, Chat, ChatInfo } from "./model";
 export interface AgentOverview {
   chats: ChatInfo[];
   mode: AgentMode;
+  /** Debug display on: the chat also shows the look-ups of the agent. */
+  debug?: boolean;
   /** The clock of the tool (ISO), so the cache display does not depend on the browser's clock. */
   now: string;
   /** Subscription usage (percent) if Claude Code reported it. */
@@ -48,6 +50,7 @@ export const getChat = (id: string) => getJson<Chat>(`/api/agent/chats/${id}`);
 export const newChat = (title = "") => send<Chat>("POST", "/api/agent/chats", { title });
 export const sendMessage = (id: string, text: string) => send<Chat>("POST", `/api/agent/chats/${id}/messages`, { text });
 export const setMode = (mode: AgentMode) => send<{ mode: AgentMode }>("PUT", "/api/agent/mode", { mode });
+export const setDebug = (on: boolean) => send<{ debug: boolean }>("PUT", "/api/agent/debug", { on });
 export const getSetup = () => getJson<AgentSetup>("/api/agent/setup");
 export const stopChat = (id: string) => send<{ stopped: boolean }>("POST", `/api/agent/chats/${id}/stop`);
 

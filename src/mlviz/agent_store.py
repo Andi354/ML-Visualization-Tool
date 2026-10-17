@@ -53,18 +53,34 @@ class AgentStore:
     def _settings_file(self) -> Path:
         return self.dir / "agent.json"
 
-    def mode(self) -> str:
+    def _settings(self) -> dict:
         try:
-            mode = json.loads(self._settings_file.read_text()).get("mode")
-        except (OSError, ValueError, AttributeError):
-            return DEFAULT_MODE
+            data = json.loads(self._settings_file.read_text())
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
+
+    def _put_setting(self, key: str, value: Any) -> None:
+        with self._lock:
+            _atomic_write(self._settings_file, {**self._settings(), key: value})
+
+    def mode(self) -> str:
+        mode = self._settings().get("mode")
         return mode if mode in MODES else DEFAULT_MODE
 
     def set_mode(self, mode: str) -> str:
         if mode not in MODES:
             raise ValueError(f"mode must be one of {MODES}")
-        _atomic_write(self._settings_file, {"mode": mode})
+        self._put_setting("mode", mode)
         return mode
+
+    def debug(self) -> bool:
+        """Debug display: the chat also shows the look-ups of the agent (a setting per project, off by default)."""
+        return self._settings().get("debug") is True
+
+    def set_debug(self, on: bool) -> bool:
+        self._put_setting("debug", bool(on))
+        return bool(on)
 
     # --- chats --------------------------------------------------------------------------------
     def _file(self, chat_id: str) -> Path:

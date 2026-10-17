@@ -52,6 +52,12 @@ MODE_LABELS = {"direct": "Direkt", "mixed": "Gemischt", "confirm": "Bestätigen"
 COMMAND_TIMEOUT_S = 120
 
 
+def _clip(text: str, limit: int = 160) -> str:
+    """One line for the chat: line breaks folded, cut with an ellipsis."""
+    line = " ".join(str(text).split())
+    return line if len(line) <= limit else line[:limit] + "…"
+
+
 @dataclass
 class Pending:
     """Something the agent waits for: a click on a card (`decision`) or the result of a command in the browser."""
@@ -375,26 +381,55 @@ class AgentRunner:
         live.out.put(self._snapshot(chat_id, True))
 
     def call_tool(self, chat_id: str, name: str, args: dict[str, Any]) -> tuple[str, bool]:
-        """Runs one tool for the agent: `(text for the agent, is_error)`. Which tools wait for a click is the mode's call."""
+        """Runs one tool for the agent: `(text for the agent, is_error)`. Which tools wait for a click is the mode's call.
+
+        What Tim sees in the chat: every failure (a line of its own unless the tool wrote one already), the look-up of
+        `help` with its topic, and with the debug display on every look-up of the agent."""
+        text, is_error, noted = self._call_tool(chat_id, name, args)
+        try:
+            self._trace(chat_id, name, args, text, is_error, noted)
+        except Exception:  # a line in the chat must never break the call of the agent
+            pass
+        return text, is_error
+
+    def _trace(self, chat_id: str, name: str, args: dict[str, Any], text: str, is_error: bool, noted: bool) -> None:
+        with self._lock:
+            live = self.live.get(chat_id)
+        if is_error and not noted:
+            self.store.append(chat_id, "info", f"{name}: {_clip(text)}", error=True, tool=name)
+        elif not is_error and name == "help":
+            topic = str(args.get("topic") or "").strip().lower()
+            self.store.append(chat_id, "action", f"Hilfe gelesen · {topic or 'Inhaltsverzeichnis'}", state="done")
+        elif not is_error and not noted and self.store.debug():
+            shown = json.dumps(args, ensure_ascii=False) if args else ""
+            self.store.append(chat_id, "action", f"{name} {_clip(shown, 100)} → {_clip(text)}".replace("  ", " "), state="done", debug=True)
+        else:
+            return
+        if live is not None:
+            self._push(chat_id, live)
+
+    def _call_tool(self, chat_id: str, name: str, args: dict[str, Any]) -> tuple[str, bool, bool]:
+        """`(text, is_error, noted)`: `noted` says that the tool has put a line into the chat itself."""
         tool = agent_tools.TOOLS.get(name)
         if tool is None:
-            return f"Unbekanntes Werkzeug: {name}", True
+            return f"Unbekanntes Werkzeug: {name}", True, False
         if tool.side == "backend" and name != "choose_run":
             try:
                 result = agent_tools.run_tool(self.project, name, args)
-                return (result if isinstance(result, str) else json.dumps(result, ensure_ascii=False, default=str)), False
+                return (result if isinstance(result, str) else json.dumps(result, ensure_ascii=False, default=str)), False, False
             except ValueError as e:
-                return str(e), True
+                return str(e), True, False
         with self._lock:
             live = self.live.get(chat_id)
         if live is None:
-            return "In diesem Chat läuft gerade keine Anfrage.", True
+            return "In diesem Chat läuft gerade keine Anfrage.", True, False
         if name == "choose_run":
-            return self._choose_run(chat_id, live, args)
+            text, is_error = self._choose_run(chat_id, live, args)
+            return text, is_error, not is_error  # the run cards and their result line are in the chat
         try:
             args = agent_tools.resolve_runs(self.project, args)
         except ValueError as e:
-            return str(e), True
+            return str(e), True, False
         cid = secrets.token_hex(6)
         what = tool.describe(args) or name
         confirmed = False
@@ -410,7 +445,7 @@ class AgentRunner:
             if not answered or not box.value.get("approve"):
                 self.store.replace(chat_id, cid, {"k": "action", "t": f"Abgelehnt · {what}", "rejected": True})
                 self._push(chat_id, live)
-                return "Der Nutzer hat diese Aktion abgelehnt. Mach ohne sie weiter.", False
+                return "Der Nutzer hat diese Aktion abgelehnt. Mach ohne sie weiter.", False, True
             confirmed = True
         box = self._await(chat_id, cid)
         live.out.put({"command": {"id": cid, "tool": name, "args": args}})
@@ -418,24 +453,24 @@ class AgentRunner:
         self._forget(cid)
         if not answered:
             note = "Die Ansicht hat nicht geantwortet (Browser geschlossen?)." if not live.stopped else "Abgebrochen."
-            self._line(chat_id, cid, confirmed, {"k": "info", "t": f"{what}: {note}"})
+            self._line(chat_id, cid, confirmed, {"k": "info", "t": f"{what}: {note}", "error": True, "tool": name})
             self._push(chat_id, live)
-            return note, True
+            return note, True, True
         result = box.value
         if not result.get("ok"):
             error = str(result.get("error") or "fehlgeschlagen")
-            self._line(chat_id, cid, confirmed, {"k": "info", "t": f"{what}: {error}"})
+            self._line(chat_id, cid, confirmed, {"k": "info", "t": f"{what}: {error}", "error": True, "tool": name})
             self._push(chat_id, live)
-            return error, True
+            return error, True, True
         if tool.silent:
-            return json.dumps(result.get("data"), ensure_ascii=False, default=str), False
+            return json.dumps(result.get("data"), ensure_ascii=False, default=str), False, False
         undoable = bool(result.get("undoable"))
         line = {"k": "action", "t": str(result.get("summary") or what), "state": "done", "auto": not confirmed}
         if undoable:
             line["undo_id"] = cid
         self._line(chat_id, cid, confirmed, line)
         self._push(chat_id, live)
-        return json.dumps({"ok": True, "summary": line["t"], "data": result.get("data")}, ensure_ascii=False, default=str), False
+        return json.dumps({"ok": True, "summary": line["t"], "data": result.get("data")}, ensure_ascii=False, default=str), False, True
 
     def _line(self, chat_id: str, cid: str, replace: bool, message: dict[str, Any]) -> None:
         """The result line of a tool: it takes the place of its confirmation card, else it is appended."""

@@ -41,3 +41,10 @@ export const MicIcon = ({ size = 15 }: { size?: number }) => (
     <path d="M4 8.5a5 5 0 0 0 10 0M9 13.5V16" />
   </svg>
 );
+
+export const BugIcon = ({ size = 15 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+    <rect x="5.5" y="5" width="7" height="9" rx="3.5" />
+    <path d="M7 5a2 2 0 0 1 4 0M9 7.5v6M5.5 9H3M12.5 9H15M5.7 6.2 4 4.5M12.3 6.2 14 4.5M5.7 12.3 4 14M12.3 12.3 14 14" />
+  </svg>
+);

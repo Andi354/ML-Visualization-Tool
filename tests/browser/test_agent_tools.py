@@ -335,13 +335,53 @@ def test_unknown_widgets_and_runs_are_reported_to_the_agent(tool_page):
     assert "Mehrere Läufe passen" in tool(page, "open_run", run="TIM-52").inner_text()
 
 
-# --- v0.2.2 · help ----------------------------------------------------------------------------------
-def test_help_answers_through_the_mcp_server_without_an_action_line(tool_page):
+# --- v0.2.2 · help, failures and the debug button -----------------------------------------------------
+def test_help_answers_through_the_mcp_server_and_shows_the_topic_it_read(tool_page):
     page = tool_page
     reply = tool(page, "help", topic="modi")
     expect(reply).to_contain_text("help: # Modi und Bestätigungen")
-    expect(page.get_by_test_id("agent-action")).to_have_count(0)  # a look-up is not an action
-    reply = tool(page, "help")
-    expect(reply).to_contain_text("Themen der Agent-Hilfe")
+    expect(page.get_by_test_id("agent-action")).to_have_text(re.compile("Hilfe gelesen · modi"))  # visible without debug
+    tool(page, "help")
+    expect(page.get_by_test_id("agent-action").last).to_contain_text("Hilfe gelesen · Inhaltsverzeichnis")
+
+
+def test_a_failing_tool_is_an_error_line_in_the_chat_without_resend(tool_page):
+    page = tool_page
     reply = tool(page, "help", topic="nix")
     expect(reply).to_contain_text("Kein Thema")
+    error = page.get_by_test_id("agent-error")
+    expect(error).to_have_text(re.compile("^help: Kein Thema"))
+    expect(page.get_by_test_id("agent-action")).to_have_count(0)  # no "Hilfe gelesen" for a wrong topic
+    tool(page, "read_run", run="gibt-es-nicht")
+    expect(page.get_by_test_id("agent-error").last).to_contain_text("read_run:")
+    expect(page.get_by_test_id("agent-resend")).to_have_count(0)  # that is for errors of Claude Code, not of a tool
+
+
+def test_the_debug_button_shows_the_look_ups_of_the_agent(tool_page):
+    page = tool_page
+    button = page.get_by_test_id("agent-debug")
+    expect(button).to_have_attribute("aria-pressed", "false")
+    tool(page, "find_runs", text="TIM-52")
+    expect(page.get_by_test_id("agent-debug-line")).to_have_count(0)  # a look-up is not worth a line without debug
+    button.click()
+    expect(button).to_have_attribute("aria-pressed", "true")
+    line = page.get_by_test_id("agent-debug-line")
+    expect(line).to_have_count(1)  # the earlier look-up shows up too: it was kept in the chat
+    expect(line).to_contain_text('find_runs {"text": "TIM-52"} → {"count": 3')
+    tool(page, "list_templates", scope="one")
+    expect(page.get_by_test_id("agent-debug-line")).to_have_count(2)
+    page.reload()
+    expect(page.get_by_test_id("agent-window")).to_be_visible()
+    expect(page.get_by_test_id("agent-debug")).to_have_attribute("aria-pressed", "true")  # kept with the project
+    expect(page.get_by_test_id("agent-debug-line")).to_have_count(2)
+    page.get_by_test_id("agent-debug").click()
+    expect(page.get_by_test_id("agent-debug-line")).to_have_count(0)
+    expect(page.get_by_test_id("agent-debug")).to_have_attribute("aria-pressed", "false")
+
+
+def test_the_debug_button_is_small_and_only_a_symbol(tool_page):
+    button = tool_page.get_by_test_id("agent-debug")
+    assert button.locator("svg").count() == 1 and button.inner_text().strip() == ""
+    box = button.bounding_box()
+    assert box["width"] <= 28 and box["height"] <= 28
+    assert button.get_attribute("title") and button.get_attribute("aria-label") == "Debug"
