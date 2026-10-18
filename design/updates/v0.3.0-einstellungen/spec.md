@@ -11,11 +11,11 @@ Prototype: prototype/ · Builds on: v0.2.4
 | B · Voice input | decided: B3 (review box with recognised project terms), recognition Weg 2 (Whisper on the server with the project vocabulary) |
 | C · Command palette | decided: C1 (like VS Code) |
 | D · Run notification and progress for the agent | decided: D1 (status bar with running runs and a bell) |
-| E · Own notes on runs | running: E1 (warm block under the description) and E2 (margin notes attached to run, section or table group) on the canvas; agreed: agent may propose notes, saved only after confirmation in every mode; Markdown via the v0.2.3 reader for notes and descriptions; storage `.mlviz/notes/<run-id>.json`; waiting for Tim |
+| E · Own notes on runs | decided: E2 (notes in the right column of the run tab, attached to run, description section or group) |
 
 Scope changed 17.10. (Tim): B–E added, deliverables area moved to v0.4 (TIM-96 header and decision comment).
-Canvas: Prototyp-03 (overall: settings tab, voice input B3, command palette C1, status bar D1), row A with A1 chosen, row B with B3 chosen, row C with C1 chosen, row D with D1 chosen. Tim on A: which
-settings stay is decided in use; the list in A is the starting set. Running block: E.
+Canvas: Prototyp-03 (overall: settings tab, voice input B3, command palette C1, status bar D1, notes E2 in the run tab via `P-Run-03`), row A with A1 chosen, row B with B3 chosen, row C with C1 chosen, row D with D1 chosen, row E with E2 chosen. Tim on A: which
+settings stay is decided in use; the list in A is the starting set. All blocks decided. Next: final check and handover (Tim's OK pending).
 
 ## Goal
 One place in the tool to see and change how it behaves for a project.
@@ -193,6 +193,28 @@ under the bell. The agent gets a tool that reports the progress of a run.
 
 **Rejected:** D2 (no new bar; badge on the runs icon and progress only in the runs list) not built: progress would not be visible in the analysis.
 
+### E · Own notes on runs
+**What:** Tim's own notes on a run, visibly separate from the agents' description: warm amber instead of
+blue-grey, headed "✎ Meine Notizen". They live in the right column of the run tab, which until now only
+showed "Eine Zeile der Tabelle anklicken …" while no row is selected; that column scrolls on its own.
+A note hangs on the run, on a section of the description, or on a group (row) of the table. Notes and the
+run description are rendered as Markdown with the chat's reader.
+
+**Behaviour:**
+- Run tab, no row selected → right column (300 px) "✎ Meine Notizen · <n>" with all notes of the run, ordered: run, description sections (Zweck, Zeigt, Erwartung, Notizen in that order), groups (table order); each card shows where it hangs ("am Lauf", "an der Beschreibung · Erwartung", "an lstm_layer 2 · lr_epochs 40"), date, Markdown text, "Bearbeiten", "Löschen".
+- "+ zum Lauf" in the column header → a new empty card in edit mode, attached to the run.
+- Description: each section heading shows "+ Notiz" on hover and "✎ n" when notes hang there; click "+ Notiz" → new card in the column attached to that section; click "✎ n" → the column scrolls to the first such note and highlights it (amber border) and the section (amber background).
+- Table: a row with notes shows "✎ n" at its end. Click a row → the detail panel opens (as today) with "✎ Notizen zu dieser Kombination" at the top: its notes and "+ Notiz" (new note attached to that group). The group is identified by its values of the grid axes, so a note survives other filters, sorting and splits; a note whose group no longer exists in the current split is still listed in the column, marked "(Gruppe nicht in der Ansicht)".
+- Edit: textarea, Ctrl+Enter or "Speichern" saves, Esc cancels; saving an empty new note discards it. Delete → toast "Notiz gelöscht" with "Rückgängig" (5 s).
+- Markdown: **bold**, *italic*, `code`, bullet and numbered lists, links, line breaks, using the reader from v0.2.3 (`web/src/agent/markdown.ts`, no HTML). The same reader now renders the run description from `description.yaml` (lifts the v0.2.1 "plain text" rule) and the description's short line in Läufe stays plain text.
+- Runs list: a run with notes shows "✎ n" next to its name. Command palette: "Lauf: Notiz hinzufügen" opens the run tab and a new run note; quick open (no prefix) also matches note text and lists matches as "✎ <run> · <excerpt>".
+- Storage: `<project>/.mlviz/notes/<run-id>.json`, a list of `{id, text, created, updated, anchor: {kind: run|section|group, key}, by: user|agent}`; written atomically; missing file = no notes.
+- Agent: reads notes with `read_notes` (lesen, argument `run`) and sees the note count per run in `find_runs`. It may propose a note with `propose_note` (ändern; `run`, `text`, `anchor`): in every mode (also Direkt) this shows a confirmation card in the chat and a dashed blue "✦ Vorschlag des Agenten" card at the top of the notes column with "Speichern", "Bearbeiten", "Verwerfen"; only "Speichern" writes it, marked "✦ vom Agenten, von dir bestätigt". `src/mlviz/agent_guide.md`: both tools in the tool table, the rule "Notizen nur vorschlagen, nie ohne Bestätigung" under Regeln, and remove "Beschreibungen von Läufen schreiben" only if it stays true (descriptions stay read-only).
+
+**In the prototype:** `P-Run-03.dc.html` (embedded in `Prototyp-03.dc.html`: notes column `allNotes`, detail notes `selNotes`, `addRun`, `addSel`), sample notes and the small Markdown reader in `notes-data.js` (prototype only). Section markers, row markers and the agent suggestion are shown in the variant `E2-Rand.dc.html`, not in the overall prototype; the overall prototype's description is still plain text.
+
+**Rejected:** E1 (block between description and table): takes too much screen height and pushes the table down.
+
 ## Changes to principles.md / tokens.json
 - none
 
@@ -203,6 +225,7 @@ under the bell. The agent gets a tool that reports the progress of a run.
 - Themes or recolouring: colours carry meaning (see principles.md).
 
 ## Open
+- Markdown reader: v0.3.0 builds on v0.2.4; if v0.2.3 (TIM-98, which adds `web/src/agent/markdown.ts`) is not merged into `main` when implementation starts, then merge `main` after it lands or take the reader from the v0.2.3 branch unchanged.
 - Rate from `finished_at`: if a project's cells have no `finished_at`, then the rate comes from the change in `cells_done` between background checks over the last 30 min.
 - Whisper on the server: if `faster-whisper` cannot be installed or loaded, or a 10 s clip takes longer than 10 s to transcribe with the small model, then use the browser's speech recognition (Web Speech API) with the same normaliser and review box, and the settings row "Erkennung" says which engine is active. Tell Tim.
 - Which settings stay: decided in use. If a setting turns out unused or missing, it is changed in a later patch update.
