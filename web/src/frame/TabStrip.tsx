@@ -1,5 +1,5 @@
 import { SETTINGS_TAB, type Area } from "../state/frame";
-import { CloseIcon } from "./icons";
+import { SearchIcon } from "./icons";
 
 export const AREA_LABEL: Record<Area, string> = { runs: "Läufe", analysis: "Analyse" };
 
@@ -49,7 +49,7 @@ export function TabStrip({ area, tabs, active, onFocusPinned, onFocus, onClose, 
         >
           <span class="tab-label">Einstellungen</span>
           <button class="tab-close" aria-label="Einstellungen schließen" data-testid="settings-close" onClick={(e) => { e.stopPropagation(); onCloseSettings(); }}>
-            <CloseIcon />
+            ×
           </button>
         </div>
       )}
@@ -83,11 +83,12 @@ export function TabStrip({ area, tabs, active, onFocusPinned, onFocus, onClose, 
               onClose(run);
             }}
           >
-            <CloseIcon />
+            ×
           </button>
         </div>
       ))}
       <button class="palette-box" data-testid="palette-box" aria-label="Befehlspalette öffnen" onClick={onPalette}>
+        <SearchIcon />
         {projectName}
       </button>
     </div>

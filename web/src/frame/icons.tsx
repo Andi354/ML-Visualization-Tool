@@ -10,21 +10,18 @@ const base = {
   "aria-hidden": true,
 };
 
+const rail = { width: 18, height: 18, viewBox: "0 0 18 18", fill: "none", stroke: "currentColor", "stroke-width": 1.5, "aria-hidden": true };
+
 export const RunsIcon = () => (
-  <svg {...base}>
-    <path d="M4 6h16M4 12h16M4 18h10" />
+  <svg {...rail}>
+    <path d="M3 4.5h12M3 9h12M3 13.5h8" />
   </svg>
 );
 
 export const AnalysisIcon = () => (
-  <svg {...base}>
-    <path d="M5 20V10M12 20V4M19 20v-7" />
-  </svg>
-);
-
-export const CloseIcon = () => (
-  <svg {...base} width={12} height={12} stroke-width={2}>
-    <path d="M6 6l12 12M18 6L6 18" />
+  <svg {...rail}>
+    <rect x="2.5" y="3" width="5.5" height="12" rx="1" />
+    <rect x="10" y="3" width="5.5" height="12" rx="1" />
   </svg>
 );
 
@@ -56,8 +53,22 @@ export const PaperclipIcon = ({ size = 15 }: { size?: number }) => (
 );
 
 export const GearIcon = () => (
-  <svg {...base}>
-    <circle cx="12" cy="12" r="3" />
-    <path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" />
+  <svg {...rail} stroke-width={1.4}>
+    <circle cx="9" cy="9" r="2.4" />
+    <path d="M9 1.8v2M9 14.2v2M1.8 9h2M14.2 9h2M3.9 3.9l1.4 1.4M12.7 12.7l1.4 1.4M3.9 14.1l1.4-1.4M12.7 5.3l1.4-1.4" />
+  </svg>
+);
+
+export const SearchIcon = () => (
+  <svg width={12} height={12} viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width={1.6} aria-hidden="true">
+    <circle cx="7" cy="7" r="4.5" />
+    <path d="M10.5 10.5L14 14" />
+  </svg>
+);
+
+export const BellIcon = () => (
+  <svg width={13} height={13} viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width={1.5} aria-hidden="true">
+    <path d="M4 11.5V7a4 4 0 0 1 8 0v4.5l1 1.2H3z" />
+    <path d="M6.6 14a1.5 1.5 0 0 0 2.8 0" />
   </svg>
 );
