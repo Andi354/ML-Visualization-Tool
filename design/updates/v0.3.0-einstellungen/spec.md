@@ -10,12 +10,12 @@ Prototype: prototype/ · Builds on: v0.2.4
 | A · Settings screen | decided: A1 (like the Agent-Dashboard settings) |
 | B · Voice input | decided: B3 (review box with recognised project terms), recognition Weg 2 (Whisper on the server with the project vocabulary) |
 | C · Command palette | decided: C1 (like VS Code) |
-| D · Run notification and progress for the agent | open |
+| D · Run notification and progress for the agent | running: D1 (VS Code-like status bar with running runs and a bell) on the canvas; agreed: events finished / ≥ 5 % errors / no new cell for 30 min / started (status bar only), Mac notification when the tab is hidden (setting, on), agent summary only on click, tool `run_progress`; waiting for Tim |
 | E · Own notes on runs | open: attached to the description, visibly Tim's own |
 
 Scope changed 17.10. (Tim): B–E added, deliverables area moved to v0.4 (TIM-96 header and decision comment).
 Canvas: Prototyp-03 (overall: settings tab, voice input B3, command palette C1), row A with A1 chosen, row B with B3 chosen, row C with C1 chosen. Tim on A: which
-settings stay is decided in use; the list in A is the starting set. Next: Tim chooses the next block (D or E).
+settings stay is decided in use; the list in A is the starting set. Running block: D.
 
 ## Goal
 One place in the tool to see and change how it behaves for a project.
