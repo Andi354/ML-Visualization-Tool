@@ -216,7 +216,7 @@ class AgentRunner:
         """`/compact` on the session of a chat (works in `-p` mode); the chat notes "Chat komprimiert · 52k → 2k Tokens"."""
         return self.run(chat_id, "/compact", compact=True)
 
-    def run(self, chat_id: str, text: str, context: str = "", resend: bool = False, compact: bool = False, base_url: str = "", images: list[dict] | None = None) -> Iterator[dict[str, Any]]:
+    def run(self, chat_id: str, text: str, context: str = "", resend: bool = False, compact: bool = False, base_url: str = "", images: list[dict] | None = None, spoken: str | None = None) -> Iterator[dict[str, Any]]:
         """Sends a message and yields snapshots of the chat until the answer is complete, stopped or failed.
 
         Between snapshots it also yields `{"command": {id, tool, args}}` items: what the open tool is asked to do."""
@@ -232,7 +232,7 @@ class AgentRunner:
                 chat["messages"].pop()
                 self.store.save(chat)
             if not resend and not compact:
-                self.store.append(chat_id, "user", text, **({"images": images} if images else {}))
+                self.store.append(chat_id, "user", text, **({"images": images} if images else {}), **({"spoken": spoken} if spoken else {}))
             yield self._snapshot(chat_id, True)
             if cmd is None:
                 self.store.append(chat_id, "info", "Claude Code wurde nicht gefunden.", error=True)
@@ -241,7 +241,7 @@ class AgentRunner:
 
             def work() -> None:
                 try:
-                    for snap in self._call(cmd, chat_id, text, context, compact, base_url, live, images or []):
+                    for snap in self._call(cmd, chat_id, text, context, compact, base_url, live, images or [], bool(spoken)):
                         live.out.put(snap)
                 finally:
                     live.out.put(None)
@@ -257,13 +257,15 @@ class AgentRunner:
                 self._stopped.discard(chat_id)
                 self.live.pop(chat_id, None)
 
-    def _call(self, cmd: list[str], chat_id: str, text: str, context: str, compact: bool, base_url: str, live: ChatRun, images: list[dict]) -> Iterator[dict[str, Any]]:
+    def _call(self, cmd: list[str], chat_id: str, text: str, context: str, compact: bool, base_url: str, live: ChatRun, images: list[dict], spoken: bool = False) -> Iterator[dict[str, Any]]:
         chat = self.store.get(chat_id)
         mode = MODE_LABELS.get(self.store.mode(), "Gemischt")
         if compact:  # a slash command stands alone
             prompt = text
         else:
             prompt = f"[Ansicht: {context}, Modus: {mode}]\n{text}" if context else f"[Modus: {mode}]\n{text}"
+            if spoken:  # recognised from speech: numbers and names may be wrong
+                prompt = "[gesprochen] " + prompt
             if images:  # where the images lie: the agent reads them with `Read`
                 prompt += "\n" + "\n".join(self.attachments.lines(images))
         args = [

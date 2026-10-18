@@ -17,7 +17,7 @@ from . import agent_attachments, agent_run
 from .agent_attachments import AttachmentError
 from .agent_store import MAX_INSTRUCTIONS, AgentStore, ChatNotFound, InstructionsChanged
 from .store import StoreError
-from . import progress
+from . import progress, voice
 from .notes import NoteNotFound, NoteStore
 from .progress import ProgressWatcher
 from .listing import merkmal_candidates, run_listing
@@ -170,7 +170,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
 
         def events():
             try:
-                for snap in runner.run(chat_id, text, str(payload.get("context") or ""), resend, base_url=f"http://127.0.0.1:{request.url.port or 80}", images=images):
+                for snap in runner.run(chat_id, text, str(payload.get("context") or ""), resend, base_url=f"http://127.0.0.1:{request.url.port or 80}", images=images, spoken=(str(payload.get("spoken") or "") or None)):
                     yield f"data: {json.dumps(snap, ensure_ascii=False)}\n\n"
             except agent_run.Busy:
                 yield f"data: {json.dumps({'error': 'busy'})}\n\n"
@@ -280,6 +280,36 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
         if any(runner.running(c["id"]) for c in agent.list()):
             raise HTTPException(409, "a chat is still working")
         return {"deleted": agent.delete_all()}
+
+    # --- voice input (v0.3.0, B) -----------------------------------------------------------------
+    recogniser = voice.Recogniser()
+    app.state.recogniser = recogniser
+
+    @app.get("/api/voice/status")
+    def api_voice_status() -> dict:
+        """Which engine recognises speech: `whisper` on the server (when loaded) or `browser`."""
+        return recogniser.status(agent.settings.get("agent.voiceModel"))
+
+    @app.post("/api/voice/normalise")
+    def api_voice_normalise(payload: dict = Body(...)) -> dict:
+        """The normaliser alone, for text the browser recognised itself: `{text}`."""
+        vocab = voice.vocabulary(project, agent.settings.get("agent.voiceTerms"))
+        return {**voice.normalise(str(payload.get("text") or ""), vocab), "engine": "browser"}
+
+    @app.post("/api/voice")
+    async def api_voice(request: Request) -> dict:
+        """A recording (the body, `audio/webm`): `{text, heard, segments, engine}`; 503 when the server cannot recognise (use the browser)."""
+        model, lang = agent.settings.get("agent.voiceModel"), agent.settings.get("agent.voiceLang")
+        status = recogniser.status(model)
+        if status["engine"] != "whisper" or not status["ready"]:
+            raise HTTPException(503, status.get("reason") or "Die Erkennung wird noch geladen.")
+        audio = await request.body()
+        vocab = voice.vocabulary(project, agent.settings.get("agent.voiceTerms"))
+        try:
+            heard = recogniser.transcribe(audio, lang, model, voice.prompt_for(vocab))
+        except Exception as e:
+            raise HTTPException(500, f"Die Erkennung ist fehlgeschlagen ({e}).")
+        return {**voice.normalise(heard, vocab), "engine": "whisper"}
 
     # --- own notes on runs (v0.3.0, E) -----------------------------------------------------------
     note_store = NoteStore(project)

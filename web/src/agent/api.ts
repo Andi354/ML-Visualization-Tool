@@ -75,7 +75,7 @@ async function stream(url: string, body: unknown, onSnapshot: (s: RunSnapshot) =
 }
 
 /** Sends a message (`resend`: ask again after an error, without a second question in the chat). */
-export const runMessage = (id: string, body: { text: string; context: string; resend?: boolean; images?: { file: string; name: string }[] }, onSnapshot: (s: RunSnapshot) => void) =>
+export const runMessage = (id: string, body: { text: string; context: string; resend?: boolean; images?: { file: string; name: string }[]; spoken?: string }, onSnapshot: (s: RunSnapshot) => void) =>
   stream(`/api/agent/chats/${id}/run`, body, onSnapshot);
 export const compactChat = (id: string, onSnapshot: (s: RunSnapshot) => void) => stream(`/api/agent/chats/${id}/compact`, {}, onSnapshot);
 

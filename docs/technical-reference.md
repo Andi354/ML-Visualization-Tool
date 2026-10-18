@@ -442,6 +442,24 @@ key). The run tab (`ExperimentView`) provides the bus handlers `add_note:<run>` 
 provides `propose_note` (opens the tab, then calls the handler of that run). Descriptions are rendered with the
 Markdown reader of the chat (`agent/Markdown.tsx`); the short line in Läufe stays plain text.
 
+## Voice input (v0.3.0)
+
+`src/mlviz/voice.py`: `vocabulary(project, extra)` collects the terms (axes, Lauf-Merkmal keys and values, metrics, run
+names and short names, issue IDs, templates, widget keys, `agent.voiceTerms`) with their kind; `normalise(text, vocab)`
+turns number words into digits (`numbers`), `tim 52` into `TIM-52`, spoken keys into snake_case, and cuts the text
+into plain segments and terms with `heard` (what was said) and up to three `alts` of the same kind; versions
+(`0.3.0`) are terms of kind `Version`. `Recogniser` loads `faster-whisper` (optional, `mlviz[voice]`, installed in the
+Docker image, model cache in the volume `mlviz-models`) in the background; `GET /api/voice/status` says which engine
+works. `POST /api/voice` takes the clip (`audio/webm` as the body) and answers `{text, heard, segments, engine}`; 503
+means: the model is loading or `faster-whisper` is missing. Then the browser recognises the speech itself (Web Speech
+API, recorded at the same time) and posts the text to `POST /api/voice/normalise`; the review box says "Erkennung im
+Browser". A message with `spoken` (the heard words) is stored with them and reaches the agent as `[gesprochen] …`.
+
+Browser (`web/src/voice/`): `recorder.ts` (MediaRecorder, level meter, optional browser recognition), `useVoice.ts`
+(idle, preparing, recording, recognising, review; 2 minutes at most; `agent.voiceReview` off sends at once),
+`VoicePanel.tsx` (microphone button, red recording row, review box with chips and alternatives), `model.ts`. Ctrl+M
+(also on macOS) and the palette command go through the bus handler `ui:voice` of the agent window.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.

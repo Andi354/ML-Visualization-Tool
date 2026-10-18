@@ -67,6 +67,7 @@ function Frame({ project }: { project: ProjectInfo }) {
       if (sc === "commands") openPalette(">");
       else if (sc === "runs") openPalette("");
       else if (sc === "agent") toggleAgent();
+      else if (sc === "voice") void handlerFor("ui:voice")?.({});
       else if (sc === "save") void handlerFor("open_save_dialog")?.({});
       else void nudgeScale(sc === "bigger" ? 1 : -1);
     };

@@ -31,6 +31,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
 COPY --from=dswheel /dist/*.whl /tmp/
 COPY --from=wheel /dist/*.whl /tmp/
 RUN pip install --no-cache-dir /tmp/*.whl && rm /tmp/*.whl
+# Voice input (agent): faster-whisper; the model is downloaded on first use into the cache volume (docker-compose.yml).
+RUN pip install --no-cache-dir "faster-whisper>=1.0"
+ENV HF_HOME=/cache/huggingface
 # The project folder is mounted here; the tool writes only below it (deliverables).
 ENV MLVIZ_PROJECT=/project MLVIZ_HOST=0.0.0.0 MLVIZ_PORT=8765
 RUN git config --system --add safe.directory '*'

@@ -29,6 +29,8 @@ export interface AgentMessage {
   auto?: boolean;
   /** Images that went along with a message of the user (kept in the project, see `attachments.ts`). */
   images?: { file: string; name: string }[];
+  /** The words as the recogniser heard them (a spoken message, v0.3.0). */
+  spoken?: string;
   /** Action line of the debug display (a look-up of the agent): only shown while the debug button is on. */
   debug?: boolean;
 }

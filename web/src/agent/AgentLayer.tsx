@@ -7,6 +7,9 @@ import { attachmentUrl, checkImages, imagesOf, IMAGE_TYPES } from "./attachments
 import { Markdown } from "./Markdown";
 import { carryOut } from "./commands";
 import { provide, undoFor } from "./bus";
+import { MicButton, RecordingRow, ReviewBox } from "../voice/VoicePanel";
+import { useVoice } from "../voice/useVoice";
+import { combine } from "../voice/model";
 import { setAgentState } from "../progress/agentStatus";
 import { compactChat, decide, getAgent, markAction, getChat, getSetup, newChat, runMessage, setDebug, uploadImage, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
 import { defaultRect, fit, moved, resized, type Bounds, type Rect } from "./geometry";
@@ -27,7 +30,6 @@ import {
 import type { AgentWindowState } from "./state";
 import "./agent.css";
 
-const MIC_TIP = "Sprache kommt in einem späteren Update";
 
 /** An image waiting to go with the next message. */
 interface Img {
@@ -70,7 +72,7 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
   const [limits, setLimits] = useState<Limits | null>(null);
   const [busyChat, setBusyChat] = useState<string | null>(null);
   /** The message held back because a cold chat would be read in full again (nothing was sent). */
-  const [hint, setHint] = useState<{ text: string; images: Img[] } | null>(null);
+  const [hint, setHint] = useState<{ text: string; images: Img[]; heard?: string } | null>(null);
   /** Images waiting to go with the next message (already kept in the project), the ones being uploaded, and a note about refused ones. */
   const [images, setImages] = useState<Img[]>([]);
   const [uploading, setUploading] = useState(0);
@@ -130,6 +132,11 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     if (!opened) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape" || e.defaultPrevented || document.querySelector('[role="dialog"]')) return;
+      if (voiceRef.current.state === "preparing" || voiceRef.current.state === "recognising") return; // wait for the microphone or the answer
+      if (voiceRef.current.state === "recording" || voiceRef.current.state === "review") {
+        voiceRef.current.cancel(); // Esc drops the recording or the review first, the window stays
+        return;
+      }
       setChatsOpen(false);
       setModesOpen(false);
       onChange({ mode: "closed" });
@@ -204,14 +211,14 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     if (snap.limits) setLimits(snap.limits);
   };
   /** Sends `text` to `target` (or the current chat, or a new one) and shows the answer as it comes in. */
-  const start = async (text: string, opts: { resend?: boolean; target?: Chat; images?: Img[] } = {}) => {
+  const start = async (text: string, opts: { resend?: boolean; target?: Chat; images?: Img[]; spoken?: string } = {}) => {
     const target = opts.target ?? chat ?? (await newChat());
     setChat(target);
     onChange({ chat: target.id });
     setBusyChat(target.id);
     const sent = (opts.images ?? []).map(({ file, name }) => ({ file, name }));
     try {
-      await runMessage(target.id, { text, context, resend: opts.resend, ...(sent.length ? { images: sent } : {}) }, onSnapshot);
+      await runMessage(target.id, { text, context, resend: opts.resend, ...(sent.length ? { images: sent } : {}), ...(opts.spoken ? { spoken: opts.spoken } : {}) }, onSnapshot);
     } catch {
       /* the chat on disk shows what arrived */
     }
@@ -225,8 +232,9 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
   const cards = (chat?.messages ?? []).filter((m) => (m.k === "confirm" || m.k === "choice") && m.cid);
   /** A message typed while a card is open rejects the card; the message is sent as soon as the agent has gone on. */
   const queued = useRef<{ text: string; images: Img[] } | null>(null);
-  const send = () => {
-    const text = draft.trim();
+  const send = (spoken?: { text: string; heard: string }) => {
+    const text = spoken ? combine(draft, spoken.text) : draft.trim();
+    const heard = spoken?.heard;
     if ((!text && !images.length) || !ready || uploading) return;
     const withImages = images;
     if (busy) {
@@ -238,30 +246,30 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
       return;
     }
     if (chat && needsColdHint(chat, nowMs())) {
-      setHint({ text, images: withImages }); // check before any call: nothing is sent
+      setHint({ text, images: withImages, heard }); // check before any call: nothing is sent
       return;
     }
     setDraft("");
     setImages([]);
     setImageNote(null);
     setActionError(null);
-    start(text, { images: withImages }).catch(() => {});
+    start(text, { images: withImages, spoken: heard }).catch(() => {});
   };
   const sendAnyway = () => {
     if (!hint) return;
-    const { text, images: sent } = hint;
+    const { text, images: sent, heard } = hint;
     setHint(null);
     setDraft("");
     setImages([]);
-    start(text, { images: sent }).catch(() => {});
+    start(text, { images: sent, spoken: heard }).catch(() => {});
   };
   const sendInNewChat = async () => {
     if (!hint) return;
-    const { text, images: sent } = hint;
+    const { text, images: sent, heard } = hint;
     setHint(null);
     setDraft("");
     setImages([]);
-    start(text, { target: await newChat(), images: sent }).catch(() => {});
+    start(text, { target: await newChat(), images: sent, spoken: heard }).catch(() => {});
   };
   const resend = () => {
     const last = [...(chat?.messages ?? [])].reverse().find((m) => m.k === "user");
@@ -320,6 +328,13 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     putMode(m).catch(() => {});
   };
 
+  // voice input (v0.3.0, B)
+  const voice = useVoice({ onSend: (text, heard) => sendRef.current({ text, heard }) });
+  const voiceRef = useRef(voice);
+  voiceRef.current = voice;
+  const sendRef = useRef<(s?: { text: string; heard: string }) => void>(() => undefined);
+  sendRef.current = send;
+
   // the palette and the shortcuts reach these functions through the bus
   const ui = useRef({ addChat, pickMode, compact, start });
   ui.current = { addChat, pickMode, compact, start };
@@ -328,6 +343,10 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
       provide("ui:new_chat", () => ui.current.addChat()),
       provide("ui:mode", (a) => ui.current.pickMode(a.mode)),
       provide("ui:compact", () => ui.current.compact()),
+      provide("ui:voice", () => {
+        onChange({ mode: "open" });
+        return voiceRef.current.toggle();
+      }),
       provide("ui:ask", (a) => ui.current.start(String(a.text))),
     ];
     return () => offs.forEach((o) => o());
@@ -354,9 +373,7 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
         <button class="agent-capsule-text" onClick={() => onChange({ mode: "open" })} data-testid="agent-capsule-open-text">
           {cap.text}
         </button>
-        <button class="agent-mic round" disabled title={MIC_TIP} aria-label="Sprechen (später)" data-testid="agent-mic">
-          <MicIcon size={14} />
-        </button>
+        <MicButton voice={voice} round disabled={!ready} />
         <button class="agent-capsule-open" title="Öffnen" aria-label="Öffnen" onClick={() => onChange({ mode: "open" })} data-testid="agent-capsule-open">
           ⤢
         </button>
@@ -468,6 +485,7 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
                     ))}
                   </div>
                 )}
+                {msg.spoken && <span class="msg-mic" data-testid="msg-spoken" title={"Gehört: " + msg.spoken}><MicIcon size={11} /> </span>}
                 {msg.t}
               </div>
             );
@@ -621,6 +639,8 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
             )}
           </div>
         )}
+        {voice.message && <div class="voice-toast" data-testid="voice-toast" role="status">{voice.message}</div>}
+        <ReviewBox voice={voice} onEdit={(t) => setDraft(combine(draft, t))} />
         <div
           class={"agent-input-row" + (dropping ? " dropping" : "")}
           onDragOver={(e) => {
@@ -639,7 +659,9 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
             }
           }}
         >
+          {(voice.state === "recording" || voice.state === "recognising" || voice.state === "preparing") && <RecordingRow voice={voice} />}
           <input
+            hidden={voice.state === "recording" || voice.state === "recognising" || voice.state === "preparing"}
             value={draft}
             disabled={!ready}
             placeholder="Frag oder sag dem Agenten, was er tun soll …"
@@ -680,15 +702,13 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
           <button class="agent-attach" disabled={!ready} title="Bild anhängen (auch einfügen oder hineinziehen)" aria-label="Bild anhängen" onClick={() => fileInput.current?.click()} data-testid="agent-attach">
             <PaperclipIcon />
           </button>
-          <button class="agent-mic" disabled title={MIC_TIP} aria-label="Sprechen (später)" data-testid="agent-mic">
-            <MicIcon />
-          </button>
+          <MicButton voice={voice} disabled={!ready} />
           {busy ? (
             <button class="agent-send stop" title="Stopp" aria-label="Stopp" onClick={() => chat && stopChat(chat.id).catch(() => {})} data-testid="agent-stop">
               ■
             </button>
           ) : (
-            <button class="agent-send" title="Senden (Enter)" aria-label="Senden (Enter)" disabled={!ready || uploading > 0} onClick={send} data-testid="agent-send">
+            <button class="agent-send" title="Senden (Enter)" aria-label="Senden (Enter)" disabled={!ready || uploading > 0} onClick={() => send()} data-testid="agent-send">
               ↑
             </button>
           )}

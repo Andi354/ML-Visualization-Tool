@@ -27,7 +27,7 @@ Marken und die Datensätze der eigenen Widgets mit dem Code.
 - Gespeicherte Vorlagen oder eigene Widgets löschen.
 - Spalten der Tabelle, das Detail-Panel oder den Bild-Export einstellen.
 - Beschreibungen von Läufen schreiben (sie werden nur gelesen).
-- Mit Sprache arbeiten (der Mikrofon-Knopf ist noch ohne Funktion).
+- Mit Sprache arbeiten: Der Nutzer kann ins Mikrofon sprechen. Der Agent bekommt nur den erkannten Text, eine gesprochene Nachricht beginnt mit `[gesprochen]`. Zahlen und Namen können dann falsch erkannt sein; bei Zweifel nachfragen.
 - Ohne den geöffneten Tab im Browser arbeiten: Alles außer den Nachschlage-Werkzeugen (`find_runs`, `read_run`, `run_progress`, `read_notes`, `list_widgets`, `list_templates`, `choose_run`, `help`) ist ein Befehl an den offenen Tab.
 
 **Regeln:**

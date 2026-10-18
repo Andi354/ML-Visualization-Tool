@@ -61,6 +61,7 @@ export const COMMANDS: Command[] = [
   { id: "ana.save", cat: "Analyse", label: "Als Deliverable speichern …", shortcut: "Ctrl+S", blocked: inAnalysis, run: call("open_save_dialog") },
   { id: "agent.toggle", cat: "Agent", label: "Fenster zeigen oder verbergen", shortcut: "Ctrl+J", run: (c) => c.toggleAgent() },
   { id: "agent.new", cat: "Agent", label: "Neuer Chat", run: async (c) => { c.openAgent(); await handlerFor("ui:new_chat")?.({}); } },
+  { id: "agent.voice", cat: "Agent", label: "Spracheingabe starten", shortcut: "Ctrl+M", run: async (c) => { c.openAgent(); await handlerFor("ui:voice")?.({}); } },
   { id: "agent.mode", cat: "Agent", label: "Modus wechseln …", shortcut: "Shift+Tab", step: "mode" },
   { id: "agent.compact", cat: "Agent", label: "Chat komprimieren (/compact)", run: async (c) => { c.openAgent(); await handlerFor("ui:compact")?.({}); } },
   { id: "set.open", cat: "Einstellungen", label: "Öffnen", shortcut: "Ctrl+,", run: (c) => c.openSetting(null) },
@@ -76,6 +77,7 @@ export const SHORTCUTS: [string, string][] = [
   ["Ctrl+Shift+P · F1", "Befehle"],
   ["Ctrl+P", "Lauf oder Issue öffnen"],
   ["Ctrl+J", "Agent-Fenster zeigen oder verbergen"],
+  ["Ctrl+M", "Spracheingabe starten oder beenden"],
   ["Shift+Tab", "Agent-Modus wechseln (im Chat)"],
   ["Ctrl+S", "Als Deliverable speichern (Analyse)"],
   ["Ctrl+,", "Einstellungen"],
@@ -85,12 +87,13 @@ export const SHORTCUTS: [string, string][] = [
 ];
 
 /** Shortcut → palette command id (the handler in the frame). */
-export function shortcutFor(e: KeyboardEvent): "commands" | "runs" | "agent" | "save" | "bigger" | "smaller" | null {
+export function shortcutFor(e: KeyboardEvent): "commands" | "runs" | "agent" | "save" | "bigger" | "smaller" | "voice" | null {
   const mod = e.ctrlKey || e.metaKey;
   const k = e.key.toLowerCase();
   if (e.key === "F1" || (mod && e.shiftKey && k === "p")) return "commands";
   if (mod && !e.shiftKey && k === "p") return "runs";
   if (mod && !e.shiftKey && k === "j") return "agent";
+  if (e.ctrlKey && !e.metaKey && !e.shiftKey && k === "m") return "voice"; // Ctrl also on macOS: Cmd+M minimises the window
   if (mod && !e.shiftKey && k === "s") return "save";
   if (mod && (e.key === "+" || e.key === "=")) return "bigger";
   if (mod && (e.key === "-" || e.key === "_")) return "smaller";

@@ -27,6 +27,8 @@ def browser_type_launch_args(browser_type_launch_args):
     base = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "")
     found = sorted(glob.glob(os.path.join(base, "chromium-*", "chrome-linux", "chrome")))
     args = dict(browser_type_launch_args)
+    # a fake microphone that is always allowed (the voice input tests)
+    args["args"] = [*args.get("args", []), "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"]
     if found and os.environ.get("MLVIZ_CHROMIUM", "auto") != "playwright":
         args["executable_path"] = found[-1]
     return args
