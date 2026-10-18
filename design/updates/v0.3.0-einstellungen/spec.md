@@ -11,11 +11,11 @@ Prototype: prototype/ · Builds on: v0.2.4
 | B · Voice input | decided: B3 (review box with recognised project terms), recognition Weg 2 (Whisper on the server with the project vocabulary) |
 | C · Command palette | decided: C1 (like VS Code) |
 | D · Run notification and progress for the agent | decided: D1 (status bar with running runs and a bell) |
-| E · Own notes on runs | open: attached to the description, visibly Tim's own |
+| E · Own notes on runs | running: E1 (warm block under the description) and E2 (margin notes attached to run, section or table group) on the canvas; agreed: agent may propose notes, saved only after confirmation in every mode; Markdown via the v0.2.3 reader for notes and descriptions; storage `.mlviz/notes/<run-id>.json`; waiting for Tim |
 
 Scope changed 17.10. (Tim): B–E added, deliverables area moved to v0.4 (TIM-96 header and decision comment).
 Canvas: Prototyp-03 (overall: settings tab, voice input B3, command palette C1, status bar D1), row A with A1 chosen, row B with B3 chosen, row C with C1 chosen, row D with D1 chosen. Tim on A: which
-settings stay is decided in use; the list in A is the starting set. Next: block E (own notes), then final check.
+settings stay is decided in use; the list in A is the starting set. Running block: E.
 
 ## Goal
 One place in the tool to see and change how it behaves for a project.
