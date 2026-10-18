@@ -160,3 +160,32 @@ def test_agent_window_sits_above_the_status_bar_with_the_prototype_controls(page
     assert css(send, "backgroundColor") == "rgb(47, 91, 211)" and css(send, "color") == "rgb(255, 255, 255)"
     mic = page.get_by_test_id("agent-mic")
     assert css(mic, "borderTopColor") == "rgb(44, 53, 71)" and css(mic, "backgroundColor") == "rgb(19, 23, 32)"
+
+
+# --- K · Settings ---------------------------------------------------------------------------------
+def test_settings_header_rail_and_rows_follow_the_prototype(page):
+    page.get_by_test_id("settings-icon").click()
+    sp = page.get_by_test_id("settings")
+    expect(sp.locator(".settings-title-main")).to_have_text("Einstellungen")
+    expect(page.get_by_test_id("settings-sub")).to_contain_text("Demo Bench · v0.3.1")
+    box = sp.locator(".settings-search-box")
+    assert box.locator("svg").count() == 1 and box.locator("kbd").inner_text() == "/"
+    pill = page.get_by_test_id("only-changed")
+    assert css(pill, "borderRadius") == "14px"
+    expect(page.get_by_test_id("only-changed-count")).to_have_text("0")
+    presets = page.get_by_test_id("presets")
+    assert presets.evaluate("e => e.tagName") == "BUTTON" and css(presets, "borderRadius") == "14px"
+    assert page.get_by_test_id("settings-undo").bounding_box()["width"] == 30
+    # the header spans rail and rows; the rail has its two group labels and an icon per category
+    assert sp.locator(".settings-top").bounding_box()["width"] == sp.bounding_box()["width"]
+    expect(sp.locator(".rail-label")).to_have_text(["Kategorien", "Mehr"])
+    assert sp.locator(".rail-cat svg").count() == 7
+    row = sp.get_by_test_id("setting-row").first
+    assert css(row.locator(".srow-label"), "fontWeight") == "500" and css(row, "paddingTop") == "12px"
+    assert css(sp.locator("h3").first, "borderBottomWidth") == "1px"
+    expect(sp.locator(".tip .tip-icon")).to_have_text("💡")
+    assert css(sp.locator(".tip"), "borderLeftWidth") == "3px"
+    slider = sp.get_by_test_id("setting-row").filter(has_text="Größe der Oberfläche")
+    assert slider.locator("input[type=range]").count() == 1
+    assert slider.get_by_role("button", name="weniger").count() == 1
+    assert css(sp.locator(".switch").first, "width") == "36px"
