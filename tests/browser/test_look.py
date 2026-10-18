@@ -189,3 +189,27 @@ def test_settings_header_rail_and_rows_follow_the_prototype(page):
     assert slider.locator("input[type=range]").count() == 1
     assert slider.get_by_role("button", name="weniger").count() == 1
     assert css(sp.locator(".switch").first, "width") == "36px"
+
+
+# --- L · Command palette --------------------------------------------------------------------------
+def test_palette_is_the_raised_panel_with_icons_and_group_hints(page):
+    page.keyboard.press("Control+p")
+    panel = page.get_by_test_id("palette")
+    box = panel.bounding_box()
+    assert box["width"] == 640 and box["y"] == 40
+    assert css(panel, "backgroundColor") == "rgb(26, 32, 48)" and css(panel, "borderTopColor") == "rgb(44, 69, 114)"
+    assert css(panel, "borderRadius") == "8px"
+    assert "Mono" not in css(page.get_by_test_id("palette-input"), "fontFamily")
+    first = page.get_by_test_id("palette-item").first
+    expect(first.locator(".palette-icon")).to_have_text("▤")
+    assert "Mono" in css(first.locator(".palette-label"), "fontFamily")
+    expect(first.get_by_test_id("palette-right")).to_have_text("zuletzt geöffnet")
+    assert css(first, "boxShadow") != "none"  # the selected row has the accent bar
+    expect(panel.locator(".palette-sep")).to_have_count(1)  # between runs and issues
+    expect(panel.locator(".palette-icon").last).to_have_text("◆")
+    page.keyboard.press("Escape")
+    page.keyboard.press("Control+Shift+p")
+    first = page.get_by_test_id("palette-item").first
+    expect(first.locator(".palette-label")).to_contain_text("Läufe: ")
+    expect(first.locator(".palette-key")).to_have_text("Ctrl+P")
+    assert css(first.locator(".palette-key"), "borderRadius") == "3px"
