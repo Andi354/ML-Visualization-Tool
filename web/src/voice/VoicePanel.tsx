@@ -36,7 +36,7 @@ export function RecordingRow({ voice }: { voice: Voice }) {
             ))}
           </span>
           <span class="mono" data-testid="voice-time">{clock(voice.seconds)}</span>
-          <span class="muted">Esc verwirft</span>
+          <button class="voice-cancel" data-testid="voice-cancel" title="Abbrechen (Esc)" onClick={() => voice.cancel()}>Abbrechen</button>
         </>
       ) : voice.state === "preparing" ? (
         <span data-testid="voice-preparing">Mikrofon wird geöffnet …</span>
@@ -55,8 +55,12 @@ export function ReviewBox({ voice, onEdit }: { voice: Voice; onEdit: (text: stri
   return (
     <div class="voice-review" data-testid="voice-review">
       <div class="voice-review-head">
-        Gesprochen · <span data-testid="voice-terms">{voice.terms} {voice.terms === 1 ? "Projektbegriff" : "Projektbegriffe"} erkannt</span>
-        {r.engine === "browser" && <span class="muted"> · Erkennung im Browser</span>}
+        <MicIcon size={11} />
+        <span>
+          Gesprochen · <span data-testid="voice-terms">{voice.terms} {voice.terms === 1 ? "Projektbegriff" : "Projektbegriffe"} erkannt</span>
+          {voice.terms > 0 && ", zum Ändern anklicken"}
+          {r.engine === "browser" && <span> · Erkennung im Browser</span>}
+        </span>
       </div>
       <div class="voice-text" data-testid="voice-text">
         {r.segments.map((s, i) =>
@@ -82,10 +86,10 @@ export function ReviewBox({ voice, onEdit }: { voice: Voice; onEdit: (text: stri
         )}
       </div>
       <div class="voice-review-actions">
-        <button class="btn" data-testid="voice-send" onClick={voice.send}>Senden</button>
-        <button class="link" data-testid="voice-edit" onClick={() => { const t = voice.text(); voice.discard(); onEdit(t); }}>Als Text bearbeiten</button>
-        <button class="link" data-testid="voice-more" onClick={voice.more}>+ weitersprechen</button>
-        <button class="link" data-testid="voice-discard" onClick={voice.discard}>Verwerfen</button>
+        <button class="voice-primary" data-testid="voice-send" onClick={voice.send}>Senden <kbd class="vkbd">Enter</kbd></button>
+        <button data-testid="voice-edit" onClick={() => { const t = voice.text(); voice.discard(); onEdit(t); }}>Als Text bearbeiten</button>
+        <button class="voice-discard" data-testid="voice-discard" onClick={voice.discard}>Verwerfen</button>
+        <button class="voice-more" data-testid="voice-more" onClick={voice.more}>+ weitersprechen</button>
       </div>
     </div>
   );

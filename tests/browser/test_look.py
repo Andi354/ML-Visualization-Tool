@@ -146,3 +146,17 @@ def test_widget_tables_follow_the_prototype_table(page):
     assert css(th, "backgroundColor") == "rgb(26, 32, 48)" and css(th, "fontSize") == "12px"
     td = table.locator("tbody td:not(.row-head)").first
     assert css(td, "textAlign") == "center" and css(td, "paddingTop") == "9px" and css(td, "fontSize") == "13px"
+
+
+# --- J · Agent window -----------------------------------------------------------------------------
+def test_agent_window_sits_above_the_status_bar_with_the_prototype_controls(page):
+    page.get_by_test_id("agent-icon").click()
+    win = page.get_by_test_id("agent-window")
+    box = win.bounding_box()
+    status = page.get_by_test_id("status-bar").bounding_box()
+    assert box["y"] + box["height"] <= status["y"] - 20
+    assert win.locator(".agent-header > svg path").count() == 1  # the big star alone
+    send = page.get_by_test_id("agent-send")
+    assert css(send, "backgroundColor") == "rgb(47, 91, 211)" and css(send, "color") == "rgb(255, 255, 255)"
+    mic = page.get_by_test_id("agent-mic")
+    assert css(mic, "borderTopColor") == "rgb(44, 53, 71)" and css(mic, "backgroundColor") == "rgb(19, 23, 32)"

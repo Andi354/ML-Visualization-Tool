@@ -25,10 +25,11 @@ export const AnalysisIcon = () => (
   </svg>
 );
 
-export const AgentIcon = ({ size = 18, color }: { size?: number; color?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 18 18" fill="none" stroke={color ?? "currentColor"} stroke-width="1.5" aria-hidden="true">
+/** The agent star; `single` is the big star alone (header and capsule of the window), else with its small one (rail). */
+export const AgentIcon = ({ size = 18, color, single }: { size?: number; color?: string; single?: boolean }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" fill="none" stroke={color ?? "currentColor"} stroke-width={single ? 1.6 : 1.5} aria-hidden="true">
     <path d="M9 2.5l1.4 3.6 3.6 1.4-3.6 1.4L9 12.5 7.6 8.9 4 7.5l3.6-1.4z" />
-    <path d="M14 12l.6 1.4 1.4.6-1.4.6L14 16l-.6-1.4-1.4-.6 1.4-.6z" />
+    {!single && <path d="M14 12l.6 1.4 1.4.6-1.4.6L14 16l-.6-1.4-1.4-.6 1.4-.6z" />}
   </svg>
 );
 

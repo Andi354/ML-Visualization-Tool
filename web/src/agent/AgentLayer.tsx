@@ -47,16 +47,17 @@ interface Props {
   appRef: RefObject<HTMLElement>;
 }
 
-/** The area the window may use: right of the icon bar, below the tab strip, inside the tool. */
+/** The area the window may use: right of the icon bar, below the tab strip, above the status bar. */
 function measure(app: HTMLElement): Bounds {
   const a = app.getBoundingClientRect();
   const bar = app.querySelector(".icon-bar")?.getBoundingClientRect();
   const tabs = app.querySelector(".tab-strip")?.getBoundingClientRect();
+  const status = app.querySelector(".status-bar")?.getBoundingClientRect();
   return {
     left: bar ? bar.right - a.left : 0,
     top: tabs ? tabs.bottom - a.top : 0,
     right: a.width,
-    bottom: a.height,
+    bottom: status ? status.top - a.top : a.height,
   };
 }
 
@@ -369,7 +370,7 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     const cap = capsuleView(chat, busy, ready);
     return (
       <div class={"agent-capsule " + cap.state} data-testid="agent-capsule" data-state={cap.state}>
-        <AgentIcon size={14} color="var(--accent)" />
+        <AgentIcon size={14} color="var(--accent)" single />
         <button class="agent-capsule-text" onClick={() => onChange({ mode: "open" })} data-testid="agent-capsule-open-text">
           {cap.text}
         </button>
@@ -389,7 +390,7 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
       style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }}
     >
       <header class="agent-header" data-testid="agent-header" onPointerDown={startDrag("move")}>
-        <AgentIcon size={14} color="var(--accent)" />
+        <AgentIcon size={14} color="var(--accent)" single />
         <button class="agent-title" title="Chats" onClick={() => {
             if (!chatsOpen) refresh().catch(() => {}); // the list is read again when it opens
             setChatsOpen(!chatsOpen);
