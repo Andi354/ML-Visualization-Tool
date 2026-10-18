@@ -64,3 +64,28 @@ def test_popovers_are_the_raised_panels_of_the_prototype(page):
     page.get_by_test_id("sb-bell").click()
     note = page.get_by_test_id("notes-popover")
     assert note.bounding_box()["width"] == 430
+
+
+# --- G · Läufe ------------------------------------------------------------------------------------
+def test_runs_header_shows_only_the_area_name_and_the_list_has_the_wide_gutter(page):
+    head = page.locator("[data-testid=runs-view] .view-head")
+    expect(head).to_have_text("LäufeListeIssues")
+    assert css(head, "paddingLeft") == "32px"
+    assert css(page.locator("[data-testid=runs-view] .view-head .seg"), "borderRadius") == "5px"
+    assert page.get_by_test_id("search").bounding_box()["x"] == 52 + 32
+    assert page.locator(".run-row").first.evaluate("e => getComputedStyle(e).gridTemplateColumns").endswith("120px")
+
+
+def test_issue_view_has_its_search_in_the_list_column_and_fills_the_height(page):
+    page.get_by_test_id("view-issues").click()
+    aside = page.get_by_test_id("issue-list")
+    expect(aside.get_by_test_id("search")).to_have_count(1)
+    assert page.locator(".toolbar").count() == 0
+    box = aside.bounding_box()
+    assert box["y"] + box["height"] >= page.get_by_test_id("status-bar").bounding_box()["y"] - 1
+    assert 295 <= box["width"] <= 360
+    assert css(page.locator(".issue-item").first, "borderRadius") == "6px"
+    page.locator('[data-testid="issue-item"][data-issue="TIM-83"]').click()
+    tag = page.locator(".exp-run .tags .flag").first
+    assert css(tag, "borderTopWidth") == "1px" and "Mono" in css(tag, "fontFamily")
+    assert page.locator(".exp-run .bar").first.bounding_box()["height"] == 5

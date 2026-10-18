@@ -1,4 +1,7 @@
 /* Läufe area (feature C) */
+.runs-view.is-list {
+  --gutter: 32px; /* the prototype's side space of the run list */
+}
 .runs-view {
   position: relative;
   display: flex;
@@ -45,7 +48,10 @@
   padding: 2px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius-control);
+  border-radius: 5px;
+}
+.toolbar .seg button {
+  padding: 4px 10px;
 }
 .seg button {
   padding: 3px 10px;
@@ -244,7 +250,7 @@ input[type="checkbox"] {
 
 .run-row {
   display: grid;
-  grid-template-columns: 22px minmax(240px, 1fr) 110px 200px 160px;
+  grid-template-columns: 22px minmax(240px, 1fr) 110px 200px 120px;
   column-gap: 18px;
   align-items: center;
   min-width: 800px;
@@ -265,7 +271,7 @@ input[type="checkbox"] {
 }
 .run-row.focused {
   background: var(--selected-row);
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 .name-col {
   display: flex;
@@ -492,13 +498,20 @@ input[type="checkbox"] {
 }
 
 /* issues view */
-.issues-view {
+.runs-view:not(.is-list) .runs-scroll {
   display: flex;
-  margin: -8px calc(var(--gutter) * -1) -28px;
-  min-height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+.issues-view {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
 }
 .issue-list {
-  flex: 0 0 340px;
+  flex: 1 1 300px;
+  max-width: 360px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -507,10 +520,20 @@ input[type="checkbox"] {
   border-right: 1px solid var(--line);
   overflow-y: auto;
 }
+.issue-list .search {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg);
+}
+.issue-list-gap {
+  flex: none;
+  height: 6px;
+}
 .issue-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
   padding: 10px 12px;
   text-align: left;
   border: 1px solid transparent;
@@ -543,13 +566,13 @@ input[type="checkbox"] {
   color: var(--accent);
 }
 .issue-detail {
-  flex: 1;
+  flex: 999 1 560px;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 18px;
   padding: 22px 28px 28px;
-  overflow-x: auto;
+  overflow: auto;
 }
 .issue-detail h1 {
   margin: 8px 0 0;
@@ -562,15 +585,24 @@ input[type="checkbox"] {
   align-items: center;
   gap: 10px;
 }
+.issue-detail-key {
+  font-size: 13px;
+  color: var(--text-2);
+}
 .status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   padding: 2px 8px;
   font-size: var(--size-tiny);
   font-weight: 500;
   background: var(--raised);
   border-radius: 10px;
+}
+.issue-item .status-dot {
+  width: 8px;
+  height: 8px;
+}
+.issue-item-top .issue-key {
+  font-weight: 500;
+  color: var(--text);
 }
 .stats {
   display: grid;
@@ -616,7 +648,7 @@ input[type="checkbox"] {
 }
 .exp-run {
   display: grid;
-  grid-template-columns: 120px minmax(120px, 1fr) 200px 160px auto;
+  grid-template-columns: 120px minmax(120px, 1fr) 200px 110px auto;
   column-gap: 14px;
   align-items: center;
   padding: 10px 14px;
@@ -629,7 +661,25 @@ input[type="checkbox"] {
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
+}
+.exp-run .tags .flag,
+.exp-run .tags .run-notes {
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+.exp-run .tags .flag.running {
+  color: var(--accent);
+}
+.exp-run .tags .flag.warn {
+  color: var(--warn);
+}
+.exp-run .bar {
+  height: 5px;
+  border-radius: 3px;
 }
 .btn {
   padding: 5px 10px;

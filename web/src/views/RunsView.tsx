@@ -137,11 +137,9 @@ export function RunsView({ project, view, onView, onOpen, onCompare }: Props) {
   };
 
   return (
-    <div class="runs-view" data-testid="runs-view">
+    <div class={"runs-view" + (view === "list" ? " is-list" : "")} data-testid="runs-view">
       <div class="view-head">
-        <span class="crumb">
-          <span class="muted">{project.name} /</span> Läufe
-        </span>
+        <span>Läufe</span>
         <div class="seg" role="group" aria-label="Ansicht">
           {(["list", "issues"] as const).map((v) => (
             <button key={v} class={view === v ? "on" : ""} aria-pressed={view === v} data-testid={`view-${v}`} onClick={() => onView(v)}>
@@ -150,43 +148,41 @@ export function RunsView({ project, view, onView, onOpen, onCompare }: Props) {
           ))}
         </div>
       </div>
-      <div class="toolbar">
-        <input
-          type="search"
-          class="search"
-          placeholder="Issue, Lauf, Achse …"
-          aria-label="Läufe durchsuchen"
-          data-testid="search"
-          value={filters.q}
-          onInput={(e) => setFilters({ ...filters, q: (e.target as HTMLInputElement).value })}
-        />
-        {view === "list" && (
-          <>
-            <Seg items={STATUS} value={filters.status} onChange={(status) => setFilters({ ...filters, status })} label="Status" />
-            <Seg
-              items={[["all", "Alle Epochen"], ...project.epochs.map((e): [string, string] => [e.name, e.name])]}
-              value={filters.epoch}
-              onChange={(epoch) => setFilters({ ...filters, epoch })}
-              label="Epoche"
-            />
-            <button class={"toggle" + (showTl ? " on" : "")} aria-expanded={showTl} data-testid="toggle-timeline" onClick={() => setShowTl(!showTl)}>
-              {(showTl ? "▾ " : "▸ ") + "Verlauf"}
-            </button>
-            <span class="grow" />
-            <span class="muted" data-testid="count">
-              {matching.length} von {all.length} Läufen
-            </span>
-            <button
-              class={"btn-primary" + (selected.length >= 2 ? " active" : "")}
-              disabled={selected.length < 2}
-              data-testid="compare"
-              onClick={() => onCompare(selected.map((r) => r.id))}
-            >
-              {selected.length >= 2 ? `Vergleichen (${selected.length})` : "Vergleichen"}
-            </button>
-          </>
-        )}
-      </div>
+      {view === "list" && (
+        <div class="toolbar">
+          <input
+            type="search"
+            class="search"
+            placeholder="Issue, Lauf, Achse …"
+            aria-label="Läufe durchsuchen"
+            data-testid="search"
+            value={filters.q}
+            onInput={(e) => setFilters({ ...filters, q: (e.target as HTMLInputElement).value })}
+          />
+          <Seg items={STATUS} value={filters.status} onChange={(status) => setFilters({ ...filters, status })} label="Status" />
+          <Seg
+            items={[["all", "Alle Epochen"], ...project.epochs.map((e): [string, string] => [e.name, e.name])]}
+            value={filters.epoch}
+            onChange={(epoch) => setFilters({ ...filters, epoch })}
+            label="Epoche"
+          />
+          <button class={"toggle" + (showTl ? " on" : "")} aria-expanded={showTl} data-testid="toggle-timeline" onClick={() => setShowTl(!showTl)}>
+            {(showTl ? "▾ " : "▸ ") + "Verlauf"}
+          </button>
+          <span class="grow" />
+          <span class="muted" data-testid="count">
+            {matching.length} von {all.length} Läufen
+          </span>
+          <button
+            class={"btn-primary" + (selected.length >= 2 ? " active" : "")}
+            disabled={selected.length < 2}
+            data-testid="compare"
+            onClick={() => onCompare(selected.map((r) => r.id))}
+          >
+            {selected.length >= 2 ? `Vergleichen (${selected.length})` : "Vergleichen"}
+          </button>
+        </div>
+      )}
       {view === "list" && showTl && (
         <Timeline runs={all} project={project} focus={state.focus} merkmalLabel={merkmalLabel} onPick={pickDot} />
       )}
@@ -251,6 +247,7 @@ export function RunsView({ project, view, onView, onOpen, onCompare }: Props) {
             runs={all}
             issues={issues}
             q={filters.q}
+            onQ={(q) => setFilters({ ...filters, q })}
             selected={issueSel}
             current={current}
             onSelect={setIssueSel}
