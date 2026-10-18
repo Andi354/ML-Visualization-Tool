@@ -81,11 +81,21 @@ def test_a_broken_chat_file_is_skipped_in_the_list(root, store):
 
 def test_the_mode_is_stored_and_checked(root, store):
     assert store.set_mode("confirm") == "confirm" and store.mode() == "confirm"
-    assert json.loads((root / ".mlviz" / "agent.json").read_text()) == {"mode": "confirm"}
+    assert json.loads((root / ".mlviz" / "settings.json").read_text()) == {"agent.mode": "confirm"}
     with pytest.raises(ValueError):
         store.set_mode("everything")
+    store.settings.change(unset=["agent.mode"])
     (root / ".mlviz" / "agent.json").write_text("[1]")
     assert store.mode() == "mixed"  # junk falls back to the default
+
+
+def test_the_agent_json_of_v02_is_still_read_until_a_setting_replaces_it(root, store):
+    (root / ".mlviz").mkdir(exist_ok=True)
+    (root / ".mlviz" / "agent.json").write_text('{"mode": "direct", "debug": true}')
+    assert store.mode() == "direct" and store.debug() is True
+    store.set_mode("mixed")  # the default: not stored, but the old value must not come back
+    assert store.mode() == "mixed"
+    assert json.loads((root / ".mlviz" / "agent.json").read_text()) == {"debug": True}
 
 
 def test_writes_stay_below_the_state_folder(root, store):

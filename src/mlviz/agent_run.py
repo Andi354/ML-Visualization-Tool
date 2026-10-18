@@ -87,9 +87,9 @@ class Busy(RuntimeError):
     """The chat already has a request running."""
 
 
-def command() -> list[str] | None:
-    """The `claude` command (a list), or None if Claude Code is not installed."""
-    custom = os.environ.get("MLVIZ_CLAUDE")
+def command(custom: str | None = None) -> list[str] | None:
+    """The `claude` command (a list), or None if Claude Code is not installed. `custom` is the setting `agent.claude`."""
+    custom = custom or os.environ.get("MLVIZ_CLAUDE")
     if custom:
         return shlex.split(custom)
     found = shutil.which("claude") or _vscode_claude()
@@ -111,10 +111,10 @@ def api_key_set() -> bool:
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
-def setup_check() -> dict[str, Any]:
+def setup_check(custom: str | None = None) -> dict[str, Any]:
     """Is the agent usable here? `{ready, problem, step, api_key}`; problem and step are German texts for the window."""
     out: dict[str, Any] = {"ready": False, "problem": None, "step": None, "api_key": api_key_set()}
-    cmd = command()
+    cmd = command(custom)
     if cmd is None:
         out["problem"] = "Claude Code ist nicht installiert (oder die Anwendung läuft in Docker)."
         out["step"] = "Claude Code installieren und das Tool ohne Docker starten (`make run`); liegt `claude` nicht im PATH, den Pfad in `MLVIZ_CLAUDE` setzen."
@@ -199,7 +199,7 @@ class AgentRunner:
         """Sends a message and yields snapshots of the chat until the answer is complete, stopped or failed.
 
         Between snapshots it also yields `{"command": {id, tool, args}}` items: what the open tool is asked to do."""
-        cmd = command()
+        cmd = command(self.store.settings.get("agent.claude") or None)
         with self._lock:
             if chat_id in self._procs:
                 raise Busy(chat_id)

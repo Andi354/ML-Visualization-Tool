@@ -4,7 +4,8 @@ One chat is one Claude Code session: the tool keeps its title, last activity, th
 numbers behind the context and cache display (see `docs/technical-reference.md`, "Agent"). Files:
 
 - `.mlviz/chats/<id>.json`: one chat with its messages
-- `.mlviz/agent.json`: settings of the agent (the mode: `direct`, `mixed`, `confirm`)
+- `.mlviz/settings.json`: the settings of the project (`agent.mode`, `agent.debug`, …, see `settings.py`);
+  `.mlviz/agent.json` of v0.2 is still read when `settings.json` has no value
 
 Everything is written atomically and only below `.mlviz/` of the project folder.
 """
@@ -20,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from .project import Project, now
+from .settings import SettingsStore
 
 STATE_DIR = ".mlviz"
 MODES = ("direct", "mixed", "confirm")
@@ -51,6 +53,7 @@ def _atomic_write(path: Path, data: dict) -> None:
 class AgentStore:
     def __init__(self, project: Project):
         self.dir = project.root / STATE_DIR
+        self.settings = SettingsStore(project)
         # a chat file is changed from the reading thread of a request and from tool calls at the same time
         self._lock = threading.RLock()
 
@@ -66,26 +69,39 @@ class AgentStore:
             return {}
         return data if isinstance(data, dict) else {}
 
-    def _put_setting(self, key: str, value: Any) -> None:
+    def _drop_legacy(self, key: str) -> None:
+        """A value set in the settings replaces the one in the `agent.json` of v0.2."""
         with self._lock:
-            _atomic_write(self._settings_file, {**self._settings(), key: value})
+            legacy = self._settings()
+            if key in legacy:
+                legacy.pop(key)
+                if legacy:
+                    _atomic_write(self._settings_file, legacy)
+                else:
+                    self._settings_file.unlink(missing_ok=True)
 
     def mode(self) -> str:
-        mode = self._settings().get("mode")
-        return mode if mode in MODES else DEFAULT_MODE
+        if self.settings.explicit("agent.mode"):
+            return self.settings.get("agent.mode")
+        legacy = self._settings().get("mode")
+        return legacy if legacy in MODES else DEFAULT_MODE
 
     def set_mode(self, mode: str) -> str:
         if mode not in MODES:
             raise ValueError(f"mode must be one of {MODES}")
-        self._put_setting("mode", mode)
+        self.settings.change({"agent.mode": mode})
+        self._drop_legacy("mode")
         return mode
 
     def debug(self) -> bool:
         """Debug display: the chat also shows the look-ups of the agent (a setting per project, off by default)."""
+        if self.settings.explicit("agent.debug"):
+            return True
         return self._settings().get("debug") is True
 
     def set_debug(self, on: bool) -> bool:
-        self._put_setting("debug", bool(on))
+        self.settings.change({"agent.debug": bool(on)})
+        self._drop_legacy("debug")
         return bool(on)
 
     # --- instructions of the project (v0.2.3) ----------------------------------------------------
@@ -152,6 +168,14 @@ class AgentStore:
 
     def get(self, chat_id: str) -> dict[str, Any]:
         return self._read(chat_id)
+
+    def delete_all(self) -> int:
+        """Deletes every chat file; returns how many."""
+        with self._lock:
+            files = list((self.dir / "chats").glob("*.json"))
+            for f in files:
+                f.unlink(missing_ok=True)
+        return len(files)
 
     def save(self, chat: dict[str, Any]) -> dict[str, Any]:
         with self._lock:

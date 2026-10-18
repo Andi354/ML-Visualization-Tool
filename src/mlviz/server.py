@@ -147,7 +147,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     @app.get("/api/agent/setup")
     def api_agent_setup() -> dict:
         """Can the agent run here? (Claude Code found and logged in; warning if an API key is set.)"""
-        return agent_run.setup_check()
+        return agent_run.setup_check(agent.settings.get("agent.claude") or None)
 
     @app.post("/api/agent/chats/{chat_id}/run")
     def api_agent_run(chat_id: str, request: Request, payload: dict = Body(...)) -> StreamingResponse:
@@ -252,6 +252,30 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
             return {"mode": agent.set_mode(str(payload.get("mode")))}
         except ValueError as e:
             raise HTTPException(400, str(e))
+
+    @app.get("/api/settings")
+    def api_settings() -> dict:
+        """The settings of the project (`.mlviz/settings.json`): values that differ from the default, the defaults, a warning."""
+        return agent.settings.payload(project)
+
+    @app.put("/api/settings")
+    def api_settings_change(payload: dict = Body(...)) -> dict:
+        """Changes settings in one write: `{set: {key: value}, unset: [key]}`; 400 (nothing written) for an unknown key or unusable value."""
+        set_, unset = payload.get("set") or {}, payload.get("unset") or []
+        if not isinstance(set_, dict) or not isinstance(unset, list):
+            raise HTTPException(400, "set must be an object and unset a list")
+        try:
+            agent.settings.change(set_, unset)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        return agent.settings.payload(project)
+
+    @app.delete("/api/agent/chats")
+    def api_agent_delete_chats() -> dict:
+        """Deletes every chat of the project (Einstellungen › Agent); settings and instructions stay."""
+        if any(runner.running(c["id"]) for c in agent.list()):
+            raise HTTPException(409, "a chat is still working")
+        return {"deleted": agent.delete_all()}
 
     @app.get("/api/agent/instructions")
     def api_agent_instructions() -> dict:
