@@ -9,13 +9,13 @@ Prototype: prototype/ · Builds on: v0.2.4
 |---|---|
 | A · Settings screen | decided: A1 (like the Agent-Dashboard settings) |
 | B · Voice input | decided: B3 (review box with recognised project terms), recognition Weg 2 (Whisper on the server with the project vocabulary) |
-| C · Command palette | running: C1 (like VS Code: Ctrl+Shift+P commands, Ctrl+P runs and issues, @ settings, ? prefixes, agent as fallback) on the canvas, waiting for Tim |
+| C · Command palette | decided: C1 (like VS Code) |
 | D · Run notification and progress for the agent | open |
 | E · Own notes on runs | open: attached to the description, visibly Tim's own |
 
 Scope changed 17.10. (Tim): B–E added, deliverables area moved to v0.4 (TIM-96 header and decision comment).
-Canvas: Prototyp-03 (overall: settings tab, voice input B3), row A with A1 chosen, row B with B3 chosen. Tim on A: which
-settings stay is decided in use; the list in A is the starting set. Running block: C.
+Canvas: Prototyp-03 (overall: settings tab, voice input B3, command palette C1), row A with A1 chosen, row B with B3 chosen, row C with C1 chosen. Tim on A: which
+settings stay is decided in use; the list in A is the starting set. Next: Tim chooses the next block (D or E).
 
 ## Goal
 One place in the tool to see and change how it behaves for a project.
@@ -131,10 +131,47 @@ a click on a term offers alternatives and what was actually heard. Then send, ed
 
 **Rejected:** B1 (text straight into the field, no term review): terms could not be checked. B2 (hold to talk) not built. Weg 1 (browser recognition): no project vocabulary, sends audio to Google in Chrome. Weg 3 (browser + Claude correction): one extra Claude call per utterance.
 
+### C · Command palette
+**What:** A command palette like VS Code's. A search box in the middle of the tab strip shows the project
+name ("repnet-bench") and opens it; keyboard shortcuts open it in a mode. It lists commands with their
+category and shortcut, runs and issues, or settings, matched as you type; anything that matches nothing
+can be sent to the agent.
+
+**Behaviour:**
+- Ctrl+Shift+P or F1 → palette opens with `>` (commands). Ctrl+P or a click on the search box → palette opens without prefix (runs and issues). The input has focus.
+- Prefixes in the input: none = runs and issues, `>` = commands, `@` = settings, `?` = list of prefixes (choosing one sets it).
+- `>` with nothing typed → "zuletzt verwendet" (the last 3 commands run, newest first), then "weitere Befehle" (all others in the order of the table below).
+- No prefix with nothing typed → "zuletzt geöffnet" (5 runs, newest first), then 3 issues.
+- Typing → items are filtered and sorted: substring matches first (earlier is better), then matches where every letter continues the previous match or starts a word (`zl` → "Zwei Läufe"); matched letters are highlighted. Runs match on short name and issue ID, issues on ID and title, settings on label and description (category on the right).
+- ↑/↓ move the selection (wraps), Enter runs it, a click runs it, Esc closes without action.
+- A command ending in "…" opens a second step in the same palette (title with ←): Lauf öffnen → runs; Issue öffnen → issues; Zwei Läufe vergleichen → second run (the first is the current run); Vorlage anwenden → templates of the current analysis view; Widget hinzufügen → catalog and own widgets; Modus wechseln → the three agent modes. Backspace on an empty input or ← goes back to `>`.
+- "Einstellung suchen …" switches the input to `@`. Choosing a setting opens the settings tab at that row.
+- Text typed in `>` or no-prefix mode always adds a last item "✦ Agent fragen: „<text>“" (desc "kein Befehl passt" when it is the only item) → Enter sends the text to the agent in the current chat and opens the agent window.
+- A command that cannot run in the current view (for example "Lauf: Filter zurücksetzen" outside a run tab) is listed but disabled with a note ("nur im Lauf-Tab").
+
+**Commands (starting set; category: label · shortcut):**
+
+| Category | Commands |
+|---|---|
+| Läufe | Lauf öffnen … · Ctrl+P; Issue öffnen …; Als Liste zeigen; Nach Issue gruppieren |
+| Lauf | Diesen Lauf analysieren; Notiz hinzufügen (E); Filter zurücksetzen; Beschreibung auf- oder zuklappen |
+| Analyse | Ein Lauf; Zwei Läufe vergleichen …; Projektverlauf; Vorlage anwenden …; Widget hinzufügen …; Als Deliverable speichern … · Ctrl+S |
+| Agent | Fenster zeigen oder verbergen · Ctrl+J; Neuer Chat; Spracheingabe starten · Ctrl+M; Modus wechseln … · Shift+Tab; Chat komprimieren (/compact) |
+| Einstellungen | Öffnen · Ctrl+,; Einstellung suchen …; Dichte umschalten; Größer · Ctrl++; Kleiner · Ctrl+- |
+| Ansicht | Zurücksetzen |
+| Hilfe | Tastenkürzel (list of all shortcuts) |
+
+New shortcuts: Ctrl+J (agent window), Ctrl+S (save as deliverable, only in the analysis), Ctrl++ / Ctrl+- (size, they set `look.scale` instead of the browser zoom). The agent's commands (v0.2 C) and the palette share one command list in the frontend, so a new command is added once.
+
+**In the prototype:** `Prototyp-03.dc.html` (`pShow`, `pRunCmd`, `ACT`, `pit`, `fuzzy`, `parts`, search box `pOpenQuick`), commands in `palette-data.js` (`CMDS`, `STEPS`, `PREFIXES`, `RECENT`), single variant `C1-Palette.dc.html`. Commands without an `ACT` entry only show a toast; disabled commands are not shown in the prototype.
+
+**Rejected:** none; one variant built on Tim's wish to follow VS Code.
+
 ## Changes to principles.md / tokens.json
 - none
 
 ## Out of scope
+- Custom keybindings (shortcuts are fixed in this update).
 - Voice output (the agent does not speak), wake words, hold-to-talk.
 - The dialogs behind action rows beyond what the rows say (own-widget manager and instruction editor follow their own features; export/import is a plain file dialog).
 - Themes or recolouring: colours carry meaning (see principles.md).
