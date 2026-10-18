@@ -99,7 +99,7 @@ def test_a_group_note_hangs_on_the_row_and_shows_in_the_detail_panel(np_):
 
 
 def test_the_description_is_rendered_as_markdown(np_):
-    assert np_.locator('[data-testid="description-fields"] .md').count() >= 1
+    expect(np_.locator('[data-testid="description-fields"] .md').first).to_be_visible()
 
 
 def test_runs_show_their_note_count_in_the_list(np_):

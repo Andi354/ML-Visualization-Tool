@@ -12,6 +12,7 @@ def pp(writable_page):
     writable_page.evaluate("localStorage.removeItem('mlviz:v1:palette-recent')")
     writable_page.reload()
     expect(writable_page.get_by_test_id("palette-box")).to_be_visible()
+    writable_page.wait_for_selector("body[data-shortcuts=on]")  # the key handler exists
     return writable_page
 
 

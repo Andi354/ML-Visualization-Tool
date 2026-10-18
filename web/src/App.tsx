@@ -72,6 +72,7 @@ function Frame({ project }: { project: ProjectInfo }) {
       else void nudgeScale(sc === "bigger" ? 1 : -1);
     };
     window.addEventListener("keydown", onKey);
+    document.body.dataset.shortcuts = "on"; // the keys work from now on (the browser tests wait for it)
     return () => window.removeEventListener("keydown", onKey);
   }, [openPalette, toggleAgent]);
   const paletteCtx: Ctx = {

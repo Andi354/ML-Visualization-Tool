@@ -53,6 +53,7 @@ def test_the_gear_opens_a_tab_and_lights_up(sp):
 
 def test_ctrl_comma_opens_the_settings(sp):
     expect(sp.get_by_test_id("project-badge")).to_be_visible()  # the app is mounted, the key handler exists
+    sp.wait_for_selector("body[data-shortcuts=on]")
     sp.keyboard.press("Control+Comma")
     expect(sp.get_by_test_id("settings")).to_be_visible()
 
@@ -157,4 +158,6 @@ def test_settings_reach_the_tool(sp):
     open_settings(sp)
     row(sp, "look.decimal").get_by_role("radio", name="412.8").click()
     sp.get_by_test_id("area-runs").click()
-    expect(sp.locator(".app")).to_contain_text(re.compile(r"3\.46"))
+    runs = sp.get_by_test_id("runs-view")
+    expect(runs).to_contain_text(re.compile(r"\d\.\d\d"))  # 2.83 %, not 2,83 %
+    expect(runs).not_to_contain_text(re.compile(r"\d,\d\d"))
