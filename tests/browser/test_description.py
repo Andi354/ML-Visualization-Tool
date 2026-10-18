@@ -42,8 +42,8 @@ def test_the_fields_stand_side_by_side_in_a_fixed_order(page):
     assert boxes[0]["width"] > boxes[1]["width"] * 1.3  # Zweck is the widest column
     expect(fields.first.locator("p")).to_have_count(2)  # one paragraph per line break
     expect(fields.nth(1).locator("li")).to_have_count(2)
-    labels = view(page).locator(".desc-field-label").all_text_contents()
-    assert labels == ["Zweck", "Soll zeigen", "Erwartung", "Notizen", "Vergleichen mit"]
+    labels = view(page).locator(".desc-field-label").all_inner_texts()  # the hidden "+ Notiz" is not text
+    assert [l.lower() for l in labels] == ["zweck", "soll zeigen", "erwartung", "notizen", "vergleichen mit"]
 
 
 def test_a_click_on_the_line_folds_and_unfolds_it(page):

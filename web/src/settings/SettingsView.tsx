@@ -170,7 +170,7 @@ function RowView({ row, values, run, flash }: { row: Row; values: Record<string,
       <div class="srow-text">
         <div class="srow-label">
           {row.label}
-          {changed && <span class="dot" title="Geändert" data-testid="changed-dot" />}
+          {changed && <span class="chg-dot" title="Geändert" data-testid="changed-dot" />}
         </div>
         <div class="srow-desc">{row.desc}</div>
         {env && <div class="srow-desc">Gesetzt in {env}; diese Einstellung hat Vorrang, wenn sie einen Wert hat.</div>}

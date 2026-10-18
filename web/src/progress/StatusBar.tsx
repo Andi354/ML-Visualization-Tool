@@ -114,7 +114,7 @@ function NoteCard({ note, testid, onAct, onClose }: { note: Note; testid: string
   return (
     <div class={"note-card " + note.kind + (note.read ? "" : " unread")} data-testid={testid} data-kind={note.kind}>
       <div class="note-top">
-        {!note.read && <span class="dot" aria-label="ungelesen" />}
+        {!note.read && <span class="note-dot" aria-label="ungelesen" />}
         <strong>{d.title}</strong>
         <span class="note-time">{clock(note.at)}</span>
         {onClose && <button class="note-x" aria-label="Schließen" data-testid="toast-close" onClick={onClose}>×</button>}

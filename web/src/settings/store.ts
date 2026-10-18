@@ -39,11 +39,13 @@ function take(p: Payload) {
   emit();
 }
 
-export async function load(): Promise<Payload> {
-  const r = await fetch("/api/settings");
-  take((await r.json()) as Payload);
-  return payload!;
-}
+// Reading runs in the same queue as the changes: an old answer must not overwrite a newer change.
+export const load = (): Promise<Payload> =>
+  enqueue(async () => {
+    const r = await fetch("/api/settings");
+    take((await r.json()) as Payload);
+    return payload!;
+  });
 
 async function send(body: { set: Values; unset: string[] }) {
   const r = await fetch("/api/settings", { method: "PUT", headers: json, body: JSON.stringify(body) });

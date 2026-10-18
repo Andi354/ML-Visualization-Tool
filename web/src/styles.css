@@ -363,7 +363,9 @@ button:disabled,
 .srow.danger .srow-label {
   color: var(--error, #e5707a);
 }
-.dot {
+.chg-dot,
+.note-dot {
+  flex: none;
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -1003,6 +1005,7 @@ button:disabled,
 }
 .voice-review-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
   margin-top: 8px;
