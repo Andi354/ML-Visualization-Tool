@@ -10,12 +10,12 @@ Prototype: prototype/ · Builds on: v0.2.4
 | A · Settings screen | decided: A1 (like the Agent-Dashboard settings) |
 | B · Voice input | decided: B3 (review box with recognised project terms), recognition Weg 2 (Whisper on the server with the project vocabulary) |
 | C · Command palette | decided: C1 (like VS Code) |
-| D · Run notification and progress for the agent | running: D1 (VS Code-like status bar with running runs and a bell) on the canvas; agreed: events finished / ≥ 5 % errors / no new cell for 30 min / started (status bar only), Mac notification when the tab is hidden (setting, on), agent summary only on click, tool `run_progress`; waiting for Tim |
+| D · Run notification and progress for the agent | decided: D1 (status bar with running runs and a bell) |
 | E · Own notes on runs | open: attached to the description, visibly Tim's own |
 
 Scope changed 17.10. (Tim): B–E added, deliverables area moved to v0.4 (TIM-96 header and decision comment).
-Canvas: Prototyp-03 (overall: settings tab, voice input B3, command palette C1), row A with A1 chosen, row B with B3 chosen, row C with C1 chosen. Tim on A: which
-settings stay is decided in use; the list in A is the starting set. Running block: D.
+Canvas: Prototyp-03 (overall: settings tab, voice input B3, command palette C1, status bar D1), row A with A1 chosen, row B with B3 chosen, row C with C1 chosen, row D with D1 chosen. Tim on A: which
+settings stay is decided in use; the list in A is the starting set. Next: block E (own notes), then final check.
 
 ## Goal
 One place in the tool to see and change how it behaves for a project.
@@ -62,6 +62,9 @@ from the default are stored, per project, in `<project>/.mlviz/settings.json`.
 | | `runs.metric` | from project.yaml / any metric of the project | from project.yaml | primary metric for sorting and "best value" |
 | Läufe · Beim Öffnen | `runs.descOpen` | aufgeklappt / zugeklappt | aufgeklappt | first-open state of the run description (later toggles still remembered per run) |
 | | `runs.overview` | switch | on | per-axis charts above the table |
+| Läufe · Hinweise | `runs.notifyMac` | switch | on | browser notification for finished / failing / stalled runs while the tool tab is hidden |
+| | `runs.errWarn` | 1–50 %, step 1 | 5 | share of failed cells that raises "Viele Fehler" |
+| | `runs.stallMin` | 10–240 min, step 10 | 30 | minutes without a new cell after which a running run counts as stalled |
 | Analyse · Boards & Vorlagen | `ana.width` | Halb / Ganz | Halb | width of newly added widgets |
 | | `ana.template` | template names / zuletzt benutzt | Standard | template applied when a run is analysed for the first time |
 | Analyse · Widgets | `ana.hints` | switch | on | the "what" line and FEST chips under widget titles (v0.2.4) |
@@ -167,6 +170,29 @@ New shortcuts: Ctrl+J (agent window), Ctrl+S (save as deliverable, only in the a
 
 **Rejected:** none; one variant built on Tim's wish to follow VS Code.
 
+### D · Run notification and progress
+**What:** A status bar along the bottom of the whole window, as in VS Code. Left: running runs with progress
+and remaining time, and a warning when one stalls. Right: agent status, project and version, and a bell with
+the number of unread run events. Events also pop up as a notification in the bottom right; a closed one stays
+under the bell. The agent gets a tool that reports the progress of a run.
+
+**Behaviour:**
+- The backend checks the runs every 10 s in the background (not only while the runs list is open) and keeps, per running run: cells done and planned, failed cells, the time of the last finished cell, and the rate from the `finished_at` of the last 50 cells (at most the last 2 h).
+- Status bar left, at least one running run → spinner and "<n> läuft/laufen · <short name of the newest running run that is not stalled> · <percent> · noch ~<remaining>"; no running run → "Keine Läufe aktiv". A stalled run adds "⚠ <n> hängt" in amber. Remaining time = remaining cells / rate, rounded (minutes below 1 h, "h min" above); fewer than 5 finished cells → no remaining time ("Restzeit nach den ersten Zellen").
+- Click the left part → popover "Laufende Läufe": per run short name, issue, percent, progress bar, and "<done> von <planned> Zellen · <errors> Fehler · <rate> Zellen/h · noch ~<remaining> (fertig ca. <time>)"; a stalled run in amber "hängt seit <min> · letzte Zelle <time>". "Öffnen" opens the run tab.
+- Events: a run goes from running to finished → "Lauf fertig" (duration, cells, best value of the primary metric, errors; actions Öffnen, Analysieren, ✦ Zusammenfassen). Failed cells of a running run reach `runs.errWarn` → "Viele Fehler" once per run (share, last error message; action Fehler zeigen = run tab filtered to errors). No new cell for `runs.stallMin` → "Lauf hängt" once until a new cell arrives (action Öffnen). A new run appears → only a short note in the status bar ("neu gestartet: <name>", 5 s), no event under the bell.
+- An event → a notification in the bottom right above the status bar (closes after 9 s unless the summary is running; × closes it) and an unread entry under the bell. The bell shows the unread count in blue.
+- Click the bell → popover "Hinweise", newest first, unread with a dot; "Alle gelesen", "Leeren". Clicking an action marks the entry read.
+- "✦ Zusammenfassen" → the agent writes a short summary of the finished run (best configurations, comparison with the previous run of the same issue) into the notification and the bell entry; it is not sent as a chat message. Only on click, never automatically.
+- `runs.notifyMac` on and the tool tab hidden → the same events also as a browser notification (permission asked on first use); clicking it focuses the tool and opens the run.
+- Events are kept for the session in the browser; after a reload the bell starts empty (the status bar is rebuilt from the runs).
+
+**Agent tool `run_progress` (lesen):** argument `run` (folder ID or unique part). Returns `state`, `cells_done`, `cells_planned`, `cells_failed`, `rate_per_hour`, `remaining` (ISO duration or null), `eta` (local time or null), `last_cell_at`, `stalled_since` (or null). `src/mlviz/agent_guide.md`: add the tool to the tool table and to "Der Agent kann" ("Fortschritt eines Laufs nachsehen (`run_progress`): Tempo, Restzeit, hängt seit"); `tests/test_agent_guide.py` must stay green.
+
+**In the prototype:** `Prototyp-03.dc.html` (status bar `nSbRun`, `nRuns`, bell `nNotes`, notification `nT…`, `fire`, demo menu "Prototyp: Ereignis ▾"), data in `notify-data.js`, single variant `D1-Statusleiste.dc.html`. The prototype raises "Lauf fertig" once after 6 s; the demo numbers do not add up across events.
+
+**Rejected:** D2 (no new bar; badge on the runs icon and progress only in the runs list) not built: progress would not be visible in the analysis.
+
 ## Changes to principles.md / tokens.json
 - none
 
@@ -177,5 +203,6 @@ New shortcuts: Ctrl+J (agent window), Ctrl+S (save as deliverable, only in the a
 - Themes or recolouring: colours carry meaning (see principles.md).
 
 ## Open
+- Rate from `finished_at`: if a project's cells have no `finished_at`, then the rate comes from the change in `cells_done` between background checks over the last 30 min.
 - Whisper on the server: if `faster-whisper` cannot be installed or loaded, or a 10 s clip takes longer than 10 s to transcribe with the small model, then use the browser's speech recognition (Web Speech API) with the same normaliser and review box, and the settings row "Erkennung" says which engine is active. Tell Tim.
 - Which settings stay: decided in use. If a setting turns out unused or missing, it is changed in a later patch update.
