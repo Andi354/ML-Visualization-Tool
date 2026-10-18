@@ -13,7 +13,9 @@ BEST_90 = folder("TIM-52_best_90")
 
 @pytest.fixture
 def np_(writable_page):
-    shutil.rmtree(writable_page.writable_root / ".mlviz" / "notes", ignore_errors=True)
+    for name in ("notes", "chats"):
+        shutil.rmtree(writable_page.writable_root / ".mlviz" / name, ignore_errors=True)
+    (writable_page.writable_root / ".mlviz" / "settings.json").unlink(missing_ok=True)
     writable_page.reload()
     open_run(writable_page, BEST_90)
     expect(writable_page.get_by_test_id("exp-row").first).to_be_visible()
