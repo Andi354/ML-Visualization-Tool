@@ -46,6 +46,8 @@ export interface RunInfo {
 }
 
 export interface RunRow extends RunInfo {
+  /** Own notes on the run (v0.3.0). */
+  notes?: number;
   cells: number;
   planned: number;
   errors: number;

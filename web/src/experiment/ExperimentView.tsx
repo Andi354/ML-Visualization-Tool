@@ -1,3 +1,7 @@
+import { countBy, groupKey } from "../notes/model";
+import { NotesColumn } from "../notes/NotesColumn";
+import { propose, useNotes } from "../notes/store";
+import { setting } from "../settings/store";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getDescription, getDims, getRuns, NotFound, type Description, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type RunRow, type TableResult, type TableRow } from "../api";
 import { provide, provideView } from "../agent/bus";
@@ -37,7 +41,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
   const [info, setInfo] = useState<DimsInfo | null>(null);
   const [state, setState] = useState<DimState>({});
   const [sort, setSort] = useState<Sort>({ metric: null, stat: "mean", dir: null });
-  const [overview, setOverview] = useState(true);
+  const [overview, setOverview] = useState(() => setting<boolean>("runs.overview"));
   const [columns, setColumns] = useState<Columns>(() => loadColumns(project.name));
   const [result, setResult] = useState<TableResult | null>(null);
   const [error, setError] = useState(false);
@@ -46,6 +50,8 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
   const seq = useRef(0);
   const [description, setDescription] = useState<Description | null>(null);
   const [folds, setFolds] = useState<Folds>(() => loadFolds(project.name));
+  /** Folded: the stored choice for this run, else the setting for the first open. */
+  const folded = run.id in folds ? folds[run.id] : setting<string>("runs.descOpen") === "closed";
   const [toolbarHeight, setToolbarHeight] = useState(49);
   const toolbarBox = useRef<HTMLDivElement>(null);
 
@@ -60,10 +66,34 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
     };
   }, [run.id]);
   const toggleDescription = () => {
-    const next = { ...folds, [run.id]: !folds[run.id] };
+    const next = { ...folds, [run.id]: !folded };
     setFolds(next);
     saveFolds(project.name, next); // at once: a reload right after the click must keep it
   };
+
+  // own notes on the run (v0.3.0)
+  const nt = useNotes(run.id);
+  const [sectionHl, setSectionHl] = useState<string | null>(null);
+  const noteApi = useRef(nt);
+  noteApi.current = nt;
+  useEffect(() => {
+    const offs = [
+      provide(`add_note:${run.id}`, () => noteApi.current.startDraft({ kind: "run", key: "" })),
+      provide(`propose_note:${run.id}`, (a) => {
+        propose(run.id, String(a.text), a.anchor ?? { kind: "run", key: "" });
+        return { summary: "Notiz vorgeschlagen" };
+      }),
+    ];
+    return () => offs.forEach((o) => o());
+  }, [run.id]);
+
+  // the palette: commands of this run tab (the tab that has the focus is addressed by its run)
+  const mine = useRef({ toggleDescription, reset: () => setState({}) });
+  mine.current = { toggleDescription, reset: () => setState({}) };
+  useEffect(() => {
+    const offs = [provide(`toggle_description:${run.id}`, () => mine.current.toggleDescription()), provide(`reset_filters:${run.id}`, () => mine.current.reset())];
+    return () => offs.forEach((o) => o());
+  }, [run.id]);
 
   // the toolbar sticks to the top of the scroll column and the table header right below it: measure its height
   useEffect(() => {
@@ -152,6 +182,9 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
   const shownChips = useMemo(() => chips(dims, state), [dims, state]);
   const visible = visibleMetrics(columns, project.metrics, info?.primary_metric ?? project.primary_metric);
   const sortMetric = result?.sort.metric ?? null;
+  const tableKeys = (result?.rows ?? []).map((r) => groupKey(r.params));
+  const sectionCounts = countBy(nt.notes, (n) => (n.anchor.kind === "section" ? n.anchor.key : null));
+  const groupCounts = countBy(nt.notes, (n) => (n.anchor.kind === "group" ? n.anchor.key : null));
   const sortDef = project.metrics.find((m) => m.key === sortMetric);
   const primary = info?.primary_metric ?? project.primary_metric;
 
@@ -178,9 +211,13 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
           {description && (
             <DescriptionBlock
               description={description}
-              open={!folds[run.id]}
+              open={!folded}
               onToggle={toggleDescription}
               onOpenRun={onOpenRun}
+              noteCounts={sectionCounts}
+              onAddNote={(section) => nt.startDraft({ kind: "section", key: section })}
+              onShowNotes={(section) => { nt.show({ kind: "section", key: section }); setSectionHl(section); setTimeout(() => setSectionHl(null), 2500); }}
+              highlight={sectionHl}
             />
           )}
           <OverviewLine open={overview} onToggle={() => setOverview(!overview)} />
@@ -233,6 +270,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
                   stale={loading}
                   selectedKey={selected?.key ?? null}
                   onRow={setSelected}
+                  noteCounts={groupCounts}
                 />
                 {result.rows.length === 0 && (
                   <div class="empty" data-testid="exp-empty">
@@ -243,8 +281,10 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
             )}
           </div>
         </main>
-        {selected && (
-          <DetailPanel run={run} project={project} row={selected} onClose={() => setSelected(null)} onAnalyse={onAnalyse} />
+        {selected ? (
+          <DetailPanel run={run} project={project} row={selected} onClose={() => setSelected(null)} onAnalyse={onAnalyse} notes={nt} />
+        ) : (
+          <NotesColumn api={nt} tableKeys={tableKeys} />
         )}
       </div>
     </div>

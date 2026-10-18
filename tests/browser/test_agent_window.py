@@ -107,16 +107,14 @@ def test_escape_closes_the_window_but_keeps_the_chats(agent_page):
     expect(page.get_by_test_id("agent-msg-user")).to_have_text("Hallo")
 
 
-def test_the_microphone_is_disabled_with_a_tooltip_in_the_window_and_the_capsule(agent_page):
+def test_the_microphone_is_there_in_the_window_and_the_capsule(agent_page):
     page = agent_page
     open_window(page)
     mic = page.get_by_test_id("agent-mic")
-    expect(mic).to_be_disabled()
-    expect(mic).to_have_attribute("title", "Sprache kommt in einem späteren Update")
+    expect(mic).to_be_enabled()
+    expect(mic).to_have_attribute("title", "Sprechen (Ctrl+M)")
     page.get_by_test_id("agent-min").click()
-    mic = page.get_by_test_id("agent-mic")
-    expect(mic).to_be_disabled()
-    expect(mic).to_have_attribute("title", "Sprache kommt in einem späteren Update")
+    expect(page.get_by_test_id("agent-mic")).to_be_enabled()
 
 
 # --- drag and resize -----------------------------------------------------------------------------------

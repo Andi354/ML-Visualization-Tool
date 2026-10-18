@@ -27,6 +27,8 @@ def browser_type_launch_args(browser_type_launch_args):
     base = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "")
     found = sorted(glob.glob(os.path.join(base, "chromium-*", "chrome-linux", "chrome")))
     args = dict(browser_type_launch_args)
+    # a fake microphone that is always allowed (the voice input tests)
+    args["args"] = [*args.get("args", []), "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"]
     if found and os.environ.get("MLVIZ_CHROMIUM", "auto") != "playwright":
         args["executable_path"] = found[-1]
     return args
@@ -40,9 +42,17 @@ def _free_port() -> int:
 
 @contextlib.contextmanager
 def serve(project_root):
+    with serve_app(project_root) as (url, _app):
+        yield url
+
+
+@contextlib.contextmanager
+def serve_app(project_root):
+    """Like `serve`, and also gives the app (a test can reach `app.state`)."""
     assert (STATIC / "index.html").exists(), "run `npm run build` in web/ first"
     port = _free_port()
-    server = uvicorn.Server(uvicorn.Config(create_app(project_root), port=port, log_level="warning"))
+    app = create_app(project_root)
+    server = uvicorn.Server(uvicorn.Config(app, port=port, log_level="warning"))
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
     for _ in range(100):
@@ -50,7 +60,7 @@ def serve(project_root):
             break
         time.sleep(0.05)
     try:
-        yield f"http://127.0.0.1:{port}"
+        yield f"http://127.0.0.1:{port}", app
     finally:
         server.should_exit = True
         thread.join(timeout=5)

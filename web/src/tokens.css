@@ -25,6 +25,10 @@
   --series-6: #6A9B33;
   --better: #1FA3A3;
   --worse: #C47F14;
+  --note: #E0A43A;
+  --note-text: #F2C66D;
+  --note-bg: #151209;
+  --note-line: #3A2E18;
   --export-card: #FFFFFF;
   --export-head: #F1F3F6;
   --export-line: #E3E6EB;
@@ -51,6 +55,8 @@
   --tab-strip: 36px;
   --detail-panel: 640px;
   --experiment-sidebar: 270px;
+  --status-bar: 24px;
+  --notes-column: 300px;
   --best-bg: color-mix(in srgb, var(--best) 14%, transparent);
 }
 .theme-light {

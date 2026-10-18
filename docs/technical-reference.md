@@ -373,6 +373,93 @@ fields `short`, `purpose`, `shows`, `notes`, `expectation`, `compare_to` and a l
   is measured (`ResizeObserver`) into `--toolbar-h`, and the table head (`thead`, both rows as one block)
   sticks at `top: var(--toolbar-h)`. The detail panel stays beside the column.
 
+## Settings (v0.3.0)
+
+`<project>/.mlviz/settings.json` is a flat JSON object with only the values that differ from the default
+(`{"look.scale": 110, "agent.mode": "direct"}`). `src/mlviz/settings.py` knows every setting that holds a value
+(`SPECS`: kind, default, range or options); `SettingsStore` reads, changes (`change(set, unset)`, atomic, nothing is
+written if one value is unusable) and keeps what it does not know (a newer tool may have written it). A file that
+cannot be read means all defaults and a warning in the screen; it is only overwritten when a value is changed.
+`agent.mode` and `agent.debug` live here too (the `agent.json` of v0.2 is still read until a value is set).
+
+API: `GET /api/settings` (`values`, `defaults`, `warning`, `file`, `project_path`, `version`, `env`),
+`PUT /api/settings` with `{set, unset}`, `DELETE /api/agent/chats` (Einstellungen › Daten).
+
+Screen (`web/src/settings/`): `catalog.ts` is the list of rows (category, section, control, text; a new setting is one
+entry there and one `Spec` in `settings.py`; `tests/settings_defaults.json` is compared by pytest and vitest),
+`model.ts` the logic (steps for undo/redo, search), `store.ts` the values with a queue for changes, undo/redo (session
+only) and `applyEffects` (`data-density`, `data-motion`, `zoom` on `<html>`, the decimal sign of `format.ts`).
+Code that needs a value calls `setting(key)`; it is read when used, so a change applies without a reload.
+The tab is `SETTINGS_TAB` (`"@settings"`) in the frame state; Ctrl/Cmd+, opens it.
+
+Effects of the settings: `look.*` (see above), `runs.feature`/`runs.metric` (`listing.run_listing`), `runs.descOpen` and
+`runs.overview` (first open of a run tab), `ana.width` (width of widgets added), `ana.template` (first board),
+`exp.*` (`analysis/images.ts`: file name, folder; `SaveDialog`, `agentSave`: background, pixel ratio, footer),
+`agent.cacheWarn`, `agent.quota`, `agent.claude` (`agent_run.command`).
+
+## Command palette (v0.3.0)
+
+`web/src/palette/`: `match.ts` (substring first, then letters that continue a match or start a word; prefixes `>` `@` `?`),
+`commands.ts` (the one list of commands with category, shortcut, a note when blocked, `step` for commands ending in
+"…"; also the keyboard shortcuts `shortcutFor` and the last three commands used), `Palette.tsx` (input, steps,
+list). `App.tsx` owns the shortcuts and opens the palette (`Ctrl+Shift+P`/`F1` with `>`, `Ctrl+P` without prefix).
+
+Commands do not reach into views: they dispatch frame actions or call the handlers views provide on the bus
+(`agent/bus.ts`): `reset_filters:<run>` and `toggle_description:<run>` (run tab), `board_info`, `open_save_dialog`,
+`add_widget`, `apply_template` (board), `ui:new_chat`, `ui:mode`, `ui:compact`, `ui:ask` (agent window). Setting changes by
+shortcut (`Ctrl++`, `Ctrl+-`) go through the settings queue (`nudgeScale`), so repeated keys add up.
+
+## Run progress and events (v0.3.0)
+
+`src/mlviz/progress.py`: `run_progress(run, now, stall_min)` computes done/planned/failed cells, the rate (from
+`finished_at` of the last 50 cells within the last 2 hours), the remaining time (not with fewer than 5 cells and not
+while stalled) and `stalled_since` (no new cell for `runs.stallMin`; a run without a cell counts from its start).
+`ProgressWatcher` polls every 10 s (`MLVIZ_PROGRESS_INTERVAL` overrides it, the tests use 0.3 s) from the start of the
+app or the first request, keeps the running runs and an in-memory list of events: `finished`, `errors` (share of failed
+cells reaches `runs.errWarn`, once per run), `stalled` (once until a new cell arrives), `started` (only a note in the
+status bar). Runs that are running when the tool starts raise nothing. `GET /api/progress?since=<id>` hands out the running
+runs and the events after `id`; `POST /api/progress/summary {run}` asks Claude Code once (`agent_run.ask_once`, no chat)
+for a short summary, the facts are in the prompt. The agent tool `run_progress` reads the same numbers.
+
+Browser (`web/src/progress/`): `store.ts` polls (10 s, `window.__mlvizPollMs` overrides it), keeps the notes of the
+session (a reload starts with an empty bell), shows each as a notification for 9 s and, when the tab is hidden and
+`runs.notifyMac` is on, as a browser notification. `StatusBar.tsx` is the bar along the bottom of the window (progress,
+agent status, project and version, bell); `model.ts` holds the texts.
+
+## Own notes on runs (v0.3.0)
+
+`src/mlviz/notes.py`: `NoteStore` keeps `<project>/.mlviz/notes/<run-id>.json`, a list of `{id, text, created, updated,
+anchor: {kind, key}, by}`. An anchor is `run`, `section` (`purpose`, `shows`, `expectation`, `notes` of the description)
+or `group` (the axis values of a table row, sorted by axis: `lr_epochs=40 · lstm_layer=2`, so a note survives
+filters, sorting and splits). API: `GET/POST /api/runs/<id>/notes`, `PUT/DELETE .../notes/<note>` (a POST with `id` and
+`created` restores a deleted note), `GET /api/notes/counts`, `GET /api/notes/search?q=`. `run_listing` has `notes`
+(count) per run, `find_runs` passes it on. Agent tools: `read_notes` (read) and `propose_note` (always asks; the browser
+puts the proposal in the notes column, only "Speichern" there writes it, marked `by: "agent"`).
+
+Browser (`web/src/notes/`): `store.ts` (`useNotes(run)`: notes, draft, edit, delete with undo, proposals of the agent kept in
+memory), `NotesColumn.tsx` (column and the notes of one group in the detail panel), `model.ts` (order, labels, group
+key). The run tab (`ExperimentView`) provides the bus handlers `add_note:<run>` and `propose_note:<run>`; the frame
+provides `propose_note` (opens the tab, then calls the handler of that run). Descriptions are rendered with the
+Markdown reader of the chat (`agent/Markdown.tsx`); the short line in Läufe stays plain text.
+
+## Voice input (v0.3.0)
+
+`src/mlviz/voice.py`: `vocabulary(project, extra)` collects the terms (axes, Lauf-Merkmal keys and values, metrics, run
+names and short names, issue IDs, templates, widget keys, `agent.voiceTerms`) with their kind; `normalise(text, vocab)`
+turns number words into digits (`numbers`), `tim 52` into `TIM-52`, spoken keys into snake_case, and cuts the text
+into plain segments and terms with `heard` (what was said) and up to three `alts` of the same kind; versions
+(`0.3.0`) are terms of kind `Version`. `Recogniser` loads `faster-whisper` (optional, `mlviz[voice]`, installed in the
+Docker image, model cache in the volume `mlviz-models`) in the background; `GET /api/voice/status` says which engine
+works. `POST /api/voice` takes the clip (`audio/webm` as the body) and answers `{text, heard, segments, engine}`; 503
+means: the model is loading or `faster-whisper` is missing. Then the browser recognises the speech itself (Web Speech
+API, recorded at the same time) and posts the text to `POST /api/voice/normalise`; the review box says "Erkennung im
+Browser". A message with `spoken` (the heard words) is stored with them and reaches the agent as `[gesprochen] …`.
+
+Browser (`web/src/voice/`): `recorder.ts` (MediaRecorder, level meter, optional browser recognition), `useVoice.ts`
+(idle, preparing, recording, recognising, review; 2 minutes at most; `agent.voiceReview` off sends at once),
+`VoicePanel.tsx` (microphone button, red recording row, review box with chips and alternatives), `model.ts`. Ctrl+M
+(also on macOS) and the palette command go through the bus handler `ui:voice` of the agent window.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.

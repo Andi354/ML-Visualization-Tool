@@ -87,9 +87,9 @@ class Busy(RuntimeError):
     """The chat already has a request running."""
 
 
-def command() -> list[str] | None:
-    """The `claude` command (a list), or None if Claude Code is not installed."""
-    custom = os.environ.get("MLVIZ_CLAUDE")
+def command(custom: str | None = None) -> list[str] | None:
+    """The `claude` command (a list), or None if Claude Code is not installed. `custom` is the setting `agent.claude`."""
+    custom = custom or os.environ.get("MLVIZ_CLAUDE")
     if custom:
         return shlex.split(custom)
     found = shutil.which("claude") or _vscode_claude()
@@ -107,14 +107,35 @@ def _vscode_claude() -> str | None:
     return max(found)[1] if found else None
 
 
+def ask_once(cmd: list[str], prompt: str, cwd: Path, timeout: int = 120) -> str:
+    """One question to Claude Code without a chat (`-p`): the text of its answer. Raises RuntimeError if it fails."""
+    try:
+        r = subprocess.run([*cmd, "-p", prompt, "--output-format", "stream-json", "--verbose"], cwd=cwd, capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise RuntimeError(f"Claude Code ließ sich nicht aufrufen ({e})") from e
+    texts, error = [], None
+    for line in r.stdout.splitlines():
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if ev.get("type") == "assistant":
+            texts += [b.get("text", "") for b in (ev.get("message") or {}).get("content", []) if b.get("type") == "text"]
+        elif ev.get("type") == "result" and ev.get("is_error"):
+            error = str(ev.get("result") or "Fehler")
+    if error or not texts:
+        raise RuntimeError(error or (r.stderr.strip()[:200] or "keine Antwort"))
+    return "\n".join(t for t in texts if t).strip()
+
+
 def api_key_set() -> bool:
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
-def setup_check() -> dict[str, Any]:
+def setup_check(custom: str | None = None) -> dict[str, Any]:
     """Is the agent usable here? `{ready, problem, step, api_key}`; problem and step are German texts for the window."""
     out: dict[str, Any] = {"ready": False, "problem": None, "step": None, "api_key": api_key_set()}
-    cmd = command()
+    cmd = command(custom)
     if cmd is None:
         out["problem"] = "Claude Code ist nicht installiert (oder die Anwendung läuft in Docker)."
         out["step"] = "Claude Code installieren und das Tool ohne Docker starten (`make run`); liegt `claude` nicht im PATH, den Pfad in `MLVIZ_CLAUDE` setzen."
@@ -195,11 +216,11 @@ class AgentRunner:
         """`/compact` on the session of a chat (works in `-p` mode); the chat notes "Chat komprimiert · 52k → 2k Tokens"."""
         return self.run(chat_id, "/compact", compact=True)
 
-    def run(self, chat_id: str, text: str, context: str = "", resend: bool = False, compact: bool = False, base_url: str = "", images: list[dict] | None = None) -> Iterator[dict[str, Any]]:
+    def run(self, chat_id: str, text: str, context: str = "", resend: bool = False, compact: bool = False, base_url: str = "", images: list[dict] | None = None, spoken: str | None = None) -> Iterator[dict[str, Any]]:
         """Sends a message and yields snapshots of the chat until the answer is complete, stopped or failed.
 
         Between snapshots it also yields `{"command": {id, tool, args}}` items: what the open tool is asked to do."""
-        cmd = command()
+        cmd = command(self.store.settings.get("agent.claude") or None)
         with self._lock:
             if chat_id in self._procs:
                 raise Busy(chat_id)
@@ -211,7 +232,7 @@ class AgentRunner:
                 chat["messages"].pop()
                 self.store.save(chat)
             if not resend and not compact:
-                self.store.append(chat_id, "user", text, **({"images": images} if images else {}))
+                self.store.append(chat_id, "user", text, **({"images": images} if images else {}), **({"spoken": spoken} if spoken else {}))
             yield self._snapshot(chat_id, True)
             if cmd is None:
                 self.store.append(chat_id, "info", "Claude Code wurde nicht gefunden.", error=True)
@@ -220,7 +241,7 @@ class AgentRunner:
 
             def work() -> None:
                 try:
-                    for snap in self._call(cmd, chat_id, text, context, compact, base_url, live, images or []):
+                    for snap in self._call(cmd, chat_id, text, context, compact, base_url, live, images or [], bool(spoken)):
                         live.out.put(snap)
                 finally:
                     live.out.put(None)
@@ -236,13 +257,15 @@ class AgentRunner:
                 self._stopped.discard(chat_id)
                 self.live.pop(chat_id, None)
 
-    def _call(self, cmd: list[str], chat_id: str, text: str, context: str, compact: bool, base_url: str, live: ChatRun, images: list[dict]) -> Iterator[dict[str, Any]]:
+    def _call(self, cmd: list[str], chat_id: str, text: str, context: str, compact: bool, base_url: str, live: ChatRun, images: list[dict], spoken: bool = False) -> Iterator[dict[str, Any]]:
         chat = self.store.get(chat_id)
         mode = MODE_LABELS.get(self.store.mode(), "Gemischt")
         if compact:  # a slash command stands alone
             prompt = text
         else:
             prompt = f"[Ansicht: {context}, Modus: {mode}]\n{text}" if context else f"[Modus: {mode}]\n{text}"
+            if spoken:  # recognised from speech: numbers and names may be wrong
+                prompt = "[gesprochen] " + prompt
             if images:  # where the images lie: the agent reads them with `Read`
                 prompt += "\n" + "\n".join(self.attachments.lines(images))
         args = [

@@ -17,6 +17,9 @@ from . import agent_attachments, agent_run
 from .agent_attachments import AttachmentError
 from .agent_store import MAX_INSTRUCTIONS, AgentStore, ChatNotFound, InstructionsChanged
 from .store import StoreError
+from . import progress, voice
+from .notes import NoteNotFound, NoteStore
+from .progress import ProgressWatcher
 from .listing import merkmal_candidates, run_listing
 from .project import Project, now
 from .descriptions import describe
@@ -44,7 +47,8 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     def api_runs() -> list[dict]:
         runs = list_runs(project)
         candidates = merkmal_candidates(runs)
-        return [run_listing(project, r, candidates) for r in runs]
+        feature, metric = agent.settings.get("runs.feature"), agent.settings.get("runs.metric")
+        return [run_listing(project, r, candidates, feature, metric) for r in runs]
 
     @app.get("/api/issues")
     def api_issues() -> dict:
@@ -147,7 +151,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     @app.get("/api/agent/setup")
     def api_agent_setup() -> dict:
         """Can the agent run here? (Claude Code found and logged in; warning if an API key is set.)"""
-        return agent_run.setup_check()
+        return agent_run.setup_check(agent.settings.get("agent.claude") or None)
 
     @app.post("/api/agent/chats/{chat_id}/run")
     def api_agent_run(chat_id: str, request: Request, payload: dict = Body(...)) -> StreamingResponse:
@@ -166,7 +170,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
 
         def events():
             try:
-                for snap in runner.run(chat_id, text, str(payload.get("context") or ""), resend, base_url=f"http://127.0.0.1:{request.url.port or 80}", images=images):
+                for snap in runner.run(chat_id, text, str(payload.get("context") or ""), resend, base_url=f"http://127.0.0.1:{request.url.port or 80}", images=images, spoken=(str(payload.get("spoken") or "") or None)):
                     yield f"data: {json.dumps(snap, ensure_ascii=False)}\n\n"
             except agent_run.Busy:
                 yield f"data: {json.dumps({'error': 'busy'})}\n\n"
@@ -252,6 +256,134 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
             return {"mode": agent.set_mode(str(payload.get("mode")))}
         except ValueError as e:
             raise HTTPException(400, str(e))
+
+    @app.get("/api/settings")
+    def api_settings() -> dict:
+        """The settings of the project (`.mlviz/settings.json`): values that differ from the default, the defaults, a warning."""
+        return agent.settings.payload(project)
+
+    @app.put("/api/settings")
+    def api_settings_change(payload: dict = Body(...)) -> dict:
+        """Changes settings in one write: `{set: {key: value}, unset: [key]}`; 400 (nothing written) for an unknown key or unusable value."""
+        set_, unset = payload.get("set") or {}, payload.get("unset") or []
+        if not isinstance(set_, dict) or not isinstance(unset, list):
+            raise HTTPException(400, "set must be an object and unset a list")
+        try:
+            agent.settings.change(set_, unset)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        return agent.settings.payload(project)
+
+    @app.delete("/api/agent/chats")
+    def api_agent_delete_chats() -> dict:
+        """Deletes every chat of the project (Einstellungen › Agent); settings and instructions stay."""
+        if any(runner.running(c["id"]) for c in agent.list()):
+            raise HTTPException(409, "a chat is still working")
+        return {"deleted": agent.delete_all()}
+
+    # --- voice input (v0.3.0, B) -----------------------------------------------------------------
+    recogniser = voice.Recogniser()
+    app.state.recogniser = recogniser
+
+    @app.get("/api/voice/status")
+    def api_voice_status() -> dict:
+        """Which engine recognises speech: `whisper` on the server (when loaded) or `browser`."""
+        return recogniser.status(agent.settings.get("agent.voiceModel"))
+
+    @app.post("/api/voice/normalise")
+    def api_voice_normalise(payload: dict = Body(...)) -> dict:
+        """The normaliser alone, for text the browser recognised itself: `{text}`."""
+        vocab = voice.vocabulary(project, agent.settings.get("agent.voiceTerms"))
+        return {**voice.normalise(str(payload.get("text") or ""), vocab), "engine": "browser"}
+
+    @app.post("/api/voice")
+    async def api_voice(request: Request) -> dict:
+        """A recording (the body, `audio/webm`): `{text, heard, segments, engine}`; 503 when the server cannot recognise (use the browser)."""
+        model, lang = agent.settings.get("agent.voiceModel"), agent.settings.get("agent.voiceLang")
+        status = recogniser.status(model)
+        if status["engine"] != "whisper" or not status["ready"]:
+            raise HTTPException(503, status.get("reason") or "Die Erkennung wird noch geladen.")
+        audio = await request.body()
+        vocab = voice.vocabulary(project, agent.settings.get("agent.voiceTerms"))
+        try:
+            heard = recogniser.transcribe(audio, lang, model, voice.prompt_for(vocab))
+        except Exception as e:
+            raise HTTPException(500, f"Die Erkennung ist fehlgeschlagen ({e}).")
+        return {**voice.normalise(heard, vocab), "engine": "whisper"}
+
+    # --- own notes on runs (v0.3.0, E) -----------------------------------------------------------
+    note_store = NoteStore(project)
+
+    def _run_or_404(run_id: str):
+        run = get_run(project, run_id)
+        if run is None:
+            raise HTTPException(404, "run not found")
+        return run
+
+    @app.get("/api/notes/counts")
+    def api_note_counts() -> dict:
+        return note_store.counts()
+
+    @app.get("/api/notes/search")
+    def api_note_search(q: str = "") -> list[dict]:
+        return note_store.search(q)
+
+    @app.get("/api/runs/{run_id}/notes")
+    def api_notes(run_id: str) -> list[dict]:
+        _run_or_404(run_id)
+        return note_store.list(run_id)
+
+    @app.post("/api/runs/{run_id}/notes")
+    def api_note_add(run_id: str, payload: dict = Body(...)) -> dict:
+        """`{text, anchor?: {kind, key}, by?, id?, created?}` (id and created restore a deleted note)."""
+        _run_or_404(run_id)
+        try:
+            return note_store.add(run_id, payload.get("text"), payload.get("anchor"), str(payload.get("by") or "user"), payload.get("id"), payload.get("created"))
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+
+    @app.put("/api/runs/{run_id}/notes/{note_id}")
+    def api_note_update(run_id: str, note_id: str, payload: dict = Body(...)) -> dict:
+        try:
+            return note_store.update(run_id, note_id, payload.get("text"))
+        except NoteNotFound:
+            raise HTTPException(404, "note not found")
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+
+    @app.delete("/api/runs/{run_id}/notes/{note_id}")
+    def api_note_delete(run_id: str, note_id: str) -> dict:
+        try:
+            return note_store.delete(run_id, note_id)
+        except NoteNotFound:
+            raise HTTPException(404, "note not found")
+
+    # --- progress and events of running runs (v0.3.0) ---------------------------------------------
+    watcher = ProgressWatcher(project, agent.settings, interval=float(os.environ.get("MLVIZ_PROGRESS_INTERVAL", "10")))
+    app.state.watcher = watcher
+
+    app.router.on_startup.append(watcher.ensure)
+    app.router.on_shutdown.append(watcher.stop)
+
+    @app.get("/api/progress")
+    def api_progress(since: int = 0) -> dict:
+        """Running runs with their progress and the events after `since` (a run finished, many errors, stalls, started)."""
+        watcher.ensure()  # a test client without startup events starts it here
+        return watcher.snapshot(since)
+
+    @app.post("/api/progress/summary")
+    def api_progress_summary(payload: dict = Body(...)) -> dict:
+        """The agent's short summary of a finished run (only on a click): best groups and the comparison with the previous run of its issue."""
+        run = get_run(project, str(payload.get("run") or ""))
+        if run is None:
+            raise HTTPException(404, "run not found")
+        cmd = agent_run.command(agent.settings.get("agent.claude") or None)
+        if cmd is None:
+            raise HTTPException(503, "Claude Code wurde nicht gefunden.")
+        try:
+            return {"text": agent_run.ask_once(cmd, progress.summary_prompt(project, run), project.root)}
+        except RuntimeError as e:
+            raise HTTPException(502, str(e))
 
     @app.get("/api/agent/instructions")
     def api_agent_instructions() -> dict:

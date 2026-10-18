@@ -1,4 +1,5 @@
 import type { Description } from "../api";
+import { Markdown } from "../agent/Markdown";
 import { foldLabel, gridColumns, problemText, sections } from "./description";
 
 interface Props {
@@ -6,13 +7,19 @@ interface Props {
   open: boolean;
   onToggle: () => void;
   onOpenRun: (run: string) => void;
+  /** Notes hanging on the sections of the description (v0.3.0): count per section, and the actions. */
+  noteCounts?: Record<string, number>;
+  onAddNote?: (section: string) => void;
+  onShowNotes?: (section: string) => void;
+  /** The section whose first note was just shown (amber background). */
+  highlight?: string | null;
 }
 
 /** Timestamp prefix of a run folder dropped: the chip shows the name of the run. */
 const chipName = (name: string) => name.replace(/^\d{4}-\d{2}-\d{2}_\d{4,6}_/, "");
 
 /** The description of a run (feature H): the folded line, the fields side by side, "Vergleichen mit" chips. */
-export function DescriptionBlock({ description: d, open, onToggle, onOpenRun }: Props) {
+export function DescriptionBlock({ description: d, open, onToggle, onOpenRun, noteCounts = {}, onAddNote, onShowNotes, highlight }: Props) {
   const secs = sections(d);
   const problem = problemText(d);
   return (
@@ -35,17 +42,21 @@ export function DescriptionBlock({ description: d, open, onToggle, onOpenRun }: 
           {secs.length > 0 && (
             <div class="desc-grid" style={{ gridTemplateColumns: gridColumns(secs) }} data-testid="description-fields">
               {secs.map((s) => (
-                <div key={s.key} data-field={s.key}>
-                  <div class="desc-field-label">{s.label}</div>
-                  {s.kind === "text" ? (
-                    s.paragraphs.map((t, i) => <p key={i}>{t}</p>)
-                  ) : (
-                    <ul>
-                      {s.items.map((t, i) => (
-                        <li key={i}>{t}</li>
-                      ))}
-                    </ul>
-                  )}
+                <div key={s.key} data-field={s.key} class={highlight === s.key ? "desc-hl" : ""}>
+                  <div class="desc-field-label">
+                    {s.label}
+                    {noteCounts[s.key] > 0 && (
+                      <button class="desc-note-count" data-testid="section-notes" onClick={() => onShowNotes?.(s.key)}>
+                        ✎ {noteCounts[s.key]}
+                      </button>
+                    )}
+                    {onAddNote && (
+                      <button class="desc-note-add" data-testid="section-add-note" onClick={() => onAddNote(s.key)}>
+                        + Notiz
+                      </button>
+                    )}
+                  </div>
+                  <Markdown text={s.kind === "text" ? s.paragraphs.join("\n\n") : s.items.map((t) => `- ${t}`).join("\n")} />
                 </div>
               ))}
             </div>

@@ -1,3 +1,4 @@
+import { groupKey } from "../notes/model";
 import type { Metric, TableResult, TableRow } from "../api";
 import { formatInt } from "../format";
 import { formatMetric, formatSd, nextSort, type Columns, type Sort } from "./model";
@@ -12,9 +13,11 @@ interface Props {
   stale: boolean;
   selectedKey: string | null;
   onRow: (row: TableRow) => void;
+  /** Notes per group (key of `groupKey`): "✎ n" at the end of the row. */
+  noteCounts?: Record<string, number>;
 }
 
-export function Table({ result, metrics, visible, columns, sort, onSort, stale, selectedKey, onRow }: Props) {
+export function Table({ result, metrics, visible, columns, sort, onSort, stale, selectedKey, onRow, noteCounts = {} }: Props) {
   const def = (k: string) => metrics.find((m) => m.key === k);
   const sortMetric = result.sort.metric;
   const sortDef = sortMetric ? def(sortMetric) : undefined;
@@ -76,9 +79,14 @@ export function Table({ result, metrics, visible, columns, sort, onSort, stale, 
             aria-selected={selectedKey === r.key}
             onClick={() => onRow(r)}
           >
-            {result.params.map((p) => (
+            {result.params.map((p, i) => (
               <td key={p} class="param-cell">
                 {r.params[p]}
+                {i === 0 && noteCounts[groupKey(r.params)] > 0 && (
+                  <span class="row-notes" data-testid="row-notes" title="Notizen zu dieser Kombination">
+                    ✎ {noteCounts[groupKey(r.params)]}
+                  </span>
+                )}
               </td>
             ))}
             {visible.map((k) => {

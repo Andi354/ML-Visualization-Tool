@@ -4,6 +4,9 @@ import { loadJson, saveJson, storageKey } from "./storage";
 export type Area = "runs" | "analysis";
 export type RunsView = "list" | "issues";
 
+/** `active` of the settings tab (it is no run). */
+export const SETTINGS_TAB = "@settings";
+
 export interface FrameState {
   area: Area;
   /** Run folder names, in tab order. */
@@ -17,6 +20,8 @@ export interface FrameState {
   analysis: { run: string; combo: Record<string, string> } | null;
   /** The agent asks the analysis for a view (`n` makes the same request count again). */
   analysisView: { view: "run" | "two" | "project"; n: number } | null;
+  /** The settings tab is open (v0.3.0). */
+  settings: boolean;
 }
 
 export type FrameAction =
@@ -24,6 +29,8 @@ export type FrameAction =
   | { type: "open-run"; run: string }
   | { type: "focus-run"; run: string }
   | { type: "focus-pinned" }
+  | { type: "open-settings" }
+  | { type: "close-settings" }
   | { type: "close-run"; run: string }
   | { type: "set-runs-view"; view: RunsView }
   | { type: "open-compare"; runs: string[] }
@@ -33,7 +40,7 @@ export type FrameAction =
   /** Undo and redo of the agent: back to an earlier state of the frame. */
   | { type: "restore"; state: FrameState };
 
-export const initialFrame: FrameState = { area: "runs", tabs: [], active: null, runsView: "list", compare: [], analysis: null, analysisView: null };
+export const initialFrame: FrameState = { area: "runs", tabs: [], active: null, runsView: "list", compare: [], analysis: null, analysisView: null, settings: false };
 
 export function frameReducer(s: FrameState, a: FrameAction): FrameState {
   switch (a.type) {
@@ -46,6 +53,10 @@ export function frameReducer(s: FrameState, a: FrameAction): FrameState {
       return s.tabs.includes(a.run) ? { ...s, active: a.run } : s;
     case "focus-pinned":
       return { ...s, active: null };
+    case "open-settings":
+      return { ...s, settings: true, active: SETTINGS_TAB };
+    case "close-settings":
+      return { ...s, settings: false, active: s.active === SETTINGS_TAB ? null : s.active };
     case "close-run": {
       const i = s.tabs.indexOf(a.run);
       if (i < 0) return s;
@@ -76,14 +87,15 @@ function validate(v: unknown): FrameState | null {
   const tabs = Array.isArray(o.tabs) ? o.tabs.filter((t): t is string => typeof t === "string") : [];
   const area: Area = o.area === "analysis" ? "analysis" : "runs";
   const runsView: RunsView = o.runsView === "issues" ? "issues" : "list";
-  const active = typeof o.active === "string" && tabs.includes(o.active) ? o.active : null;
+  const settings = o.settings === true;
+  const active = typeof o.active === "string" && (tabs.includes(o.active) || (settings && o.active === SETTINGS_TAB)) ? o.active : null;
   const compare = Array.isArray(o.compare) ? o.compare.filter((t): t is string => typeof t === "string") : [];
   const an = o.analysis as { run?: unknown; combo?: unknown } | null | undefined;
   const analysis =
     an && typeof an.run === "string" && an.combo && typeof an.combo === "object"
       ? { run: an.run, combo: an.combo as Record<string, string> }
       : null;
-  return { area, tabs: [...new Set(tabs)], active, runsView, compare, analysis, analysisView: null };
+  return { area, tabs: [...new Set(tabs)], active, runsView, compare, analysis, analysisView: null, settings };
 }
 
 export const loadFrame = (project: string): FrameState =>
