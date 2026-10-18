@@ -481,3 +481,107 @@ button:disabled,
 .about dd {
   margin: 0;
 }
+
+/* Command palette (v0.3.0, C) */
+.palette-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 12vh;
+  background: rgba(8, 10, 14, 0.55);
+}
+.palette {
+  width: min(640px, 92vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.palette-step {
+  padding: 8px 12px 0;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.palette-step button {
+  color: var(--accent);
+}
+.palette-input {
+  margin: 8px;
+  height: 34px;
+  padding: 0 10px;
+  color: var(--text);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.palette-list {
+  overflow-y: auto;
+  padding-bottom: 6px;
+}
+.palette-group {
+  padding: 8px 14px 2px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.palette-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.palette-item.sel {
+  background: var(--accent-bg);
+}
+.palette-item.off {
+  opacity: 0.5;
+  cursor: default;
+}
+.palette-item mark {
+  color: var(--accent);
+  background: none;
+  font-weight: 600;
+}
+.palette-desc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.palette-right {
+  margin-left: auto;
+  color: var(--text-3);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.palette-empty {
+  padding: 12px 14px;
+  color: var(--text-3);
+}
+.palette-box {
+  margin: 0 auto;
+  align-self: center;
+  width: min(420px, 40%);
+  height: 24px;
+  padding: 0 10px;
+  text-align: center;
+  color: var(--text-3);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.srow.flash {
+  background: var(--accent-bg);
+}

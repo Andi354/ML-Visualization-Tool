@@ -64,15 +64,18 @@ const enqueue = <T>(fn: () => Promise<T>): Promise<T> => {
 };
 
 /** Sets and resets values in one write (one undo step). `unset` may be a function, called when the change runs. */
-export const change = (set: Values, unset: string[] | (() => string[]) = []) =>
-  enqueue(async () => {
-    const step = makeStep(values(), set, typeof unset === "function" ? unset() : unset);
-    if (!step) return;
-    await send(request(step.after));
-    undo.push(step);
-    redo = [];
-    emit();
-  });
+const apply = async (set: Values, unset: string[] | (() => string[]) = []) => {
+  const step = makeStep(values(), set, typeof unset === "function" ? unset() : unset);
+  if (!step) return;
+  await send(request(step.after));
+  undo.push(step);
+  redo = [];
+  emit();
+};
+export const change = (set: Values, unset: string[] | (() => string[]) = []) => enqueue(() => apply(set, unset));
+
+/** Ctrl++ / Ctrl+-: the size changes by one step from what it is when this runs (keys can repeat quickly). */
+export const nudgeScale = (steps: number) => enqueue(() => apply({ "look.scale": Math.min(125, Math.max(85, setting<number>("look.scale") + steps * 5)) }));
 
 export const resetAll = () => change({}, () => Object.keys(values()));
 
@@ -96,6 +99,18 @@ export const redoLast = () =>
 
 export const canUndo = () => undo.length > 0;
 export const canRedo = () => redo.length > 0;
+
+// The palette opens the settings tab at a row.
+let focusKey: string | null = null;
+export const requestFocus = (key: string | null) => {
+  focusKey = key;
+  emit();
+};
+export const takeFocus = (): string | null => {
+  const k = focusKey;
+  focusKey = null;
+  return k;
+};
 
 /** For tests: forget the session history. */
 export function resetHistory() {

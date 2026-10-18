@@ -20,9 +20,11 @@ interface Props {
   settings: boolean;
   onFocusSettings: () => void;
   onCloseSettings: () => void;
+  projectName: string;
+  onPalette: () => void;
 }
 
-export function TabStrip({ area, tabs, active, onFocusPinned, onFocus, onClose, settings, onFocusSettings, onCloseSettings }: Props) {
+export function TabStrip({ area, tabs, active, onFocusPinned, onFocus, onClose, settings, onFocusSettings, onCloseSettings, projectName, onPalette }: Props) {
   return (
     <div class="tab-strip" role="tablist" data-testid="tab-strip">
       <button
@@ -85,6 +87,9 @@ export function TabStrip({ area, tabs, active, onFocusPinned, onFocus, onClose, 
           </button>
         </div>
       ))}
+      <button class="palette-box" data-testid="palette-box" aria-label="Befehlspalette öffnen" onClick={onPalette}>
+        {projectName}
+      </button>
     </div>
   );
 }

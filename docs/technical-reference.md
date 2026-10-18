@@ -397,6 +397,18 @@ Effects of the settings: `look.*` (see above), `runs.feature`/`runs.metric` (`li
 `exp.*` (`analysis/images.ts`: file name, folder; `SaveDialog`, `agentSave`: background, pixel ratio, footer),
 `agent.cacheWarn`, `agent.quota`, `agent.claude` (`agent_run.command`).
 
+## Command palette (v0.3.0)
+
+`web/src/palette/`: `match.ts` (substring first, then letters that continue a match or start a word; prefixes `>` `@` `?`),
+`commands.ts` (the one list of commands with category, shortcut, a note when blocked, `step` for commands ending in
+"…"; also the keyboard shortcuts `shortcutFor` and the last three commands used), `Palette.tsx` (input, steps,
+list). `App.tsx` owns the shortcuts and opens the palette (`Ctrl+Shift+P`/`F1` with `>`, `Ctrl+P` without prefix).
+
+Commands do not reach into views: they dispatch frame actions or call the handlers views provide on the bus
+(`agent/bus.ts`): `reset_filters:<run>` and `toggle_description:<run>` (run tab), `board_info`, `open_save_dialog`,
+`add_widget`, `apply_template` (board), `ui:new_chat`, `ui:mode`, `ui:compact`, `ui:ask` (agent window). Setting changes by
+shortcut (`Ctrl++`, `Ctrl+-`) go through the settings queue (`nudgeScale`), so repeated keys add up.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.

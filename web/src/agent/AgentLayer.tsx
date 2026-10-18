@@ -6,7 +6,7 @@ import { AgentIcon, BugIcon, MicIcon, PaperclipIcon } from "../frame/icons";
 import { attachmentUrl, checkImages, imagesOf, IMAGE_TYPES } from "./attachments";
 import { Markdown } from "./Markdown";
 import { carryOut } from "./commands";
-import { undoFor } from "./bus";
+import { provide, undoFor } from "./bus";
 import { compactChat, decide, getAgent, markAction, getChat, getSetup, newChat, runMessage, setDebug, uploadImage, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
 import { defaultRect, fit, moved, resized, type Bounds, type Rect } from "./geometry";
 import {
@@ -318,6 +318,19 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     setOverview((o) => (o ? { ...o, mode: m } : o));
     putMode(m).catch(() => {});
   };
+
+  // the palette and the shortcuts reach these functions through the bus
+  const ui = useRef({ addChat, pickMode, compact, start });
+  ui.current = { addChat, pickMode, compact, start };
+  useEffect(() => {
+    const offs = [
+      provide("ui:new_chat", () => ui.current.addChat()),
+      provide("ui:mode", (a) => ui.current.pickMode(a.mode)),
+      provide("ui:compact", () => ui.current.compact()),
+      provide("ui:ask", (a) => ui.current.start(String(a.text))),
+    ];
+    return () => offs.forEach((o) => o());
+  }, []);
 
   const debug = overview?.debug === true;
   const toggleDebug = () => {

@@ -68,6 +68,14 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
     saveFolds(project.name, next); // at once: a reload right after the click must keep it
   };
 
+  // the palette: commands of this run tab (the tab that has the focus is addressed by its run)
+  const mine = useRef({ toggleDescription, reset: () => setState({}) });
+  mine.current = { toggleDescription, reset: () => setState({}) };
+  useEffect(() => {
+    const offs = [provide(`toggle_description:${run.id}`, () => mine.current.toggleDescription()), provide(`reset_filters:${run.id}`, () => mine.current.reset())];
+    return () => offs.forEach((o) => o());
+  }, [run.id]);
+
   // the toolbar sticks to the top of the scroll column and the table header right below it: measure its height
   useEffect(() => {
     const el = toolbarBox.current;

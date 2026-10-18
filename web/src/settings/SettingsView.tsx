@@ -3,7 +3,7 @@ import { getRuns, type ProjectInfo } from "../api";
 import { getInstructions, putInstructions } from "../agent/api";
 import { CATS, DEFAULTS, PRESETS, ROWS, type Row, type Value } from "./catalog";
 import { changedCount, isChanged, search, valueOf } from "./model";
-import { canRedo, canUndo, change, current, load, redoLast, resetAll, undoLast, useSettings } from "./store";
+import { canRedo, canUndo, change, current, load, redoLast, resetAll, takeFocus, undoLast, useSettings } from "./store";
 import { clearViewState } from "./viewState";
 
 const catTitle = (id: string) => CATS.find((c) => c.id === id)?.title ?? id;
@@ -47,6 +47,19 @@ export function SettingsView({ project, templates }: { project: ProjectInfo; tem
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  const [flash, setFlash] = useState<string | null>(null);
+  useEffect(() => {
+    const key = takeFocus();
+    const row = ROWS.find((r) => r.key === key);
+    if (!row) return;
+    setCat(row.cat);
+    setQuery("");
+    setOnlyChanged(false);
+    setFlash(row.key);
+    setTimeout(() => root.current?.querySelector(`[data-key="${row.key}"]`)?.scrollIntoView({ block: "center" }), 30);
+    setTimeout(() => setFlash(null), 1800);
+  });
 
   const values = data?.values ?? {};
   const rows = useMemo(() => ROWS.map((r) => withProjectOptions(r, project, templates, features)), [project, templates, features]);
@@ -109,7 +122,7 @@ export function SettingsView({ project, templates }: { project: ProjectInfo; tem
               {active.subs.map((s) => (
                 <div key={s.id} data-sub={`${active.id}.${s.id}`}>
                   <h3>{s.title}</h3>
-                  {shown.filter((r) => r.sub === s.id).map((r) => <RowView key={r.key} row={r} values={values} run={run} />)}
+                  {shown.filter((r) => r.sub === s.id).map((r) => <RowView key={r.key} row={r} values={values} run={run} flash={flash === r.key} />)}
                 </div>
               ))}
             </>
@@ -149,11 +162,11 @@ function About({ data }: { data: ReturnType<typeof useSettings> }) {
   );
 }
 
-function RowView({ row, values, run }: { row: Row; values: Record<string, Value>; run: (p: Promise<unknown>) => void }) {
+function RowView({ row, values, run, flash }: { row: Row; values: Record<string, Value>; run: (p: Promise<unknown>) => void; flash?: boolean }) {
   const changed = row.type !== "action" && isChanged(values, row.key);
   const env = current()?.env[row.key];
   return (
-    <div class={"srow" + (row.type === "action" && row.danger ? " danger" : "")} data-testid="setting-row" data-key={row.key}>
+    <div class={"srow" + (row.type === "action" && row.danger ? " danger" : "") + (flash ? " flash" : "")} data-testid="setting-row" data-key={row.key}>
       <div class="srow-text">
         <div class="srow-label">
           {row.label}

@@ -210,6 +210,8 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
       return reason ? { state, reason } : { state };
     };
     const offs = [
+      provide("board_info", () => ({ data: { templates: (m().templates ?? []).map((t) => t.name), widgets: m().everything.map((c) => ({ key: c.key, label: c.label, question: c.question })) } })),
+      provide("open_save_dialog", () => setDialog({ initial: [] })),
       provide("add_widget", async (a) => {
         const def = m().everything.find((c) => c.key === a.type);
         if (!def) throw new Error(`Unbekanntes Widget „${a.type}“ (vorhanden: ${m().everything.map((c) => c.key).join(", ")})`);
