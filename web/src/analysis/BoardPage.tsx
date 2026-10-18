@@ -7,6 +7,7 @@ import { boardReducer, loadBoard, makeBoard, newId, saveBoard, type Board, type 
 import { BUILTIN, isDirty, lastUsed, loadCurrent, saveCurrent, standardWidgets, templateScope, toTemplateWidgets, widgetsFromTemplate, type StoredTemplate } from "../widgets/templates";
 import { storageKey } from "../state/storage";
 import { WidgetTile } from "../widgets/WidgetTile";
+import { problemSummary, reportFor, whenLoaded } from "../widgets/status";
 import { DraftRow } from "./DraftRow";
 import { saveWidgets } from "./agentSave";
 import { SaveDialog } from "./SaveDialog";
@@ -179,8 +180,13 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
       const nameAfter = m().current;
       const id = glowId?.();
       if (id) glowElement(`[data-id="${id}"]`);
+      // wait for the widgets to be drawn and tell the agent how they came out (and the user in the action line)
+      await whenLoaded(() => m().board.widgets.map((w) => w.id));
+      const widgets = reportFor(m().board.widgets, labelFor);
+      const problems = problemSummary(widgets);
       return {
-        summary,
+        summary: problems ? `${summary} · ${problems}` : summary,
+        data: { widgets },
         undo: async () => {
           dispatch({ type: "reset", board: before });
           ops.current.setCurrent(nameBefore);
@@ -194,6 +200,11 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
           return summary;
         },
       };
+    };
+    /** How a widget came out: `state` (loading, ok, error, unavailable, gone) and, if there is one, the `reason`. */
+    const stateOf = (id: string, type: string) => {
+      const { state, reason } = reportFor([{ id, type }])[0];
+      return reason ? { state, reason } : { state };
     };
     const offs = [
       provide("add_widget", async (a) => {
@@ -301,7 +312,7 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
       runs: m().req.scope === "run" ? [m().req.run] : m().req.runs,
       template: m().current,
       template_changed: m().dirty,
-      widgets: m().board.widgets.map((w) => ({ id: w.id, type: w.type, label: labelFor(w.type), width: w.width, settings: w.settings })),
+      widgets: m().board.widgets.map((w) => ({ id: w.id, type: w.type, label: labelFor(w.type), width: w.width, settings: w.settings, ...stateOf(w.id, w.type) })),
       draft: m().board.draft ? m().board.draft!.definition.name : null,
       templates: ["Standard", ...(m().templates ?? []).map((t) => t.name)],
     }));

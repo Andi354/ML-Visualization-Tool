@@ -26,6 +26,8 @@ export interface AgentMessage {
   state?: "done" | "reverted";
   rejected?: boolean;
   auto?: boolean;
+  /** Images that went along with a message of the user (kept in the project, see `attachments.ts`). */
+  images?: { file: string; name: string }[];
   /** Action line of the debug display (a look-up of the agent): only shown while the debug button is on. */
   debug?: boolean;
 }

@@ -13,8 +13,9 @@ import json
 
 from . import aggregate, configview, deliverables, linear, widgets
 from . import own_widgets, templates
-from . import agent_run
-from .agent_store import AgentStore, ChatNotFound
+from . import agent_attachments, agent_run
+from .agent_attachments import AttachmentError
+from .agent_store import MAX_INSTRUCTIONS, AgentStore, ChatNotFound, InstructionsChanged
 from .store import StoreError
 from .listing import merkmal_candidates, run_listing
 from .project import Project, now
@@ -153,7 +154,11 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
         """Sends a message to the agent; the answer streams back as server-sent events (`data: {chat, busy, limits}`)."""
         text = str(payload.get("text") or "").strip()
         resend = bool(payload.get("resend"))
-        if not text:
+        try:
+            images = runner.attachments.check(payload.get("images"))
+        except AttachmentError as e:
+            raise HTTPException(400, str(e))
+        if not text and not images:
             raise HTTPException(400, "text is empty")
         _chat_or_404(chat_id)  # 404 if there is no such chat
         if runner.running(chat_id):
@@ -161,12 +166,28 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
 
         def events():
             try:
-                for snap in runner.run(chat_id, text, str(payload.get("context") or ""), resend, base_url=f"http://127.0.0.1:{request.url.port or 80}"):
+                for snap in runner.run(chat_id, text, str(payload.get("context") or ""), resend, base_url=f"http://127.0.0.1:{request.url.port or 80}", images=images):
                     yield f"data: {json.dumps(snap, ensure_ascii=False)}\n\n"
             except agent_run.Busy:
                 yield f"data: {json.dumps({'error': 'busy'})}\n\n"
 
         return StreamingResponse(events(), media_type="text/event-stream", headers={"cache-control": "no-cache"})
+
+    @app.post("/api/agent/attachments")
+    def api_agent_attachment(payload: dict = Body(...)) -> dict:
+        """Keeps an image for the agent (`{name, data}` with base64 data); answers `{file, name, size, url}`."""
+        try:
+            kept = runner.attachments.save(str(payload.get("name") or ""), str(payload.get("data") or ""))
+        except AttachmentError as e:
+            raise HTTPException(400, str(e))
+        return {**kept, "url": f"/api/agent/attachments/{kept['file']}"}
+
+    @app.get("/api/agent/attachments/{file}")
+    def api_agent_attachment_file(file: str) -> FileResponse:
+        path = runner.attachments.path(file)
+        if path is None:
+            raise HTTPException(404, "image not found")
+        return FileResponse(path, media_type=agent_attachments.MEDIA[path.suffix[1:]], headers={"cache-control": "private, max-age=86400"})
 
     @app.post("/api/agent/chats/{chat_id}/compact")
     def api_agent_compact(chat_id: str) -> StreamingResponse:
@@ -229,6 +250,22 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     def api_agent_mode(payload: dict = Body(...)) -> dict:
         try:
             return {"mode": agent.set_mode(str(payload.get("mode")))}
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+
+    @app.get("/api/agent/instructions")
+    def api_agent_instructions() -> dict:
+        """The instructions of the project for the agent (the text of `.mlviz/agent_instructions.md`)."""
+        return {"text": agent.instructions().strip("\n"), "max": MAX_INSTRUCTIONS}
+
+    @app.put("/api/agent/instructions")
+    def api_agent_set_instructions(payload: dict = Body(...)) -> dict:
+        """Replaces the instructions: `{text, expect?}`; with `expect` only if they still are that text (409 otherwise)."""
+        expect = payload.get("expect")
+        try:
+            return {"text": agent.set_instructions(payload.get("text"), expect if isinstance(expect, str) else None), "max": MAX_INSTRUCTIONS}
+        except InstructionsChanged as e:
+            raise HTTPException(409, str(e))
         except ValueError as e:
             raise HTTPException(400, str(e))
 

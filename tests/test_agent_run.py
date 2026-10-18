@@ -212,3 +212,42 @@ def test_the_system_prompt_sends_the_agent_to_help(client):
     (call,) = calls(client)
     prompt = call["args"][call["args"].index("--append-system-prompt") + 1]
     assert "`help`" in prompt and "faehigkeiten" in prompt and prompt == agent_run.SYSTEM_PROMPT
+
+
+# --- v0.2.3 · M: the instructions of the project reach the system prompt ---------------------------------------------
+def system_prompts(client):
+    return [c["args"][c["args"].index("--append-system-prompt") + 1] for c in calls(client)]
+
+
+def test_without_instructions_the_system_prompt_is_the_fixed_one(client):
+    run(client, new_chat(client), "Hallo")
+    assert system_prompts(client) == [agent_run.SYSTEM_PROMPT]
+
+
+def test_the_instructions_are_appended_after_the_fixed_prompt_and_read_afresh_for_every_message(client):
+    cid = new_chat(client)
+    run(client, cid, "eins")
+    assert client.put("/api/agent/instructions", json={"text": "Antworte mit Tabellen.\nNenne Läufe mit ihrem Kurznamen."}).status_code == 200
+    run(client, cid, "zwei")
+    client.put("/api/agent/instructions", json={"text": "Nur noch das."})
+    run(client, cid, "drei")
+    first, second, third = system_prompts(client)
+    assert first == agent_run.SYSTEM_PROMPT
+    assert second == agent_run.SYSTEM_PROMPT + "\n\nAnweisungen des Nutzers für dieses Projekt:\nAntworte mit Tabellen.\nNenne Läufe mit ihrem Kurznamen."
+    assert third.endswith("Projekt:\nNur noch das.") and third.startswith(agent_run.SYSTEM_PROMPT)  # the fixed part always comes first
+
+
+def test_the_fixed_prompt_names_the_rules_for_the_instructions():
+    text = agent_run.SYSTEM_PROMPT
+    assert "`set_instructions`" in text and "ausdrücklich" in text and "bei Widerspruch gilt" in text
+
+
+def test_the_instructions_api_reads_writes_and_refuses(client):
+    assert client.get("/api/agent/instructions").json() == {"text": "", "max": 4000}
+    assert client.put("/api/agent/instructions", json={"text": "a"}).json()["text"] == "a"
+    assert client.put("/api/agent/instructions", json={"text": "b", "expect": "falsch"}).status_code == 409
+    assert client.put("/api/agent/instructions", json={"text": "x" * 4001}).status_code == 400
+    assert client.put("/api/agent/instructions", json={"text": 5}).status_code == 400
+    assert client.get("/api/agent/instructions").json()["text"] == "a"
+    assert client.put("/api/agent/instructions", json={"text": "b", "expect": "a"}).status_code == 200
+    assert client.put("/api/agent/instructions", json={"text": ""}).json()["text"] == ""
