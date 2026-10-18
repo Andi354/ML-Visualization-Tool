@@ -20,7 +20,10 @@ from . import agent_guide, aggregate, configview, own_widgets, store, widgets
 from .listing import merkmal_candidates, run_listing
 from .project import Project
 from .agent_store import MAX_INSTRUCTIONS
+from . import progress
+from .project import now as clock
 from .runs import get_run, list_runs
+from .settings import SettingsStore
 from .templates import TemplateStore
 
 READ, NAV, CHANGE = "read", "nav", "change"
@@ -107,6 +110,9 @@ _add(Tool("find_runs", READ, "Sucht Läufe nach Text (Name, ID, Kurzbeschreibung
 }, side="backend"))
 _add(Tool("read_run", READ, "Liest Ergebnisse (summary: beste Gruppen je Metrik) oder die Konfiguration (config) eines Laufs.", {
     "run": _RUN, "part": _s("summary oder config", enum=["summary", "config"]),
+}, ["run"], side="backend"))
+_add(Tool("run_progress", READ, "Fortschritt eines Laufs: Zellen fertig und geplant, fehlgeschlagene, Tempo, Restzeit, voraussichtlich fertig, hängt seit.", {
+    "run": _RUN,
 }, ["run"], side="backend"))
 _add(Tool("list_widgets", READ, "Listet die Widgets (Katalog und eigene) einer Analyse-Ansicht mit Einstellungen.", {"scope": _SCOPE}, side="backend"))
 _add(Tool("list_templates", READ, "Listet die gespeicherten Vorlagen (Boards ohne Läufe) einer Analyse-Ansicht.", {"scope": _SCOPE}, side="backend"))
@@ -281,6 +287,12 @@ def run_tool(project: Project, name: str, args: dict) -> Any:
         table = aggregate.run_table(run, project, {})
         rows = [{"group": r["params"], "n": r["n"], "mean": {m: v["mean"] for m, v in list(r["metrics"].items())[:6]}} for r in table["rows"][:10]]
         return _clip({"run": run.id, "sorted_by": table["sort"], "groups": table["groups"], "cells": table["cells"], "best": table["best"], "rows": rows})
+    if name == "run_progress":
+        run, many = _resolve(project, str(args.get("run") or ""))
+        if run is None:
+            raise ValueError("Mehrere Läufe passen: " + ", ".join(many) if many else "Lauf nicht gefunden")
+        p = progress.run_progress(run, clock(), int(SettingsStore(project).get("runs.stallMin")))
+        return {k: p[k] for k in ("state", "cells_done", "cells_planned", "cells_failed", "rate_per_hour", "remaining", "eta", "last_cell_at", "stalled_since")}
     if name == "list_widgets":
         scope = args.get("scope")
         cat_scope = {"one": "run", "two": "two-runs", "project": "project"}.get(scope)

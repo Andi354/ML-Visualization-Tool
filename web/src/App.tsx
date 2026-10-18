@@ -10,6 +10,7 @@ import { SETTINGS_TAB, frameReducer, initialFrame, loadFrame, saveFrame } from "
 import { SettingsView } from "./settings/SettingsView";
 import { load as loadSettings, nudgeScale, requestFocus } from "./settings/store";
 import { handlerFor } from "./agent/bus";
+import { StatusBar } from "./progress/StatusBar";
 import { Palette, type Request as PaletteRequest } from "./palette/Palette";
 import { shortcutFor, type Ctx } from "./palette/commands";
 import { AnalysisView } from "./views/AnalysisView";
@@ -174,6 +175,11 @@ function Frame({ project }: { project: ProjectInfo }) {
           ))}
         </div>
       </div>
+      <StatusBar
+        projectName={project.name}
+        onOpenRun={(run) => dispatch({ type: "open-run", run })}
+        onAnalyse={(run) => dispatch({ type: "open-analysis", run, combo: {} })}
+      />
       {palette && <Palette ctx={paletteCtx} request={palette} onClose={() => setPalette(null)} />}
       <AgentLayer agent={agent} onChange={changeAgent} context={contextLabel(frame)} appRef={appRef} />
     </div>

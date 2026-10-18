@@ -9,6 +9,7 @@ Marken und die Datensätze der eigenen Widgets mit dem Code.
 
 **Der Agent kann:**
 - Läufe suchen (`find_runs`: Text, Issue, Datum, Zustand, Lauf-Merkmal, Grid-Achse) und lesen (`read_run`: beste Gruppen je Metrik oder die Konfiguration eines Laufs).
+- Den Fortschritt eines Laufs nachsehen (`run_progress`): Tempo, Restzeit, hängt seit.
 - Navigieren: Läufe als Tab öffnen, fokussieren und schließen, in Läufe zwischen Liste und Issues wechseln, die Analyse in einer Ansicht öffnen.
 - In einem Lauf-Tab Filter und Sortierung der Tabelle einstellen.
 - Das Board der Analyse bearbeiten: Widgets hinzufügen, entfernen, einstellen, verschieben und in der Breite ändern; Vorlagen anwenden und speichern.
@@ -25,7 +26,7 @@ Marken und die Datensätze der eigenen Widgets mit dem Code.
 - Spalten der Tabelle, das Detail-Panel oder den Bild-Export einstellen.
 - Beschreibungen von Läufen schreiben (sie werden nur gelesen).
 - Mit Sprache arbeiten (der Mikrofon-Knopf ist noch ohne Funktion).
-- Ohne den geöffneten Tab im Browser arbeiten: Alles außer den Nachschlage-Werkzeugen (`find_runs`, `read_run`, `list_widgets`, `list_templates`, `choose_run`, `help`) ist ein Befehl an den offenen Tab.
+- Ohne den geöffneten Tab im Browser arbeiten: Alles außer den Nachschlage-Werkzeugen (`find_runs`, `read_run`, `run_progress`, `list_widgets`, `list_templates`, `choose_run`, `help`) ist ein Befehl an den offenen Tab.
 
 **Regeln:**
 - Zahlen und Namen nie raten, mit `find_runs` und `read_run` nachsehen.
@@ -43,6 +44,7 @@ Art `lesen` schlägt nur nach, `Ansicht` ändert, was der Nutzer sieht, `ändern
 | `help` | lesen | diese Hilfe |
 | `find_runs` | lesen | Läufe suchen |
 | `read_run` | lesen | Ergebnisse oder Konfiguration eines Laufs |
+| `run_progress` | lesen | Fortschritt, Tempo und Restzeit eines Laufs |
 | `list_widgets` | lesen | Widgets (Katalog und eigene) einer Analyse-Ansicht |
 | `list_templates` | lesen | gespeicherte Vorlagen |
 | `choose_run` | lesen | den Nutzer einen von mehreren Läufen wählen lassen |

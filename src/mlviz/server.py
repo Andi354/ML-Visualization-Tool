@@ -17,6 +17,8 @@ from . import agent_attachments, agent_run
 from .agent_attachments import AttachmentError
 from .agent_store import MAX_INSTRUCTIONS, AgentStore, ChatNotFound, InstructionsChanged
 from .store import StoreError
+from . import progress
+from .progress import ProgressWatcher
 from .listing import merkmal_candidates, run_listing
 from .project import Project, now
 from .descriptions import describe
@@ -277,6 +279,33 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
         if any(runner.running(c["id"]) for c in agent.list()):
             raise HTTPException(409, "a chat is still working")
         return {"deleted": agent.delete_all()}
+
+    # --- progress and events of running runs (v0.3.0) ---------------------------------------------
+    watcher = ProgressWatcher(project, agent.settings, interval=float(os.environ.get("MLVIZ_PROGRESS_INTERVAL", "10")))
+    app.state.watcher = watcher
+
+    app.router.on_startup.append(watcher.ensure)
+    app.router.on_shutdown.append(watcher.stop)
+
+    @app.get("/api/progress")
+    def api_progress(since: int = 0) -> dict:
+        """Running runs with their progress and the events after `since` (a run finished, many errors, stalls, started)."""
+        watcher.ensure()  # a test client without startup events starts it here
+        return watcher.snapshot(since)
+
+    @app.post("/api/progress/summary")
+    def api_progress_summary(payload: dict = Body(...)) -> dict:
+        """The agent's short summary of a finished run (only on a click): best groups and the comparison with the previous run of its issue."""
+        run = get_run(project, str(payload.get("run") or ""))
+        if run is None:
+            raise HTTPException(404, "run not found")
+        cmd = agent_run.command(agent.settings.get("agent.claude") or None)
+        if cmd is None:
+            raise HTTPException(503, "Claude Code wurde nicht gefunden.")
+        try:
+            return {"text": agent_run.ask_once(cmd, progress.summary_prompt(project, run), project.root)}
+        except RuntimeError as e:
+            raise HTTPException(502, str(e))
 
     @app.get("/api/agent/instructions")
     def api_agent_instructions() -> dict:

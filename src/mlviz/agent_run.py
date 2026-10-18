@@ -107,6 +107,27 @@ def _vscode_claude() -> str | None:
     return max(found)[1] if found else None
 
 
+def ask_once(cmd: list[str], prompt: str, cwd: Path, timeout: int = 120) -> str:
+    """One question to Claude Code without a chat (`-p`): the text of its answer. Raises RuntimeError if it fails."""
+    try:
+        r = subprocess.run([*cmd, "-p", prompt, "--output-format", "stream-json", "--verbose"], cwd=cwd, capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise RuntimeError(f"Claude Code ließ sich nicht aufrufen ({e})") from e
+    texts, error = [], None
+    for line in r.stdout.splitlines():
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if ev.get("type") == "assistant":
+            texts += [b.get("text", "") for b in (ev.get("message") or {}).get("content", []) if b.get("type") == "text"]
+        elif ev.get("type") == "result" and ev.get("is_error"):
+            error = str(ev.get("result") or "Fehler")
+    if error or not texts:
+        raise RuntimeError(error or (r.stderr.strip()[:200] or "keine Antwort"))
+    return "\n".join(t for t in texts if t).strip()
+
+
 def api_key_set() -> bool:
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 

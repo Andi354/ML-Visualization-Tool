@@ -7,6 +7,7 @@ import { attachmentUrl, checkImages, imagesOf, IMAGE_TYPES } from "./attachments
 import { Markdown } from "./Markdown";
 import { carryOut } from "./commands";
 import { provide, undoFor } from "./bus";
+import { setAgentState } from "../progress/agentStatus";
 import { compactChat, decide, getAgent, markAction, getChat, getSetup, newChat, runMessage, setDebug, uploadImage, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
 import { defaultRect, fit, moved, resized, type Bounds, type Rect } from "./geometry";
 import {
@@ -331,6 +332,8 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     ];
     return () => offs.forEach((o) => o());
   }, []);
+
+  useEffect(() => setAgentState(!ready ? "off" : busy ? "busy" : "ready"), [ready, busy]);
 
   const debug = overview?.debug === true;
   const toggleDebug = () => {

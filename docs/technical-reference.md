@@ -409,6 +409,23 @@ Commands do not reach into views: they dispatch frame actions or call the handle
 `add_widget`, `apply_template` (board), `ui:new_chat`, `ui:mode`, `ui:compact`, `ui:ask` (agent window). Setting changes by
 shortcut (`Ctrl++`, `Ctrl+-`) go through the settings queue (`nudgeScale`), so repeated keys add up.
 
+## Run progress and events (v0.3.0)
+
+`src/mlviz/progress.py`: `run_progress(run, now, stall_min)` computes done/planned/failed cells, the rate (from
+`finished_at` of the last 50 cells within the last 2 hours), the remaining time (not with fewer than 5 cells and not
+while stalled) and `stalled_since` (no new cell for `runs.stallMin`; a run without a cell counts from its start).
+`ProgressWatcher` polls every 10 s (`MLVIZ_PROGRESS_INTERVAL` overrides it, the tests use 0.3 s) from the start of the
+app or the first request, keeps the running runs and an in-memory list of events: `finished`, `errors` (share of failed
+cells reaches `runs.errWarn`, once per run), `stalled` (once until a new cell arrives), `started` (only a note in the
+status bar). Runs that are running when the tool starts raise nothing. `GET /api/progress?since=<id>` hands out the running
+runs and the events after `id`; `POST /api/progress/summary {run}` asks Claude Code once (`agent_run.ask_once`, no chat)
+for a short summary, the facts are in the prompt. The agent tool `run_progress` reads the same numbers.
+
+Browser (`web/src/progress/`): `store.ts` polls (10 s, `window.__mlvizPollMs` overrides it), keeps the notes of the
+session (a reload starts with an empty bell), shows each as a notification for 9 s and, when the tab is hidden and
+`runs.notifyMac` is on, as a browser notification. `StatusBar.tsx` is the bar along the bottom of the window (progress,
+agent status, project and version, bell); `model.ts` holds the texts.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.
