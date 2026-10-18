@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Gesamtprototyp v0.3</title>
+<script src="./support.js"></script>
+<script src="./runs-data.js"></script>
+<script src="./exp-data.js"></script>
+<script src="./cmp-data.js"></script>
+<script src="./one-data.js"></script>
+<script src="./f-data.js"></script>
+<script src="./cfg-data.js"></script>
+<script src="./g-shared.js"></script>
+<script src="./short-data.js"></script>
+<script src="./desc-data.js"></script>
+<script src="./frame.js"></script>
+<script src="./settings-data.js"></script>
+<script src="./voice-data.js"></script>
+<script src="./palette-data.js"></script>
+<script src="./notify-data.js"></script>
+<script src="./notes-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1016}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #6E9BF5;outline-offset:1px}
+.lvl{display:inline-flex;align-items:center;gap:2px;height:18px}
+.lvl i{display:block;width:3px;border-radius:2px;background:#E5484D;animation:lv 0.9s ease-in-out infinite}
+.lvl i:nth-child(2){animation-delay:.12s}.lvl i:nth-child(3){animation-delay:.24s}.lvl i:nth-child(4){animation-delay:.36s}.lvl i:nth-child(5){animation-delay:.48s}.lvl i:nth-child(6){animation-delay:.6s}.lvl i:nth-child(7){animation-delay:.72s}
+@keyframes lv{0%,100%{height:4px}50%{height:16px}}
+.vdot{width:8px;height:8px;border-radius:4px;background:#E5484D;animation:pl 1.2s ease-in-out infinite}
+@keyframes pl{0%,100%{opacity:1}50%{opacity:.35}}
+.spin{width:12px;height:12px;border-radius:6px;border:2px solid #2C4572;border-top-color:#6E9BF5;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.vkbd{font:400 10px 'IBM Plex Mono',monospace;border:1px solid #6E8FE0;border-radius:3px;padding:0 4px;color:#DDE6FF}
+.pk{font:400 10.5px 'IBM Plex Mono',monospace;border:1px solid #2C3547;border-radius:3px;padding:1px 5px;color:#A1AABB;background:#131720;white-space:nowrap}
+.hl{color:#6E9BF5;font-weight:600}
+.sb{height:100%;display:flex;align-items:center;gap:6px;padding:0 9px;border:0;background:none;color:#A1AABB;font-size:12px;cursor:pointer;white-space:nowrap}
+.sb:hover{background:#1A2030;color:#E4E8EF}
+.nspin{width:9px;height:9px;border-radius:5px;border:1.6px solid #2C4572;border-top-color:#6E9BF5;animation:sp 1s linear infinite;display:inline-block}
+.act{font:500 11.5px 'IBM Plex Sans',sans-serif;padding:4px 9px;border-radius:4px;border:1px solid #2C3547;background:#131720;color:#E4E8EF;cursor:pointer}
+.act.p{background:#2F5BD3;border-color:#2F5BD3;color:#fff}
+.nbar{height:5px;border-radius:3px;background:#262E3E;overflow:hidden}
+.nx{background:none;border:0;color:#8590A3;cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
+</style>
+</helmet>
+<div style="width: 100%; height: 860px; box-sizing: border-box; display: flex; flex-direction: column; background: #0D1016; color: #E4E8EF; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; position: relative; overflow: hidden;">
+<div style="flex: 1; min-height: 0; display: flex;">
+<nav aria-label="Bereiche" style="width: 52px; flex-shrink: 0; background: #131720; border-right: 1px solid #262E3E; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0;">
+<div title="repnet-bench" style="width: 32px; height: 32px; border-radius: 6px; background: #1A2030; border: 1px solid #262E3E; display: flex; align-items: center; justify-content: center; font: 500 12px 'IBM Plex Mono', monospace; color: #A1AABB; margin-bottom: 8px;">rb</div>
+<sc-for list="{{rail}}" as="n" hint-placeholder-count="3"><button style="{{n.st}}" onClick="{{n.on}}" title="{{n.label}}" aria-label="{{n.label}}">
+<sc-if value="{{n.isRuns}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h12M3 9h12M3 13.5h8"/></svg></sc-if>
+<sc-if value="{{n.isCmp}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="3" width="5.5" height="12" rx="1"/><rect x="10" y="3" width="5.5" height="12" rx="1"/></svg></sc-if>
+<sc-if value="{{n.isDel}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 2.5h5.5L14 6v9.5H5z"/><path d="M10.5 2.5V6H14"/></svg></sc-if>
+</button></sc-for>
+<span style="flex: 1;"></span>
+<button style="{{gearSt}}" onClick="{{toggleSettings}}" title="Einstellungen (Strg+,)" aria-label="Einstellungen"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="9" r="2.4"/><path d="M9 1.8v2M9 14.2v2M1.8 9h2M14.2 9h2M3.9 3.9l1.4 1.4M12.7 12.7l1.4 1.4M3.9 14.1l1.4-1.4M12.7 5.3l1.4-1.4"/></svg></button>
+<button style="{{agentRailSt}}" onClick="{{toggleAgent}}" title="Agent" aria-label="Agent"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2.5l1.4 3.6 3.6 1.4-3.6 1.4L9 12.5 7.6 8.9 4 7.5l3.6-1.4z"/><path d="M14 12l.6 1.4 1.4.6-1.4.6L14 16l-.6-1.4-1.4-.6 1.4-.6z"/></svg></button>
+</nav>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+<div role="tablist" style="flex-shrink: 0; height: 36px; display: flex; background: #131720; border-bottom: 1px solid #262E3E; overflow: hidden; position: relative;">
+<button onClick="{{pOpenQuick}}" title="Läufe und Issues öffnen (Strg+P) · Befehle (Strg+Shift+P)" style="position: absolute; left: 50%; transform: translateX(-50%); top: 6px; width: 340px; height: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #2C3547; border-radius: 6px; background: #1A2030; color: #8590A3; cursor: pointer; font-size: 12px; z-index: 1;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>repnet-bench</button>
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="2"><div role="tab" title="{{t.title}}" style="{{t.st}}" onClick="{{t.on}}">{{t.label}}<sc-if value="{{t.closable}}"><button onClick="{{t.close}}" aria-label="Tab schließen" style="background: none; border: 0; padding: 0; color: #8590A3; cursor: pointer; font-size: 14px; line-height: 1;">×</button></sc-if></div></sc-for>
+</div>
+<div style="flex: 1; min-width: 0; min-height: 0; display: flex;">
+<div style="flex: 1; min-width: 0; position: relative;">
+<sc-if value="{{isRunsC}}" hint-placeholder-val="{{true}}"><dc-import name="G2-EigeneZeile" open-run="{{openRunId}}" set-view="{{setView}}" hint-size="100%,100%"></dc-import></sc-if>
+<sc-if value="{{isIssuesC}}" hint-placeholder-val="{{false}}"><dc-import name="F-Issues-021" open-run="{{openRunId}}" set-view="{{setView}}" hint-size="100%,100%"></dc-import></sc-if>
+<sc-if value="{{isExpC}}" hint-placeholder-val="{{false}}"><dc-import name="P-Run-03" run="{{runName}}" set-view="{{setView}}" hint-size="100%,100%"></dc-import></sc-if>
+<sc-if value="{{isAnalysisC}}" hint-placeholder-val="{{false}}"><dc-import name="P-Analyse-02" hint-size="100%,100%"></dc-import></sc-if>
+<sc-if value="{{settings}}" hint-placeholder-val="{{false}}"><dc-import name="S1-Einstellungen" embedded="{{true}}" hint-size="100%,100%"></dc-import></sc-if>
+<sc-if value="{{isSoon}}" hint-placeholder-val="{{false}}"><div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #8590A3;">{{soon}}</div></sc-if>
+</div>
+
+</div>
+</div>
+</div>
+
+<footer style="flex-shrink: 0; height: 24px; display: flex; align-items: stretch; background: #131720; border-top: 1px solid #262E3E;">
+<button class="sb" onClick="{{nToggleRuns}}" title="Laufende Läufe"><sc-if value="{{nAnyRunning}}" hint-placeholder-val="{{true}}"><span class="nspin"></span></sc-if><span>{{nSbRun}}</span><sc-if value="{{nHasMore}}" hint-placeholder-val="{{true}}"><span style="color: #8590A3;">{{nSbMore}}</span></sc-if></button>
+<sc-if value="{{nHasStalled}}" hint-placeholder-val="{{true}}"><button class="sb" onClick="{{nToggleRuns}}" style="color: #E0A43A;">⚠ {{nSbStalled}}</button></sc-if>
+<sc-if value="{{nFlash}}" hint-placeholder-val="{{false}}"><span class="sb" style="color: #6E9BF5; cursor: default;">{{nFlashText}}</span></sc-if>
+<span style="flex: 1;"></span>
+<button class="sb" onClick="{{nToggleDemo}}" style="color: #E0A43A; border: 1px dashed #6E5A2A;">Prototyp: Ereignis ▾</button>
+<button class="sb" onClick="{{toggleAgent}}">✦ {{capsule}}</button>
+<span class="sb" style="cursor: default;">repnet-bench · v0.3.0</span>
+<button class="sb" onClick="{{nToggleBell}}" title="Hinweise" style="{{nBellSt}}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 11.5V7a4 4 0 0 1 8 0v4.5l1 1.2H3z"/><path d="M6.6 14a1.5 1.5 0 0 0 2.8 0"/></svg><sc-if value="{{nHasUnread}}" hint-placeholder-val="{{true}}"><span style="font: 600 10px 'IBM Plex Sans', sans-serif; min-width: 14px; height: 14px; padding: 0 3px; box-sizing: border-box; border-radius: 7px; background: #2F5BD3; color: #fff; display: inline-flex; align-items: center; justify-content: center;">{{nUnread}}</span></sc-if></button>
+</footer>
+
+<sc-if value="{{nRunsOpen}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; left: 6px; bottom: 30px; width: 480px; z-index: 30; background: #1A2030; border: 1px solid #2C4572; border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 10px;">
+<div style="display: flex; align-items: center; margin-bottom: 8px;"><span style="font-weight: 600;">Laufende Läufe</span><span style="flex: 1;"></span><button class="nx" onClick="{{nToggleRuns}}" title="Schließen">×</button></div>
+<sc-for list="{{nRuns}}" as="r" hint-placeholder-count="2"><div style="padding: 8px 2px; border-top: 1px solid #262E3E; display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; align-items: center; gap: 8px;"><span style="font: 500 12.5px 'IBM Plex Mono', monospace; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{r.name}}</span><span style="color: #8590A3; font-size: 11px;">{{r.issue}}</span><span style="flex: 1;"></span><span style="{{r.pctSt}}">{{r.pct}}</span><button class="act" onClick="{{r.open}}">Öffnen</button></div>
+<div class="nbar"><span style="{{r.barSt}}"></span></div>
+<div style="font-size: 11.5px; {{r.lineSt}}">{{r.line}}</div>
+</div></sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{nBellOpen}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; right: 6px; bottom: 30px; width: 430px; z-index: 30; background: #1A2030; border: 1px solid #2C4572; border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 10px; max-height: 560px; overflow: auto;">
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;"><span style="font-weight: 600;">Hinweise</span><span style="flex: 1;"></span><button onClick="{{nReadAll}}" style="background: none; border: 0; color: #6E9BF5; cursor: pointer; font-size: 12px;">Alle gelesen</button><button onClick="{{nClearAll}}" style="background: none; border: 0; color: #8590A3; cursor: pointer; font-size: 12px;">Leeren</button><button class="nx" onClick="{{nToggleBell}}" title="Schließen">×</button></div>
+<sc-for list="{{nNotes}}" as="n" hint-placeholder-count="2"><div style="padding: 9px 2px; border-top: 1px solid #262E3E; display: flex; gap: 9px;">
+<span style="{{n.iconSt}}">{{n.icon}}</span>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+<div style="display: flex; align-items: center; gap: 6px;"><sc-if value="{{n.unread}}"><span style="width: 6px; height: 6px; border-radius: 3px; background: #6E9BF5;"></span></sc-if><span style="font-weight: 600; font-size: 12.5px;">{{n.title}}</span><span style="flex: 1;"></span><span style="color: #6B7385; font-size: 11px;">{{n.when}}</span></div>
+<span style="font: 400 12px 'IBM Plex Mono', monospace; color: #C9D3E3; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{n.run}}</span>
+<span style="font-size: 12px; color: #A1AABB; line-height: 1.45;">{{n.text}}</span>
+<sc-if value="{{n.sumLoading}}"><span style="font-size: 12px; color: #8590A3;">✦ Agent fasst zusammen …</span></sc-if>
+<sc-if value="{{n.sumDone}}"><div style="font-size: 12px; color: #E4E8EF; line-height: 1.45; border-left: 2px solid #6E9BF5; padding-left: 8px;">{{n.sum}}</div></sc-if>
+<div style="display: flex; gap: 6px; flex-wrap: wrap;"><sc-for list="{{n.acts}}" as="a" hint-placeholder-count="2"><button class="{{a.cls}}" onClick="{{a.on}}">{{a.t}}</button></sc-for></div>
+</div>
+</div></sc-for>
+<sc-if value="{{nNoNotes}}" hint-placeholder-val="{{false}}"><div style="color: #8590A3; font-size: 12px; padding: 8px 2px;">Keine Hinweise</div></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{nToastOpen}}" hint-placeholder-val="{{false}}">
+<div role="status" style="position: absolute; right: 12px; bottom: 34px; width: 400px; z-index: 31; background: #1A2030; border: 1px solid #2C4572; border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 11px 12px; display: flex; gap: 10px;">
+<span style="{{nTIconSt}}">{{nTIcon}}</span>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+<div style="display: flex; align-items: center; gap: 6px;"><span style="font-weight: 600;">{{nTTitle}}</span><span style="flex: 1;"></span><button class="nx" onClick="{{nCloseToast}}" title="Schließen (bleibt unter der Glocke)">×</button></div>
+<span style="font: 400 12px 'IBM Plex Mono', monospace; color: #C9D3E3; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{nTRun}}</span>
+<span style="font-size: 12px; color: #A1AABB; line-height: 1.45;">{{nTText}}</span>
+<sc-if value="{{nTSumLoading}}"><span style="font-size: 12px; color: #8590A3;">✦ Agent fasst zusammen …</span></sc-if>
+<sc-if value="{{nTSumDone}}"><div style="font-size: 12px; color: #E4E8EF; line-height: 1.45; border-left: 2px solid #6E9BF5; padding-left: 8px;">{{nTSum}}</div></sc-if>
+<div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px;"><sc-for list="{{nTActs}}" as="a" hint-placeholder-count="2"><button class="{{a.cls}}" onClick="{{a.on}}">{{a.t}}</button></sc-for></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{nDemoOpen}}" hint-placeholder-val="{{false}}"><div style="position: absolute; right: 200px; bottom: 30px; z-index: 40; width: 230px; background: #1A2030; border: 1px dashed #6E5A2A; border-radius: 6px; padding: 5px;"><sc-for list="{{nDemo}}" as="d" hint-placeholder-count="4"><button onClick="{{d.on}}" style="width: 100%; text-align: left; padding: 6px 8px; border: 0; border-radius: 4px; background: none; color: #E4E8EF; cursor: pointer; font-size: 12px;">{{d.t}}</button></sc-for></div></sc-if>
+
+<sc-if value="{{pOpen}}" hint-placeholder-val="{{true}}">
+<div role="dialog" aria-label="Befehlspalette" style="position: absolute; left: calc(50% + 26px); transform: translateX(-50%); top: 40px; width: 640px; background: #1A2030; border: 1px solid #2C4572; border-radius: 8px; box-shadow: 0 16px 48px rgba(0,0,0,.6); padding: 6px; z-index: 30;">
+<sc-if value="{{pHasStep}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; gap: 8px; padding: 2px 6px 6px; font-size: 12px; color: #A1AABB;"><button onClick="{{pBack}}" title="Zurück (Rücktaste)" style="background: none; border: 0; color: #6E9BF5; cursor: pointer; padding: 0;">←</button>{{pStepTitle}}</div></sc-if>
+<input id="pal-q" autofocus value="{{pQ}}" onInput="{{pOnQ}}" onKeyDown="{{pOnKey}}" placeholder="{{pPh}}" style="width: 100%; box-sizing: border-box; background: #0D1016; border: 1px solid #2C4572; border-radius: 5px; outline: none; color: #E4E8EF; font: 400 13px 'IBM Plex Sans', sans-serif; padding: 7px 9px;">
+<div style="max-height: 440px; overflow: auto; margin-top: 6px;">
+<sc-for list="{{pItems}}" as="it" hint-placeholder-count="8">
+<sc-if value="{{it.sep}}"><div style="border-top: 1px solid #262E3E; margin: 4px 0;"></div></sc-if>
+<button onClick="{{it.on}}" style="{{it.st}}">
+<sc-if value="{{it.hasIcon}}"><span style="width: 16px; flex-shrink: 0; color: {{it.iconCol}}; font-size: 12px; text-align: center;">{{it.icon}}</span></sc-if>
+<span style="min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; {{it.labelFont}}"><sc-for list="{{it.parts}}" as="p" hint-placeholder-count="1"><span class="{{p.cls}}">{{p.t}}</span></sc-for></span>
+<span style="min-width: 0; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #8590A3; font-size: 12px;">{{it.desc}}</span>
+<sc-if value="{{it.hasGroup}}"><span style="color: #6B7385; font-size: 11px; flex-shrink: 0;">{{it.group}}</span></sc-if>
+<sc-if value="{{it.hasKey}}"><span class="pk">{{it.key}}</span></sc-if>
+</button>
+</sc-for>
+<sc-if value="{{pEmpty}}" hint-placeholder-val="{{false}}"><div style="padding: 8px 10px; color: #8590A3; font-size: 12px;">{{pEmptyText}}</div></sc-if>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{pToast}}" hint-placeholder-val="{{false}}"><div style="position: absolute; left: calc(50% + 26px); transform: translateX(-50%); bottom: 24px; padding: 9px 14px; background: #1A2030; border: 1px solid #2C4572; border-radius: 6px; font-size: 12px; color: #C9D3E3; z-index: 31;">{{pToastText}}</div></sc-if>
+<sc-if value="{{winOpen}}" hint-placeholder-val="{{true}}">
+<section aria-label="Agent" style="{{winSt}}">
+<header onPointerDown="{{dragStart}}" style="height: 38px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; border-bottom: 1px solid #262E3E; cursor: move; user-select: none; background: #161B26; border-radius: 10px 10px 0 0;">
+<svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="#6E9BF5" stroke-width="1.6"><path d="M9 2.5l1.4 3.6 3.6 1.4-3.6 1.4L9 12.5 7.6 8.9 4 7.5l3.6-1.4z"/></svg>
+<button onPointerDown="{{stop}}" onClick="{{toggleChats}}" title="Chats" style="display: flex; align-items: center; gap: 6px; background: none; border: 0; color: #E4E8EF; font: 600 13px 'IBM Plex Sans', sans-serif; cursor: pointer; padding: 4px 6px; border-radius: 4px; max-width: 220px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{chatTitle}}<span style="color: #8590A3; font-weight: 400;">▾</span></button>
+<span title="{{ctxTip}}" style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #8590A3;"><span style="width: 34px; height: 5px; border-radius: 3px; background: #262E3E; overflow: hidden; display: inline-block;"><span style="{{ctxBarSt}}"></span></span>{{ctxPct}}</span>
+<span title="{{cacheTip}}" style="{{cacheSt}}">{{cacheLabel}}</span>
+<span style="flex: 1;"></span>
+<button onPointerDown="{{stop}}" onClick="{{newChat}}" title="Neuer Chat" aria-label="Neuer Chat" style="{{hdrBtn}}">+</button>
+<button onPointerDown="{{stop}}" onClick="{{minimize}}" title="Minimieren" aria-label="Minimieren" style="{{hdrBtn}}">–</button>
+<button onPointerDown="{{stop}}" onClick="{{closeAgent}}" title="Schließen (Esc)" aria-label="Schließen" style="{{hdrBtn}}">×</button>
+</header>
+<sc-if value="{{chatsOpen}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; top: 40px; left: 30px; width: 330px; background: #1A2030; border: 1px solid #2C4572; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.45); padding: 6px; z-index: 3;">
+<div style="font-size: 11px; color: #8590A3; padding: 4px 8px 6px;">Chats in diesem Projekt</div>
+<sc-for list="{{chats}}" as="c" hint-placeholder-count="3"><button onClick="{{c.on}}" style="{{c.st}}"><span style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{c.title}}</span><span style="color: #8590A3; font-size: 11px; flex-shrink: 0;">{{c.meta}}</span></button></sc-for>
+<div style="border-top: 1px solid #262E3E; margin-top: 4px; padding-top: 4px;"><button onClick="{{compact}}" disabled="{{compactOff}}" title="{{compactTip}}" style="{{compactSt}}">Diesen Chat komprimieren (/compact)</button></div>
+<div style="font-size: 11px; color: #6B7385; padding: 6px 8px 2px;">Abo · 5 h: 34 % · Woche: 12 % (optional, falls Claude Code es liefert)</div>
+</div>
+</sc-if>
+<div style="flex-shrink: 0; padding: 8px 12px; border-bottom: 1px solid #1E2533; display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8590A3;">sieht<span style="display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 10px; background: #192640; border: 1px solid #2C4572; color: #C9D3E3; font-family: 'IBM Plex Mono', monospace; max-width: 300px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{ctx}}</span></div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+<sc-for list="{{msgs}}" as="m" hint-placeholder-count="3">
+<sc-if value="{{m.isUser}}"><div style="align-self: flex-end; max-width: 85%; display: flex; gap: 6px; align-items: flex-start;"><sc-if value="{{m.voice}}"><span title="{{m.heard}}" style="color: #6E9BF5; margin-top: 7px;"><svg width="12" height="12" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6.5" y="2" width="5" height="9" rx="2.5"/><path d="M4 8.5a5 5 0 0 0 10 0M9 13.5V16"/></svg></span></sc-if><div style="background: #192640; border: 1px solid #2C4572; border-radius: 10px 10px 2px 10px; padding: 7px 10px; line-height: 1.45;">{{m.t}}</div></div></sc-if>
+<sc-if value="{{m.isAgent}}"><div style="max-width: 92%; line-height: 1.5; color: #E4E8EF;">{{m.t}}</div></sc-if>
+<sc-if value="{{m.isAction}}"><div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #A1AABB; border: 1px dashed #2C3547; border-radius: 6px; padding: 6px 9px;"><span style="{{m.iconSt}}">{{m.icon}}</span><span style="flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{m.t}}</span><button onClick="{{m.undo}}" style="background: none; border: 0; color: #6E9BF5; cursor: pointer; font-size: 12px; padding: 0 2px;">{{m.undoLabel}}</button></div></sc-if>
+<sc-if value="{{m.isInfo}}"><div style="align-self: center; font-size: 11px; color: #8590A3; border-top: 1px solid #262E3E; padding-top: 4px;">{{m.t}}</div></sc-if>
+</sc-for>
+<sc-if value="{{busy}}" hint-placeholder-val="{{false}}"><div style="color: #8590A3; font-size: 12px;">arbeitet …</div></sc-if>
+</div>
+<div style="flex-shrink: 0; padding: 10px; border-top: 1px solid #262E3E;">
+<sc-if value="{{hint}}" hint-placeholder-val="{{false}}"><div style="margin-bottom: 8px; border: 1px solid #6E5A2A; background: rgba(196,127,20,.08); border-radius: 8px; padding: 9px 10px; display: flex; flex-direction: column; gap: 8px;">
+<div style="line-height: 1.45; font-size: 12px;"><span style="color: #E0A43A; font-weight: 600;">Cache abgelaufen.</span> Diese Nachricht liest den ganzen Chat neu ein (~{{hintTokens}} Tokens). Noch nichts gesendet.</div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap;"><button onClick="{{sendAnyway}}" style="padding: 5px 10px; border-radius: 5px; border: 0; background: #2F5BD3; color: #fff; cursor: pointer; font-size: 12px;">Trotzdem senden</button><button onClick="{{newChatWithDraft}}" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #2C3547; background: none; color: #E4E8EF; cursor: pointer; font-size: 12px;">In neuem Chat senden</button><button onClick="{{cancelHint}}" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #2C3547; background: none; color: #A1AABB; cursor: pointer; font-size: 12px;">Abbrechen</button></div>
+</div></sc-if>
+<sc-if value="{{vReview}}" hint-placeholder-val="{{false}}"><div style="margin-bottom: 8px; border: 1px solid #2C4572; background: #151C2B; border-radius: 8px; padding: 9px 10px; display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8590A3;"><svg width="11" height="11" viewBox="0 0 18 18" fill="none" stroke="#6E9BF5" stroke-width="1.8"><rect x="6.5" y="2" width="5" height="9" rx="2.5"/><path d="M4 8.5a5 5 0 0 0 10 0M9 13.5V16"/></svg>Gesprochen · {{vTermCount}} Projektbegriffe erkannt, zum Ändern anklicken</div>
+<div style="line-height: 1.9;"><sc-for list="{{vSegs}}" as="g" hint-placeholder-count="5"><sc-if value="{{g.isText}}"><span>{{g.t}}</span></sc-if><sc-if value="{{g.isTerm}}"><button onClick="{{g.on}}" title="{{g.tip}}" style="{{g.st}}">{{g.t}}</button></sc-if></sc-for></div>
+<sc-if value="{{vPopOpen}}" hint-placeholder-val="{{false}}"><div style="border: 1px solid #2C3547; background: #1A2030; border-radius: 6px; padding: 6px;">
+<div style="font-size: 11px; color: #8590A3; padding: 2px 6px 6px;">{{vPopKind}} · gehört: „{{vPopHeard}}“</div>
+<sc-for list="{{vPopAlts}}" as="a" hint-placeholder-count="2"><button onClick="{{a.on}}" style="{{a.st}}"><span style="font-family: 'IBM Plex Mono', monospace;">{{a.t}}</span><span style="color: #8590A3; font-size: 11px;">{{a.note}}</span></button></sc-for>
+</div></sc-if>
+<div style="display: flex; gap: 6px; align-items: center;"><button onClick="{{vSend}}" style="padding: 5px 12px; border-radius: 5px; border: 0; background: #2F5BD3; color: #fff; cursor: pointer; font-size: 12px;">Senden <span class="vkbd">Enter</span></button><button onClick="{{vEdit}}" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #2C3547; background: none; color: #E4E8EF; cursor: pointer; font-size: 12px;">Als Text bearbeiten</button><button onClick="{{vDiscard}}" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #2C3547; background: none; color: #A1AABB; cursor: pointer; font-size: 12px;">Verwerfen</button><span style="flex: 1;"></span><button onClick="{{vMic}}" title="Weitersprechen (Strg+M)" style="background: none; border: 0; color: #6E9BF5; cursor: pointer; font-size: 12px;">+ weitersprechen</button></div>
+</div></sc-if>
+<div style="{{vBoxSt}}">
+<sc-if value="{{vIdle}}" hint-placeholder-val="{{true}}"><input value="{{draft}}" onInput="{{onDraft}}" onKeyDown="{{onKey}}" placeholder="Frag oder sag dem Agenten, was er tun soll …" style="flex: 1; min-width: 0; background: none; border: 0; outline: none; color: #E4E8EF; font: 400 13px 'IBM Plex Sans', sans-serif; padding: 5px 0;"></sc-if>
+<sc-if value="{{vListen}}" hint-placeholder-val="{{false}}"><div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; padding: 5px 0;"><span class="vdot"></span><span style="color: #FF8A8A; font-weight: 500;">Hört zu</span><span class="lvl"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span style="font: 400 12px 'IBM Plex Mono', monospace; color: #A1AABB;">{{vTimer}}</span><span style="flex: 1;"></span><button onClick="{{vCancel}}" title="Abbrechen (Esc)" style="background: none; border: 0; color: #8590A3; cursor: pointer; font-size: 12px;">Abbrechen</button></div></sc-if>
+<sc-if value="{{vRecog}}" hint-placeholder-val="{{false}}"><div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; padding: 5px 0; color: #A1AABB;"><span class="spin"></span>Erkenne … <span style="color: #6B7385; font-size: 12px;">mit Projektbegriffen</span></div></sc-if>
+<button onClick="{{vMic}}" title="{{vMicTitle}}" aria-label="{{vMicTitle}}" style="{{vMicSt}}"><sc-if value="{{vListen}}" hint-placeholder-val="{{false}}"><span style="width: 10px; height: 10px; border-radius: 2px; background: #fff; display: block;"></span></sc-if><sc-if value="{{vNotListen}}" hint-placeholder-val="{{true}}"><svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6.5" y="2" width="5" height="9" rx="2.5"/><path d="M4 8.5a5 5 0 0 0 10 0M9 13.5V16"/></svg></sc-if></button>
+<button onClick="{{sendOrStop}}" title="{{sendTitle}}" aria-label="{{sendTitle}}" style="width: 30px; height: 30px; flex-shrink: 0; border-radius: 6px; border: 0; background: {{sendBg}}; color: #fff; cursor: pointer; font-size: 13px;">{{sendIcon}}</button>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 11px; color: #8590A3; position: relative;">
+<button onClick="{{toggleModes}}" title="Modus wechseln (Shift+Tab)" style="{{modeBtnSt}}">{{modeIcon}} {{modeLabel}} ▾</button><span>{{modeHint}}</span>
+<sc-if value="{{modesOpen}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; left: 0; bottom: 26px; width: 340px; background: #1A2030; border: 1px solid #2C4572; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.45); padding: 6px; z-index: 3;">
+<div style="font-size: 11px; color: #8590A3; padding: 4px 8px 6px;">Wie soll der Agent handeln?</div>
+<sc-for list="{{modes}}" as="d" hint-placeholder-count="3"><button onClick="{{d.on}}" style="{{d.st}}"><span style="font-weight: 600; font-size: 12px;">{{d.label}}</span><span style="color: #A1AABB; font-size: 12px; line-height: 1.4;">{{d.desc}}</span></button></sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+<div onPointerDown="{{resizeStart}}" title="Größe ändern" style="position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize; background: linear-gradient(135deg, transparent 50%, #3A4458 50%, #3A4458 58%, transparent 58%, transparent 70%, #3A4458 70%, #3A4458 78%, transparent 78%); border-radius: 0 0 10px 0;"></div>
+</section>
+</sc-if>
+<sc-if value="{{winMin}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; right: 20px; bottom: 40px; z-index: 20; display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; border-radius: 22px; background: #1A2030; border: 1px solid #2C4572; box-shadow: 0 8px 24px rgba(0,0,0,.45);">
+<svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="#6E9BF5" stroke-width="1.6"><path d="M9 2.5l1.4 3.6 3.6 1.4-3.6 1.4L9 12.5 7.6 8.9 4 7.5l3.6-1.4z"/></svg>
+<button onClick="{{restore}}" style="background: none; border: 0; color: #E4E8EF; font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; padding: 0; max-width: 260px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{capsule}}</button>
+<button onClick="{{capMic}}" title="Sprechen (Strg+M)" aria-label="Sprechen" style="width: 28px; height: 28px; border-radius: 14px; border: 1px solid #2C3547; background: #131720; color: #A1AABB; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6.5" y="2" width="5" height="9" rx="2.5"/><path d="M4 8.5a5 5 0 0 0 10 0M9 13.5V16"/></svg></button>
+<button onClick="{{restore}}" title="Öffnen" aria-label="Öffnen" style="width: 28px; height: 28px; border-radius: 14px; border: 0; background: none; color: #A1AABB; cursor: pointer;">⤢</button>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":860}}'>
+// v0.2 overall prototype = v0.1 + A1 (agent as a floating window) + C (modes Direkt/Gemischt/Bestätigen, undo) + D (templates in Analyse via P-Analyse-02 → G-Vorlagen) + F (context meter, cache status, pre-send hint, busy/stop) + v0.2.1 G (short description in Läufe and Issues) + H (description, overview and table in one scroll column, sticky toolbar and table header) over the content (Block A, v0.2). Messages and actions are samples;
+// what the agent can do comes with Block C, voice with Block B.
+const W0 = 1440, H0 = 860, RAIL = 52, TOP = 36;
+const CHATS = [
+  { id: 'c1', title: 'pred_len 90 · Parameter', when: 'heute', tokens: 38000, cache: 37, msgs: [
+    { k: 'user', t: 'Öffne das Experiment von gestern, das bei pred_len 90 ein paar Parameter getestet hat.' },
+    { k: 'action', t: 'Tab geöffnet · TIM-52_best_combined_90' },
+    { k: 'agent', t: 'Das war 2026-10-14_0912_TIM-52_best_combined_90 (läuft noch, 2 592 Zellen). Getestet wurden lstm_layer, time_embedding, conv_dims und lr_epochs.' }
+  ] },
+  { id: 'c2', title: 'Modellvergleich fürs Meeting', when: 'gestern', tokens: 21000, cache: 0, msgs: [
+    { k: 'user', t: 'Bau mir die Modellvergleich-Tabelle wie letzte Woche.' },
+    { k: 'action', t: 'Analyse geöffnet · Ein Lauf · TIM-52_model_comparison' },
+    { k: 'agent', t: 'Die Tabelle steht oben links im Board. Speichern kannst du sie über das blaue Symbol.' }
+  ] },
+  { id: 'c3', title: 'ETS-Lücke bei 90 Tagen', when: '09.10.', tokens: 84000, cache: 0, msgs: [
+    { k: 'user', t: 'Warum ist ETS bei 90 Tagen so nah an REP-Net?' },
+    { k: 'agent', t: 'Platzhalter für einen älteren Chat.' }
+  ] }
+];
+const MODES = [
+  { key: 'direct', label: 'Direkt', icon: '⏵⏵', desc: 'Handelt sofort. Jede Aktion lässt sich rückgängig machen.', hint: 'handelt ohne Rückfrage', col: '#3FB68B' },
+  { key: 'mixed', label: 'Gemischt', icon: '⏵', desc: 'Suchen, Navigieren und Ansicht sofort. Analyse ändern und Speichern erst nach Bestätigung.', hint: 'fragt bei Änderungen und Speichern', col: '#6E9BF5' },
+  { key: 'confirm', label: 'Bestätigen', icon: '⏸', desc: 'Fragt vor jeder Aktion. Auch danach rückgängig machbar.', hint: 'fragt vor jeder Aktion', col: '#E0A43A' }
+];
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const fuzzy = (text, term) => {
+  // substring first (best), else subsequence; returns { score, idx } or null
+  const a = text.toLowerCase(), b = term.toLowerCase();
+  if (!b) return { score: 0, idx: [] };
+  const at = a.indexOf(b);
+  if (at >= 0) return { score: 100 - at, idx: Array.from({ length: b.length }, (_, i) => at + i) };
+  // like VS Code: each letter continues the previous match or starts a word ("vl" → Vorlage, "zl" → Zwei Läufe)
+  const start = (i) => i === 0 || ' _-·:/.'.indexOf(a[i - 1]) >= 0;
+  const idx = []; let j = 0;
+  for (let i = 0; i < a.length && j < b.length; i++) {
+    if (a[i] === b[j] && (start(i) || (idx.length && idx[idx.length - 1] === i - 1))) { idx.push(i); j++; }
+  }
+  return j === b.length ? { score: 50 - (idx[idx.length - 1] - idx[0]), idx } : null;
+};
+const parts = (text, idx) => {
+  const out = []; const set = new Set(idx || []);
+  for (let i = 0; i < text.length; i++) {
+    const hl = set.has(i), last = out[out.length - 1];
+    if (last && last.hl === hl) last.t += text[i]; else out.push({ t: text[i], hl });
+  }
+  return out.map((p) => ({ t: p.t, cls: p.hl ? 'hl' : '' }));
+};
+class Component extends DCLogic {
+renderVals() {
+  const v = window.Frame.build(this);
+  const st = this.state || {};
+  const set = (p) => this.setState(p);
+  const isAnalysis = st.view === 'cmp';
+  v.rail = v.rail.filter((n) => n.isRuns || n.isCmp).map((n) => Object.assign(n, n.isCmp ? { label: 'Analyse' } : {}));
+  v.tabs = v.tabs.map((t) => (t.label === 'Vergleich' ? Object.assign(t, { label: 'Analyse' }) : t));
+
+  // v0.3: settings as its own tab, opened from the gear in the rail or Strg+,
+  const sOn = !!st.settings;
+  const off = (fn) => (e) => { set({ settings: false }); return fn && fn(e); };
+  v.rail = v.rail.map((n) => Object.assign(n, { on: off(n.on), st: sOn ? n.st.replace('#2C4572', 'transparent').replace('#192640', 'transparent').replace('#6E9BF5', '#8590A3') : n.st }));
+  const tabSt = (on, mono) => "display: flex; align-items: center; gap: 8px; height: 100%; padding: 0 14px; cursor: pointer; font: 400 12px " + (mono ? "'IBM Plex Mono'" : "'IBM Plex Sans'") + ", monospace; border: 0; border-right: 1px solid #262E3E; border-top: 2px solid " + (on ? '#6E9BF5' : 'transparent') + '; background: ' + (on ? '#0D1016' : 'transparent') + '; color: ' + (on ? '#E4E8EF' : '#8590A3') + ';';
+  if (sOn) v.tabs = v.tabs.map((t) => Object.assign(t, { st: tabSt(false, !t.pinned) }));
+  v.tabs = v.tabs.map((t) => Object.assign(t, { on: off(t.on) }));
+  if (st.settingsTab) v.tabs.push({ label: 'Einstellungen', title: 'Einstellungen', closable: true, st: tabSt(sOn, false), on: () => set({ settings: true }), close: (e) => { if (e && e.stopPropagation) e.stopPropagation(); set({ settings: false, settingsTab: false }); } });
+  v.isRunsC = v.isRuns && !sOn; v.isIssuesC = v.isIssues && !sOn; v.isExpC = v.isExp && !sOn; v.isAnalysisC = isAnalysis && !sOn;
+  v.settings = sOn;
+  v.gearSt = 'width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px; border: 1px solid ' + (sOn ? '#2C4572' : 'transparent') + '; background: ' + (sOn ? '#192640' : 'transparent') + '; color: ' + (sOn ? '#6E9BF5' : '#8590A3') + ';';
+  v.toggleSettings = () => set({ settings: true, settingsTab: true });
+  if (!this._comma) {
+    this._comma = true;
+    document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === ',') { e.preventDefault(); this.setState({ settings: true, settingsTab: true }); } });
+  }
+  const mode = st.agentMode || 'open';           // 'open' | 'min' | 'closed'
+  const w = st.aw || 400, h = st.ah || 520;
+  const x = st.ax === undefined ? W0 - w - 24 : st.ax, y = st.ay === undefined ? H0 - h - 44 : st.ay;
+  const chats = st.chats || CHATS;
+  const cur = chats.find((c) => c.id === (st.chat || 'c1')) || chats[0];
+  const runShort = (v.runName || '').replace(/^\d{4}-\d{2}-\d{2}_\d{4,6}_/, '');
+  const ctx = v.isExp ? 'Lauf · ' + runShort : isAnalysis ? 'Analyse' : v.isIssues ? 'Läufe · Issues' : 'Läufe · Liste';
+
+  const drag = (kind) => (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY, o = { x, y, w, h };
+    const move = (ev) => {
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      if (kind === 'move') set({ ax: clamp(o.x + dx, RAIL + 4, W0 - o.w - 4), ay: clamp(o.y + dy, TOP + 4, H0 - 24 - o.h - 4) });
+      else set({ aw: clamp(o.w + dx, 320, W0 - o.x - 4), ah: clamp(o.h + dy, 280, H0 - 24 - o.y - 4) });
+    };
+    const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  };
+  // F: context and cache are computed by the tool from the usage of the last turn (no agent call)
+  const CTX = 200000, BIG = 50000;
+  const k = (n) => Math.round(n / 1000) + 'k';
+  const patchChat = (id, p) => chats.map((c) => (c.id === id ? Object.assign({}, c, p) : c));
+  const reallySend = (t, target, voice) => {
+    const c0 = chats.find((c) => c.id === target) || cur;
+    const tok = (c0.tokens || 0) + 2500;
+    const next = patchChat(c0.id, { msgs: c0.msgs.concat([{ k: 'user', t, voice: voice || '' }]), when: 'jetzt', tokens: tok, cache: 60 });
+    set({ draft: '', hint: false, busy: true, chats: next, chat: c0.id });
+    clearTimeout(this._busy);
+    this._busy = setTimeout(() => {
+      const s2 = this.state || {}, cs = s2.chats || next;
+      if (!s2.busy) return;
+      this.setState({ busy: false, chats: cs.map((c) => (c.id === c0.id ? Object.assign({}, c, { msgs: c.msgs.concat([{ k: 'agent', t: 'Platzhalter · Antwort des Agenten (kommt gestreamt, Wort für Wort).' }]) }) : c)) });
+    }, 1600);
+  };
+  const send = () => {
+    const t = (st.draft || '').trim();
+    if (!t || st.busy) return;
+    if (!cur.cache && (cur.tokens || 0) > BIG) { set({ hint: true }); return; }
+    reallySend(t, cur.id);
+  };
+  // B3: voice input; the server transcribes with the project vocabulary (simulated here), the text shows in a review box
+  const VD = window.VoiceData || { SEGS: [], text: () => '' };
+  const vph = st.vph || 'idle';                // idle | listen | recog | review
+  const vpick = st.vpick || {};
+  const vsegs = VD.SEGS.map((g, i) => (g.term ? Object.assign({}, g, { cur: vpick[i] || g.term, i }) : Object.assign({}, g, { i })));
+  const vText = () => vsegs.map((g) => (g.term ? g.cur : g.t)).join('');
+  const vHeard = 'gesprochen · gehört: „' + VD.SEGS.map((g) => g.heard || g.t).join('') + '“';
+  const vStopTick = () => { clearInterval(this._vtick); this._vtick = null; };
+  const vJoin = (t) => ((st.draft || '').trim() ? st.draft.replace(/\s*$/, ' ') : '') + t;
+  const vStart = () => { vStopTick(); set({ vph: 'listen', vsec: 0, vpop: -1, agentMode: 'open' }); this._vtick = setInterval(() => this.setState({ vsec: ((this.state || {}).vsec || 0) + 1 }), 1000); };
+  const vStop = () => { vStopTick(); set({ vph: 'recog' }); clearTimeout(this._vrec); this._vrec = setTimeout(() => this.setState({ vph: 'review', vpick: {}, vpop: -1 }), 1300); };
+  const vCancel = () => { vStopTick(); clearTimeout(this._vrec); set({ vph: 'idle' }); };
+  const vSend = () => { if (st.busy) return; const t = vJoin(vText());
+    if (!cur.cache && (cur.tokens || 0) > BIG) { set({ vph: 'idle', vpop: -1, draft: t, hint: true }); return; }  // same pre-send check as typed text
+    set({ vph: 'idle', vpop: -1 }); reallySend(t, cur.id, vHeard); };
+  const vMic = () => (vph === 'listen' ? vStop() : vph === 'idle' ? vStart() : vph === 'review' ? (set({ draft: vJoin(vText()) }), vStart()) : null);
+  this._v = { vMic, vCancel, vSend, vDiscard: () => set({ vph: 'idle', vpop: -1 }), vph };
+  if (!this._vkeys) {
+    this._vkeys = true;
+    document.addEventListener('keydown', (e) => {
+      const v = this._v || {};
+      if (e.ctrlKey && (e.key === 'm' || e.key === 'M')) { e.preventDefault(); v.vMic && v.vMic(); }
+      else if (e.key === 'Escape' && v.vph === 'listen') { e.preventDefault(); v.vCancel(); }
+      else if (e.key === 'Escape' && v.vph === 'review') { e.preventDefault(); v.vDiscard(); }
+      else if (e.key === 'Enter' && v.vph === 'review') { e.preventDefault(); v.vSend(); }
+    });
+  }
+  const vpop = st.vpop === undefined ? -1 : st.vpop;
+  const vpg = vsegs.find((g) => g.term && g.i === vpop);
+  const vChip = (g) => {
+    const changed = g.cur !== g.term, open = g.i === vpop;
+    return "font: 500 12.5px 'IBM Plex Mono', monospace; padding: 1px 6px; margin: 0 1px; border-radius: 4px; cursor: pointer; color: " + (changed ? '#F2C66D' : '#C9D3E3') + '; background: ' + (open ? '#22345A' : '#192640') + '; border: 1px solid ' + (open ? '#6E9BF5' : changed ? '#6E5A2A' : '#2C4572') + '; border-bottom: 2px dotted ' + (changed ? '#E0A43A' : '#6E9BF5') + ';';
+  };
+  const vLive = vph === 'listen', vsec = st.vsec || 0;
+  Object.assign(v, {
+    vIdle: vph === 'idle' || vph === 'review', vListen: vLive, vRecog: vph === 'recog', vNotListen: !vLive, vReview: vph === 'review',
+    vTimer: Math.floor(vsec / 60) + ':' + String(vsec % 60).padStart(2, '0'),
+    vMic, vCancel, vSend, vEdit: () => set({ vph: 'idle', draft: vJoin(vText()), vpop: -1 }), vDiscard: () => set({ vph: 'idle', vpop: -1 }),
+    capMic: () => vStart(),
+    vTermCount: String(vsegs.filter((g) => g.term).length),
+    vSegs: vsegs.map((g) => (g.term
+      ? { isTerm: true, isText: false, t: g.cur, tip: g.kind + ' · gehört: „' + g.heard + '“', st: vChip(g), on: () => set({ vpop: vpop === g.i ? -1 : g.i }) }
+      : { isTerm: false, isText: true, t: g.t })),
+    vPopOpen: !!vpg, vPopKind: vpg ? vpg.kind : '', vPopHeard: vpg ? vpg.heard : '',
+    vPopAlts: vpg ? vpg.alts.concat(['§heard']).map((a) => {
+      const t = a === '§heard' ? vpg.heard : a, on = t === vpg.cur;
+      return { t, note: a === '§heard' ? 'wie gehört' : a === vpg.term ? (on ? '✓ erkannt' : 'erkannt') : on ? '✓' : '',
+        st: 'width: 100%; display: flex; justify-content: space-between; gap: 10px; text-align: left; padding: 6px 8px; border: 0; border-radius: 5px; cursor: pointer; font-size: 12px; color: #E4E8EF; background: ' + (on ? '#192640' : 'transparent') + ';',
+        on: () => set({ vpick: Object.assign({}, vpick, { [vpg.i]: t }), vpop: -1 }) };
+    }) : [],
+    vMicTitle: vLive ? 'Stoppen (Strg+M)' : 'Sprechen (Strg+M)',
+    vMicSt: 'width: 30px; height: 30px; flex-shrink: 0; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; ' + (vLive ? 'border: 0; background: #E5484D; color: #fff;' : 'border: 1px solid #2C3547; background: #131720; color: ' + (vph === 'recog' ? '#4A5265' : '#A1AABB') + ';'),
+    vBoxSt: 'display: flex; align-items: flex-end; gap: 6px; border: 1px solid ' + (vLive ? '#6A2B2E' : '#2C3547') + '; background: ' + (vLive ? 'rgba(229,72,77,.06)' : '#1A2030') + '; border-radius: 8px; padding: 6px 6px 6px 10px;'
+  });
+  const hdrBtn = 'width: 26px; height: 26px; border-radius: 4px; border: 0; background: none; color: #A1AABB; cursor: pointer; font-size: 15px; line-height: 1;';
+  const last = cur.msgs.filter((m) => m.k === 'action').slice(-1)[0];
+  if (!this._esc) {
+    this._esc = true;
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (this.state || {}).agentMode !== 'closed' && !['listen', 'review'].includes((this.state || {}).vph) && !(this.state || {}).pOpen) this.setState({ agentMode: 'closed', chatsOpen: false }); });
+  }
+  // C1: command palette like VS Code; commands act on the real frame here
+  const PD = window.PaletteData || { CMDS: [], STEPS: {}, PREFIXES: [], RECENT: [] };
+  const RD = window.RunsData || { RUNS: [], ISSUES: {} };
+  const SD = window.SetData || { S: [], CATS: [] };
+  const pOpen = !!st.pOpen, pq = st.pq2 === undefined ? '>' : st.pq2, pstep = st.pstep || null, precent = st.precent || PD.RECENT;
+  const pmode = pstep ? 'step' : pq[0] === '>' || pq[0] === '@' || pq[0] === '?' ? pq[0] : '';
+  const pterm = (pmode === '>' || pmode === '@' || pmode === '?' ? pq.slice(1) : pq).trim();
+  const pshort = (id) => id.replace(/^\d{4}-\d{2}-\d{2}_\d{4,6}_/, '');
+  const pFocus = () => setTimeout(() => { const el = document.getElementById('pal-q'); if (el) el.focus(); }, 0);
+  const pShow = (nq) => { set({ pOpen: true, pq2: nq, psel: 0, pstep: null }); pFocus(); };
+  const pClose = () => set({ pOpen: false, pstep: null });
+  const pToast = (t) => { set({ pToast: t }); clearTimeout(this._ptt); this._ptt = setTimeout(() => this.setState({ pToast: '' }), 2200); };
+  const pDone = (patch, msg, id) => { set(Object.assign({ pOpen: false, pstep: null }, id ? { precent: [id].concat(precent.filter((x) => x !== id)).slice(0, 3) } : {}, patch || {})); if (msg) pToast(msg); };
+  const ACT = {
+    'runs.list': () => pDone({ settings: false, view: 'runs', lastRunsView: 'runs' }), 'runs.byIssue': () => pDone({ settings: false, view: 'issues', lastRunsView: 'issues' }),
+    'run.analyse': () => pDone({ settings: false, view: 'cmp' }), 'ana.one': () => pDone({ settings: false, view: 'cmp' }), 'ana.project': () => pDone({ settings: false, view: 'cmp' }, 'Analyse · Projektverlauf'),
+    'agent.toggle': () => pDone({ agentMode: mode === 'open' ? 'min' : 'open' }), 'agent.voice': () => { pClose(); vStart(); },
+    'agent.new': () => { const id = 'n' + Date.now(); pDone({ agentMode: 'open', chats: [{ id, title: 'Neuer Chat', when: 'jetzt', tokens: 0, cache: 0, msgs: [] }].concat(chats), chat: id }); },
+    'set.open': () => pDone({ settings: true, settingsTab: true })
+  };
+  const pCmdLabel = (c) => c.cat + ': ' + c.t;
+  const pRunCmd = (c) => {
+    if (c.step) return set({ pstep: { kind: c.step, title: c.step === 'runs' ? (c.then ? 'Zweiten Lauf wählen' : 'Lauf öffnen') : c.step === 'issues' ? 'Issue öffnen' : PD.STEPS[c.step].title, then: c.then || '', cmd: c.id }, pq2: '', psel: 0 });
+    if (c.prefix) return set({ pq2: c.prefix, psel: 0 });
+    if (ACT[c.id]) { ACT[c.id](); set({ precent: [c.id].concat(precent.filter((x) => x !== c.id)).slice(0, 3) }); return; }
+    pDone(null, '✓ ' + pCmdLabel(c) + ' (im Prototyp nur angedeutet)', c.id);
+  };
+  const pRunItem = (r, m, then) => ({ icon: '▤', iconCol: '#6E9BF5', label: pshort(r.id), idx: m && m.idx, mono: true,
+    desc: (r.issue || 'ohne Issue') + ' · ' + r.id.slice(0, 10) + (r.running ? ' · ● läuft' : ''),
+    run: () => (then ? pDone({ settings: false, view: 'cmp' }, '✓ Zwei Läufe: ' + pshort(r.id), 'ana.two') : (pDone({ settings: false }, '', 'runs.open'), v.openRunId(r.id))) });
+  const pIssueItem = (id, m) => ({ icon: '◆', iconCol: '#A78BFA', label: id + ' · ' + RD.ISSUES[id].title, idx: m && m.idx, desc: RD.ISSUES[id].status,
+    run: () => pDone({ settings: false, view: 'issues', lastRunsView: 'issues' }, '✓ Issue ' + id, 'runs.issue') });
+  let pit = [];
+  if (pmode === '>') {
+    if (!pterm) {
+      const rec = precent.map((id) => PD.CMDS.find((c) => c.id === id)).filter(Boolean);
+      pit = rec.map((c, i) => ({ label: pCmdLabel(c), key: c.k, group: i === 0 ? 'zuletzt verwendet' : '', run: () => pRunCmd(c) }))
+        .concat(PD.CMDS.filter((c) => precent.indexOf(c.id) < 0).map((c, i) => ({ label: pCmdLabel(c), key: c.k, group: i === 0 ? 'weitere Befehle' : '', sep: i === 0, run: () => pRunCmd(c) })));
+    } else pit = PD.CMDS.map((c) => ({ c, m: fuzzy(pCmdLabel(c), pterm) })).filter((x) => x.m).sort((a, b) => b.m.score - a.m.score).map((x) => ({ label: pCmdLabel(x.c), idx: x.m.idx, key: x.c.k, run: () => pRunCmd(x.c) }));
+  } else if (pmode === '') {
+    const rs = RD.RUNS.map((r) => ({ r, m: fuzzy(pshort(r.id) + ' ' + (r.issue || ''), pterm) })).filter((x) => x.m).sort((a, b) => b.m.score - a.m.score).slice(0, pterm ? 8 : 5);
+    const is = Object.keys(RD.ISSUES).map((id) => ({ id, m: fuzzy(id + ' · ' + RD.ISSUES[id].title, pterm) })).filter((x) => x.m).sort((a, b) => b.m.score - a.m.score).slice(0, pterm ? 5 : 3);
+    pit = rs.map((x, i) => Object.assign(pRunItem(x.r, x.m), { group: i === 0 ? (pterm ? 'Läufe' : 'zuletzt geöffnet') : '' }))
+      .concat(is.map((x, i) => Object.assign(pIssueItem(x.id, x.m), { group: i === 0 ? 'Issues' : '', sep: i === 0 && rs.length > 0 })));
+  } else if (pmode === '@') {
+    pit = SD.S.map((d) => ({ d, m: fuzzy(d.label + ' ' + d.desc, pterm) })).filter((x) => x.m).sort((a, b) => b.m.score - a.m.score).slice(0, 10)
+      .map((x) => { const cat = (SD.CATS.find((c) => c.id === x.d.cat) || {}).title || ''; return { icon: '⚙', iconCol: '#8590A3', label: x.d.label, idx: x.m.idx && x.m.idx.filter((i) => i < x.d.label.length), desc: cat, run: () => pDone({ settings: true, settingsTab: true }, 'Einstellungen · ' + cat + ' · ' + x.d.label, 'set.search') }; });
+  } else if (pmode === '?') {
+    pit = PD.PREFIXES.map((p) => ({ label: (p[0] || '…') + '  ' + p[1], key: p[2], run: () => set({ pq2: p[0], psel: 0 }) }));
+  } else {
+    if (pstep.kind === 'runs') pit = RD.RUNS.map((r) => ({ r, m: fuzzy(pshort(r.id), pterm) })).filter((x) => x.m).slice(0, 10).map((x) => pRunItem(x.r, x.m, pstep.then));
+    else if (pstep.kind === 'issues') pit = Object.keys(RD.ISSUES).map((id) => ({ id, m: fuzzy(id + ' · ' + RD.ISSUES[id].title, pterm) })).filter((x) => x.m).map((x) => pIssueItem(x.id, x.m));
+    else pit = PD.STEPS[pstep.kind].items.map((it) => ({ it, m: fuzzy(it[0], pterm) })).filter((x) => x.m).map((x) => ({ label: x.it[0], idx: x.m.idx, desc: x.it[1],
+      run: () => (pstep.kind === 'modes' ? pDone({ agentMode2: ['direct', 'mixed', 'confirm'][PD.STEPS.modes.items.indexOf(x.it)] }, '✓ Modus: ' + x.it[0], pstep.cmd) : pDone(null, '✓ ' + pstep.title + ': ' + x.it[0] + ' (im Prototyp nur angedeutet)', pstep.cmd)) }));
+  }
+  if (pterm && (pmode === '>' || pmode === '')) pit.push({ agent: true, sep: pit.length > 0, icon: '✦', iconCol: '#6E9BF5', label: 'Agent fragen: „' + pterm + '“', desc: pit.length ? '' : 'kein Befehl passt',
+    run: () => { pClose(); set({ agentMode: 'open' }); reallySend(pterm, cur.id); } });
+  const psel = Math.min(st.psel || 0, Math.max(0, pit.length - 1));
+  const pExec = (i) => { const it = pit[i]; if (it) it.run(); };
+  this._pShow = pShow;
+  if (!this._pkeys) {
+    this._pkeys = true;
+    document.addEventListener('keydown', (e) => {
+      const ctrl = e.ctrlKey || e.metaKey;
+      if ((ctrl && e.shiftKey && (e.key === 'P' || e.key === 'p')) || e.key === 'F1') { e.preventDefault(); this._pShow('>'); }
+      else if (ctrl && !e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); this._pShow(''); }
+    });
+  }
+  Object.assign(v, {
+    pOpen, pQ: pq, pOnQ: (e) => set({ pq2: e.target.value, psel: 0 }),
+    pOnKey: (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); set({ psel: (psel + 1) % Math.max(1, pit.length) }); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); set({ psel: (psel - 1 + pit.length) % Math.max(1, pit.length) }); }
+      else if (e.key === 'Enter') { e.preventDefault(); pExec(psel); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); pClose(); }
+      else if (e.key === 'Backspace' && pstep && !pq) { e.preventDefault(); set({ pstep: null, pq2: '>', psel: 0 }); }
+    },
+    pPh: pmode === 'step' ? (pstep.kind === 'runs' ? 'Lauf suchen …' : 'Auswählen …') : pmode === '>' ? 'Befehl eingeben · ? zeigt die Präfixe' : pmode === '@' ? 'Einstellung suchen …' : 'Lauf oder Issue suchen · > für Befehle',
+    pHasStep: !!pstep, pStepTitle: pstep ? pstep.title : '', pBack: () => set({ pstep: null, pq2: '>', psel: 0 }),
+    pItems: pit.map((it, i) => ({
+      sep: !!it.sep, hasIcon: !!it.icon, icon: it.icon || '', iconCol: it.iconCol || '#8590A3',
+      parts: parts(it.label, it.idx), labelFont: it.mono ? "font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;" : '',
+      desc: it.desc || '', hasGroup: !!it.group && !it.key, group: it.group || '', hasKey: !!it.key, key: it.key || '', on: () => pExec(i),
+      st: 'width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; padding: 6px 10px; border: 0; border-radius: 4px; cursor: pointer; color: ' + (it.agent ? '#C9D3E3' : '#E4E8EF') + '; font-size: 13px; background: ' + (i === psel ? '#22345A' : 'transparent') + '; box-shadow: ' + (i === psel ? 'inset 2px 0 0 #6E9BF5' : 'none') + ';'
+    })),
+    pEmpty: pit.length === 0, pEmptyText: pmode === '@' ? 'Keine Einstellung passt' : 'Nichts gefunden',
+    pOpenQuick: () => pShow(''), pToast: !!st.pToast, pToastText: st.pToast || ''
+  });
+  // D1: status bar with running runs and a bell for run events
+  const _s = (id) => String(id || '').replace(/^\d{4}-\d{2}-\d{2}_\d{4,6}_/, '');
+  const ND = window.NotifyData || { RUNNING: [], EVENTS: {}, OLD: [] };
+    const running = st.nrunning || ND.RUNNING;
+  const notes = st.nnotes || ND.OLD.map((n, i) => Object.assign({ nid: 'o' + i }, n));
+  const fire = (kind) => {
+    const s = this.state || {}, ev = ND.EVENTS[kind];
+    if (!ev) return;
+    if (ev.silent) {   // a started run only shows up in the status bar
+      const r = { id: ev.run, issue: 'TIM-37', done: 0, planned: 96, err: 0, rate: 0, eta: '', fresh: true };
+      this.setState({ nrunning: (s.nrunning || ND.RUNNING).concat([r]), nflash: 'neu gestartet: ' + _s(ev.run), ndemoOpen: false });
+      clearTimeout(this._fl); this._fl = setTimeout(() => this.setState({ nflash: '' }), 5000);
+      return;
+    }
+    const n = Object.assign({}, ev, { nid: kind + Date.now(), when: 'gerade eben', read: false });
+    this.setState({ nnotes: [n].concat(s.nnotes || notes), ntoast: n.nid, ndemoOpen: false });
+    clearTimeout(this._th); this._th = setTimeout(() => { if (!(this.state || {}).nhold) this.setState({ ntoast: '' }); }, 9000);
+  };
+  if (!this._nauto) { this._nauto = true; setTimeout(() => fire('done'), 6000); }
+  const patch = (nid, p) => set({ nnotes: notes.map((n) => (n.nid === nid ? Object.assign({}, n, p) : n)) });
+  const act = (n, a) => {
+    if (a.indexOf('Zusammenfassen') >= 0) {
+      patch(n.nid, { sumState: 'loading', read: true }); set({ nhold: true });
+      clearTimeout(this._sm); this._sm = setTimeout(() => { const s = this.state || {}; this.setState({ nnotes: (s.nnotes || notes).map((x) => (x.nid === n.nid ? Object.assign({}, x, { sumState: 'done' }) : x)) }); }, 1500);
+      return;
+    }
+    set({ ntoast: '', nbellOpen: false, nhold: false, nnotes: notes.map((x) => (x.nid === n.nid ? Object.assign({}, x, { read: true }) : x)) });
+    if (a === 'Analysieren') set({ settings: false, view: 'cmp' }); else { set({ settings: false }); v.openRunId(n.run); }
+  };
+  const view = (n) => ({
+    icon: n.icon, iconSt: 'width: 20px; height: 20px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #0D1016; background: ' + n.col + ';',
+    title: n.title, run: _s(n.run), text: n.text, when: n.when, unread: !n.read,
+    sumLoading: n.sumState === 'loading', sumDone: n.sumState === 'done', sum: n.summary || '',
+    acts: (n.actions || []).filter((a) => !(a.indexOf('Zusammenfassen') >= 0 && n.sumState)).map((a, i) => ({ t: a, cls: 'act' + (i === 0 ? ' p' : ''), on: () => act(n, a) }))
+  });
+  const tn = notes.find((n) => n.nid === st.ntoast);
+  const unread = notes.filter((n) => !n.read).length;
+  const first = running.find((r) => !r.stalled) || running[0];
+  const stalled = running.filter((r) => r.stalled).length;
+  const pct = (r) => Math.round(r.done / r.planned * 100) + ' %';
+  
+  const nv = {
+    sbIconSpin: '', anyRunning: running.length > 0,
+    sbRun: first ? running.length + (running.length === 1 ? ' läuft' : ' laufen') + ' · ' + _s(first.id) + ' · ' + pct(first) + (first.eta ? ' · noch ~' + first.eta : '') : 'Keine Läufe aktiv',
+    hasMore: false, sbMore: '',
+    hasStalled: stalled > 0, sbStalled: stalled + ' hängt',
+    flash: !!st.nflash, flashText: st.nflash || '',
+    toggleRuns: () => set({ nrunsOpen: !st.nrunsOpen, nbellOpen: false }),
+    toggleBell: () => set({ nbellOpen: !st.nbellOpen, nrunsOpen: false, ntoast: '' }),
+    bellSt: st.nbellOpen ? 'background: #1A2030; color: #E4E8EF;' : '',
+    hasUnread: unread > 0, unread: String(unread),
+    runsOpen: !!st.nrunsOpen,
+    runs: running.map((r) => ({
+      name: _s(r.id), issue: r.issue, pct: pct(r),
+      pctSt: 'font: 500 12px \'IBM Plex Mono\', monospace; color: ' + (r.stalled ? '#E0A43A' : '#E4E8EF') + ';',
+      barSt: 'display: block; height: 100%; width: ' + Math.max(1, r.done / r.planned * 100).toFixed(0) + '%; background: ' + (r.stalled ? '#E0A43A' : '#6E9BF5') + ';',
+      line: r.stalled ? 'hängt seit ' + r.stalled + ' · letzte Zelle ' + r.last + ' · ' + r.done.toLocaleString('de-DE') + ' von ' + r.planned.toLocaleString('de-DE') + ' Zellen'
+        : r.fresh ? 'gerade gestartet · ' + r.planned + ' Zellen geplant · Restzeit nach den ersten Zellen'
+        : r.done.toLocaleString('de-DE') + ' von ' + r.planned.toLocaleString('de-DE') + ' Zellen · ' + r.err + ' Fehler · ' + r.rate + ' Zellen/h · noch ~' + r.eta + ' (fertig ca. ' + r.at + ')',
+      lineSt: 'color: ' + (r.stalled ? '#E0A43A' : '#8590A3') + ';',
+      open: () => { set({ nrunsOpen: false, settings: false }); v.openRunId(r.id); }
+    })),
+    bellOpen: !!st.nbellOpen, notes: notes.map(view), noNotes: notes.length === 0,
+    readAll: () => set({ nnotes: notes.map((n) => Object.assign({}, n, { read: true })) }),
+    clearAll: () => set({ nnotes: [] }),
+    toastOpen: !!tn, ...(() => { const t = tn ? view(tn) : view({ actions: [], run: '' }); const o = {}; Object.keys(t).forEach((k) => { o['t' + k[0].toUpperCase() + k.slice(1)] = t[k]; }); return o; })(),
+    closeToast: () => set({ ntoast: '', nhold: false }),
+    demoOpen: !!st.ndemoOpen, toggleDemo: () => set({ ndemoOpen: !st.ndemoOpen }),
+    demo: [['done', 'Lauf fertig'], ['err', 'Viele Fehler (≥ 5 %)'], ['stalled', 'Lauf hängt (30 min)'], ['started', 'Lauf gestartet (nur Statusleiste)']].map((d) => ({ t: d[1], on: () => fire(d[0]) })),
+  };
+  Object.keys(nv).forEach((k) => { v['n' + k[0].toUpperCase() + k.slice(1)] = nv[k]; });
+  v.nToggleDemo = nv.toggleDemo;
+  return Object.assign(v, {
+    isAnalysis, isSoon: false,
+    winOpen: mode === 'open', winMin: mode === 'min',
+    winSt: 'position: absolute; left: ' + x + 'px; top: ' + y + 'px; width: ' + w + 'px; height: ' + h + 'px; z-index: 20; display: flex; flex-direction: column; background: rgba(19,23,32,.97); border: 1px solid #2C3547; border-radius: 10px; box-shadow: 0 18px 50px rgba(0,0,0,.55), 0 0 0 1px rgba(110,155,245,.08); backdrop-filter: blur(6px);',
+    agentRailSt: 'width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px; border: 1px solid ' + (mode !== 'closed' ? '#2C4572' : 'transparent') + '; background: ' + (mode !== 'closed' ? '#192640' : 'transparent') + '; color: ' + (mode !== 'closed' ? '#6E9BF5' : '#8590A3') + ';',
+    toggleAgent: () => set({ agentMode: mode === 'open' ? 'min' : 'open', chatsOpen: false }),
+    minimize: () => set({ agentMode: 'min', chatsOpen: false }),
+    restore: () => set({ agentMode: 'open' }),
+    closeAgent: () => set({ agentMode: 'closed', chatsOpen: false }),
+    dragStart: drag('move'), resizeStart: drag('size'), stop: (e) => e.stopPropagation(),
+    hdrBtn, ctx, chatTitle: cur.title, chatsOpen: !!st.chatsOpen,
+    toggleChats: () => set({ chatsOpen: !st.chatsOpen }),
+    chats: chats.map((c) => ({
+      title: c.title, meta: c.when + ' · ' + (c.tokens ? k(c.tokens) + (c.cache ? ' · warm' : ' · kalt') : 'leer'), on: () => set({ chat: c.id, chatsOpen: false, hint: false }),
+      st: 'width: 100%; display: flex; justify-content: space-between; gap: 10px; align-items: center; text-align: left; padding: 7px 8px; border: 0; border-radius: 5px; cursor: pointer; font: 400 12px \'IBM Plex Sans\', sans-serif; color: #E4E8EF; background: ' + (c.id === cur.id ? '#192640' : 'transparent') + ';'
+    })),
+    newChat: () => { const id = 'n' + Date.now(); set({ chats: [{ id, title: 'Neuer Chat', when: 'jetzt', tokens: 0, cache: 0, msgs: [] }].concat(chats), chat: id, chatsOpen: false }); },
+    busy: !!st.busy, hint: !!st.hint, hintTokens: k(cur.tokens || 0),
+    sendAnyway: () => reallySend((st.draft || '').trim(), cur.id),
+    cancelHint: () => set({ hint: false }),
+    newChatWithDraft: () => { const id = 'n' + Date.now(), nc = { id, title: (st.draft || 'Neuer Chat').slice(0, 32), when: 'jetzt', tokens: 0, cache: 0, msgs: [] };
+      const t = (st.draft || '').trim(); chats.unshift(nc); reallySend(t, id); },
+    sendOrStop: () => (st.busy ? set({ busy: false, chats: patchChat(cur.id, { msgs: cur.msgs.concat([{ k: 'info', t: 'Abgebrochen' }]) }) }) : send()),
+    sendIcon: st.busy ? '■' : '↑', sendTitle: st.busy ? 'Stopp' : 'Senden (Enter)', sendBg: st.busy ? '#B5453A' : '#2F5BD3',
+    ctxPct: Math.round((cur.tokens || 0) / CTX * 100) + ' %',
+    ctxTip: 'Kontext: ' + k(cur.tokens || 0) + ' von ' + k(CTX) + ' Tokens',
+    ctxBarSt: 'display: block; height: 100%; width: ' + Math.min(100, (cur.tokens || 0) / CTX * 100).toFixed(0) + '%; background: ' + ((cur.tokens || 0) / CTX > 0.9 ? '#D9534F' : (cur.tokens || 0) / CTX > 0.7 ? '#E0A43A' : '#3FB68B') + ';',
+    cacheLabel: !cur.tokens ? 'neu' : cur.cache ? 'Cache warm · ' + cur.cache + ' min' : 'Cache abgelaufen',
+    cacheTip: cur.cache ? 'Nächste Nachricht liest den Verlauf aus dem Cache (günstig)' : 'Nächste Nachricht liest ~' + k(cur.tokens || 0) + ' Tokens neu ein',
+    cacheSt: 'font-size: 11px; padding: 1px 7px; border-radius: 9px; border: 1px solid ' + (cur.cache || !cur.tokens ? '#23402F' : '#6E5A2A') + '; color: ' + (cur.cache || !cur.tokens ? '#5FD4A0' : '#E0A43A') + '; white-space: nowrap;',
+    compactOff: !cur.cache || (cur.tokens || 0) < 10000,
+    compactTip: 'Nur solange der Cache warm ist: /compact liest den Chat selbst einmal ein',
+    compactSt: 'width: 100%; text-align: left; padding: 7px 8px; border: 0; border-radius: 5px; background: none; font: 400 12px \'IBM Plex Sans\', sans-serif; cursor: pointer; color: ' + (!cur.cache || (cur.tokens || 0) < 10000 ? '#4A5265' : '#E4E8EF') + ';',
+    compact: () => { if (!cur.cache) return; set({ chatsOpen: false, chats: patchChat(cur.id, { tokens: 6000, msgs: cur.msgs.concat([{ k: 'info', t: 'Chat komprimiert · ' + k(cur.tokens) + ' → 6k Tokens' }]) }) }); },
+    msgs: cur.msgs.map((m, i) => {
+      const key = cur.id + ':' + i, und = !!(st.undone || {})[key];
+      return { voice: !!m.voice, heard: m.voice || '', t: und ? 'Rückgängig gemacht · ' + m.t : m.t, isUser: m.k === 'user', isAgent: m.k === 'agent', isAction: m.k === 'action', isInfo: m.k === 'info',
+        icon: und ? '↶' : '✓', iconSt: 'color: ' + (und ? '#8590A3' : '#3FB68B') + ';', undoLabel: und ? 'Wiederholen' : 'Rückgängig',
+        undo: () => set({ undone: Object.assign({}, st.undone || {}, { [key]: !und }) }) };
+    }),
+    modesOpen: !!st.modesOpen, toggleModes: () => set({ modesOpen: !st.modesOpen }),
+    modes: MODES.map((d) => ({ label: d.icon + '  ' + d.label, desc: d.desc, on: () => set({ agentMode2: d.key, modesOpen: false }),
+      st: 'width: 100%; display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 8px 9px; border: 0; border-radius: 5px; cursor: pointer; color: #E4E8EF; background: ' + (d.key === (st.agentMode2 || 'mixed') ? '#192640' : 'transparent') + ';' })),
+    modeLabel: MODES.find((d) => d.key === (st.agentMode2 || 'mixed')).label,
+    modeIcon: MODES.find((d) => d.key === (st.agentMode2 || 'mixed')).icon,
+    modeHint: MODES.find((d) => d.key === (st.agentMode2 || 'mixed')).hint,
+    modeBtnSt: 'background: none; border: 1px solid #2C3547; border-radius: 10px; padding: 2px 8px; cursor: pointer; font-size: 11px; color: ' + MODES.find((d) => d.key === (st.agentMode2 || 'mixed')).col + ';',
+    draft: st.draft || '', onDraft: (e) => set({ draft: e.target.value }),
+    onKey: (e) => { if (e.key === 'Enter') send(); }, send,
+    capsule: st.busy ? 'Agent · arbeitet …' : last ? 'Agent · ' + last.t : 'Agent · bereit'
+  });
+}
+}
+</script>
+</body>
+</html>
