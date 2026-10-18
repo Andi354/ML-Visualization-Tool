@@ -120,3 +120,29 @@ def test_notes_column_is_the_amber_column_of_the_prototype(page):
     assert css(card.locator("strong"), "color") == "rgb(255, 226, 168)"
     expect(card.get_by_test_id("note-edit")).to_have_class("lnk")
     expect(col.locator(".notes-count")).to_have_text("1 Notiz")
+
+
+# --- I · Analysis ---------------------------------------------------------------------------------
+def test_analysis_has_the_scope_strip_and_the_prototype_header(page):
+    page.get_by_test_id("area-analysis").click()
+    strip = page.locator(".scope-strip")
+    assert strip.bounding_box()["height"] == 40 and css(strip, "backgroundColor") == "rgb(15, 19, 27)"
+    expect(strip).to_contain_text("Umfang")
+    expect(strip.get_by_test_id("analysis-view-run")).to_have_text("Ein Lauf")
+    head = page.locator(".analysis > .view-head")
+    assert head.bounding_box()["height"] >= 52 and css(head, "paddingLeft") == "28px"
+    expect(head.locator(".crumb")).to_contain_text("Analyse")
+    expect(head.locator(".crumb-view")).to_have_text("Ein Lauf")
+    save = page.get_by_test_id("save-deliverable")
+    assert css(save, "fontSize") == "13px" and css(save, "backgroundColor") == "rgb(110, 155, 245)"
+    assert css(page.get_by_test_id("template-menu"), "backgroundColor") == "rgb(19, 23, 32)"
+
+
+def test_widget_tables_follow_the_prototype_table(page):
+    page.get_by_test_id("area-analysis").click()
+    table = page.locator(".w-table").first
+    table.wait_for()
+    th = table.locator("thead th").first
+    assert css(th, "backgroundColor") == "rgb(26, 32, 48)" and css(th, "fontSize") == "12px"
+    td = table.locator("tbody td:not(.row-head)").first
+    assert css(td, "textAlign") == "center" and css(td, "paddingTop") == "9px" and css(td, "fontSize") == "13px"
