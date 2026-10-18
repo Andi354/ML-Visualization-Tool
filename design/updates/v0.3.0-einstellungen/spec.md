@@ -1,24 +1,10 @@
 # v0.3.0 · Einstellungen
 
 Issue: TIM-96 · Canvas: https://claude.ai/artifact/5XSVMrDJk2PpQS9sGqWd8f, page "v0.3 · Einstellungen"
-Prototype: prototype/ · Builds on: v0.2.4
-
-## State
-
-| Block | Status |
-|---|---|
-| A · Settings screen | decided: A1 (like the Agent-Dashboard settings) |
-| B · Voice input | decided: B3 (review box with recognised project terms), recognition Weg 2 (Whisper on the server with the project vocabulary) |
-| C · Command palette | decided: C1 (like VS Code) |
-| D · Run notification and progress for the agent | decided: D1 (status bar with running runs and a bell) |
-| E · Own notes on runs | decided: E2 (notes in the right column of the run tab, attached to run, description section or group) |
-
-Scope changed 17.10. (Tim): B–E added, deliverables area moved to v0.4 (TIM-96 header and decision comment).
-Canvas: Prototyp-03 (overall: settings tab, voice input B3, command palette C1, status bar D1, notes E2 in the run tab via `P-Run-03`), row A with A1 chosen, row B with B3 chosen, row C with C1 chosen, row D with D1 chosen, row E with E2 chosen. Tim on A: which
-settings stay is decided in use; the list in A is the starting set. All blocks decided. Next: final check and handover (Tim's OK pending).
+Prototype: prototype/ (start `Prototyp-03.dc.html`) · Builds on: v0.2.4 (and the Markdown reader of v0.2.3)
 
 ## Goal
-One place in the tool to see and change how it behaves for a project.
+The tool becomes a workbench you can set up and drive without the mouse: one place for its settings, voice input to the agent, a command palette, live progress and events of running runs, and your own notes on runs.
 
 ## Today (from the code on main, v0.2.2)
 - Environment only: `MLVIZ_PROJECT_PATH`/`MLVIZ_PROJECT`, `MLVIZ_HOST`, `MLVIZ_PORT`, `MLVIZ_CLAUDE` (path to `claude`), `ANTHROPIC_API_KEY` (agent bills the API when set).
@@ -216,7 +202,13 @@ run description are rendered as Markdown with the chat's reader.
 **Rejected:** E1 (block between description and table): takes too much screen height and pushes the table down.
 
 ## Changes to principles.md / tokens.json
-- none
+- `principles.md`: `warn` also marks a stalled run; new `note` = Tim's own notes only; voice recording uses `error` red with a pulse.
+- `tokens.json`: `color.note` `#E0A43A`, `color.note-text` `#F2C66D`, `color.note-bg` `#151209`, `color.note-line` `#3A2E18`; `size.status-bar` `24px`, `size.notes-column` `300px`.
+- Numbers follow the principles everywhere (thin space as thousands separator, `1 204`); the D prototype shows `1.204`, the spec wins.
+
+## Keyboard
+- "Ctrl" in this spec means Cmd on macOS, except Ctrl+M (voice), which stays Ctrl because Cmd+M minimises the window.
+- The tool takes Ctrl+P, Ctrl+Shift+P, F1, Ctrl+J, Ctrl+S (analysis only), Ctrl++/Ctrl+-, Ctrl+, and Ctrl+M with `preventDefault`, so the browser's own action does not run while the tool has focus.
 
 ## Out of scope
 - Custom keybindings (shortcuts are fixed in this update).

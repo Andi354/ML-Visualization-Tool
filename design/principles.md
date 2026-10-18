@@ -7,8 +7,9 @@ Tokens live in `tokens.json`; this file says how to use them.
 - Everything is slate grey (`bg`, `surface`, `raised`, `line`, `text`, `text-2`, `text-3`) unless it
   means something.
 - `accent` = selection, focus, active controls. `best` = best value. `error` = failed cells.
-  `warn` = comparability problem (mixed epochs, metric families, horizons). Never use these for
-  decoration.
+  `warn` = comparability problem (mixed epochs, metric families, horizons) and a run that stalls.
+  `note` = Tim's own notes, nothing else (warm, never for problems). A running recording (voice input)
+  uses `error` red with a pulse, the common sign for "recording". Never use these for decoration.
 - Meaning never by colour alone: the best value also gets the tag "Bestwert", errors a count,
   warnings a sentence.
 - Chart series take `series` in fixed order, assigned by entity, never by rank; a series keeps its

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>J1 · Config nach Blöcken</title>
+<script src="./support.js"></script>
+<script src="./cfg-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1016}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,a:focus-visible{outline:2px solid #6E9BF5;outline-offset:1px}
+.card{background:#131720;border:1px solid #262E3E;border-radius:6px;padding:14px 16px;box-sizing:border-box;min-width:0}
+.ct{font-weight:600;font-size:13px;margin:0 0 2px}
+.cs{font-size:12px;color:#8590A3;margin:0 0 12px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.chip{font:400 12px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:3px;border:1px solid #262E3E;background:#1A2030;color:#A1AABB;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 100%; height: {{rootH}}; box-sizing: border-box; display: flex; flex-direction: column; background: #0F131B; color: #E4E8EF; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden;">
+<div style="flex-shrink: 0; padding: 14px 18px 12px; border-bottom: 1px solid #262E3E; background: #131720; {{topHide}}">
+<div style="display: flex; align-items: center; gap: 8px;"><span style="font-weight: 600;">Config dieser Kombination</span><span style="flex: 1;"></span></div>
+<div class="mono" style="font-size: 11px; color: #8590A3; margin-top: 4px;">{{file}}</div>
+<div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; font-size: 11px; color: #8590A3;"><span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #192640; border: 1px solid #2C4572;"></span>im Grid variiert</span><span style="display: flex; align-items: center; gap: 5px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #F0B44C;"></span>weicht von base.yaml ab</span><span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 2px; border: 1px dashed #3A4458;"></span>Wiederholungen</span></div>
+</div>
+
+<div style="flex: 1; min-height: 0; overflow: auto; padding: {{pad}}; display: flex; flex-direction: column; gap: 12px;">
+<div style="border: 1px solid #2C4572; border-left: 3px solid #6E9BF5; border-radius: 6px; background: #121B2D; padding: 10px 12px;">
+<div style="font-size: 11px; color: #6E9BF5; margin-bottom: 8px;">Im Grid variiert · {{sweptCount}} Achsen</div>
+<div style="display: grid; grid-template-columns: 150px minmax(0, 1fr); row-gap: 8px; column-gap: 12px; align-items: baseline;">
+<sc-for list="{{swept}}" as="s" hint-placeholder-count="4"><span class="mono" style="font-size: 12px; color: #A1AABB;">{{s.k}}</span><span style="display: flex; flex-wrap: wrap; gap: 4px;"><sc-for list="{{s.vals}}" as="v" hint-placeholder-count="3"><span class="mono" style="{{v.st}}">{{v.t}}</span></sc-for></span></sc-for>
+</div>
+<div style="display: grid; grid-template-columns: 150px minmax(0, 1fr); row-gap: 6px; column-gap: 12px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #2C4572;">
+<sc-for list="{{reps}}" as="s" hint-placeholder-count="2"><span class="mono" style="font-size: 12px; color: #8590A3;">{{s.k}}</span><span class="mono" style="font-size: 12px; color: #A1AABB;">{{s.v}}</span></sc-for>
+</div>
+</div>
+<sc-for list="{{blocks}}" as="b" hint-placeholder-count="4">
+<div style="border: 1px solid #262E3E; border-radius: 6px; background: #131720;">
+<button onClick="{{b.toggle}}" aria-expanded="{{b.open}}" style="width: 100%; display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 8px 12px; cursor: pointer; color: #E4E8EF; font: 500 12px 'IBM Plex Sans', sans-serif;"><span style="color: #8590A3; width: 10px;">{{b.arrow}}</span><span class="mono">{{b.block}}</span><span style="color: #8590A3; font-weight: 400;">{{b.count}}</span><span style="flex: 1;"></span><span style="font-size: 11px; color: #F0B44C; font-weight: 400;">{{b.changed}}</span></button>
+<sc-if value="{{b.open}}" hint-placeholder-val="{{true}}"><div style="display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1.1fr); row-gap: 5px; column-gap: 10px; padding: 2px 12px 10px;">
+<sc-for list="{{b.entries}}" as="e" hint-placeholder-count="8"><span class="mono" style="font-size: 11px; color: #8590A3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{e.k}}">{{e.k}}</span><span class="mono" style="{{e.st}}" title="{{e.tip}}">{{e.v}}<sc-if value="{{e.changed}}"><span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #F0B44C; margin-left: 5px; vertical-align: middle;"></span></sc-if></span></sc-for>
+</div></sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":680,"height":900},"embedded":{"editor":null}}'>
+class Component extends DCLogic {
+renderVals() {
+  const C = window.CfgData, st = this.state || {}, set = (p) => this.setState(p), P = this.props || {}, closed = st.closed || (P.embedded ? Object.assign({}, ...C.blocks.map((b) => ({ [b.block]: true }))) : {});
+  const all = [].concat(...C.blocks.map((b) => b.entries.map((e) => Object.assign({ block: b.block }, e))));
+  // paired axes (lr_epochs) show as one row
+  const swept = [], seen = {};
+  all.filter((e) => e.sweep).forEach((e) => {
+    if (e.pair) {
+      if (seen[e.pair]) return; seen[e.pair] = 1;
+      const ps = all.filter((x) => x.pair === e.pair), n = ps[0].sweep.length;
+      const vals = Array.from({ length: n }, (_, i) => ps.map((x) => x.sweep[i]).join(' · '));
+      const cur = ps.map((x) => x.v).join(' · ');
+      swept.push({ k: e.pair, vals: vals.map((t) => ({ t, on: t === cur })) });
+    } else swept.push({ k: e.k, vals: e.sweep.map((t) => ({ t, on: t === e.v })) });
+  });
+  swept.forEach((s) => s.vals.forEach((v) => { v.st = 'font-size: 12px; padding: 1px 6px; border-radius: 3px; ' + (v.on ? 'color: #E4E8EF; font-weight: 600; background: #192640; border: 1px solid #2C4572;' : 'color: #6B7385; border: 1px solid transparent;'); }));
+  const reps = all.filter((e) => e.rep).map((e) => ({ k: e.k, v: e.v }));
+  return {
+    pad: P.embedded ? '0' : '14px 18px 40px', rootH: P.embedded ? 'auto' : '900px', topHide: P.embedded ? 'display: none;' : '',
+    file: C.file, swept, sweptCount: String(swept.length), reps,
+    blocks: C.blocks.filter((b) => b.block !== 'replicates').map((b) => {
+      const open = !closed[b.block], ch = b.entries.filter((e) => e.base).length;
+      return {
+        block: b.block, count: b.entries.length + ' Einträge', open, arrow: open ? '▾' : '▸', changed: ch ? ch + ' abweichend von base' : '',
+        toggle: () => set({ closed: Object.assign({}, closed, { [b.block]: open }) }),
+        entries: b.entries.map((e) => ({
+          k: e.k, v: e.v, changed: !!e.base, tip: e.base ? 'base.yaml: ' + e.base : e.sweep ? 'im Grid: ' + e.sweep.join(' · ') : '',
+          st: 'font-size: 11px; overflow-wrap: anywhere; ' + (e.sweep ? 'color: #6E9BF5; font-weight: 600;' : 'color: #E4E8EF;')
+        }))
+      };
+    })
+  };
+}
+}
+</script>
+</body>
+</html>

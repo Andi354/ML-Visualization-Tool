@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Rahmen-Inhalt</title>
+<script src="./support.js"></script>
+<script src="./runs-data.js"></script>
+<script src="./short-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1016}
+input[type=search]{font:400 13px 'IBM Plex Sans',sans-serif;color:#E4E8EF;background:#0D1016;border:1px solid #262E3E;border-radius:4px;padding:6px 10px;width:100%;box-sizing:border-box}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #6E9BF5;outline-offset:1px}
+</style>
+</helmet>
+<div style="width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; background: #0D1016; color: #E4E8EF; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px;">
+<div style="flex-shrink: 0; min-height: 48px; box-sizing: border-box; padding: 8px 24px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #262E3E;">
+<span>Läufe</span>
+<div style="display: flex; margin-left: 14px; padding: 2px; gap: 2px; background: #131720; border: 1px solid #262E3E; border-radius: 5px;"><a onClick="{{toList}}" style="cursor: pointer; font: 400 12px 'IBM Plex Sans', sans-serif; color: #8590A3; text-decoration: none; border-radius: 3px; padding: 3px 10px;">Liste</a><span style="font: 500 12px 'IBM Plex Sans', sans-serif; color: #E4E8EF; background: #1A2030; border-radius: 3px; padding: 3px 10px;">Issues</span></div>
+<span style="flex: 1;"></span>
+<span style="font-size: 12px; color: #8590A3;">Beispieldaten · Issues aus Linear</span>
+</div>
+<div style="flex: 1; min-height: 0; display: flex; flex-wrap: wrap;">
+<aside style="flex: 1 1 300px; max-width: 360px; height: 100%; overflow-y: auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 4px; background: #131720; border-right: 1px solid #262E3E;">
+<input type="search" placeholder="Issue, Lauf, Achse …" aria-label="Issues durchsuchen" value="{{q}}" onChange="{{onQ}}">
+<div style="height: 6px;"></div>
+<sc-for list="{{items}}" as="it" hint-placeholder-count="8">
+<button style="{{it.st}}" onClick="{{it.on}}">
+<span style="display: flex; align-items: center; gap: 8px;"><span style="{{it.dot}}"></span><span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500;">{{it.key}}</span><span style="flex: 1;"></span><span style="font-size: 11px; color: #8590A3;">{{it.when}}</span></span>
+<span style="font-size: 12px; color: #A1AABB; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{it.title}}</span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #8590A3;"><span>{{it.meta}}</span><sc-if value="{{it.running}}" hint-placeholder-val="{{false}}"><span style="color: #6E9BF5;">● läuft</span></sc-if></span>
+</button>
+</sc-for>
+</aside>
+<main style="flex: 999 1 560px; min-width: 0; height: 100%; overflow-y: auto; box-sizing: border-box; padding: 22px 28px 28px; display: flex; flex-direction: column; gap: 18px;">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #A1AABB;">{{sel.key}}</span>
+<span style="{{sel.statusSt}}">{{sel.status}}</span>
+<span style="flex: 1;"></span>
+<sc-for list="{{sel.links}}" as="l" hint-placeholder-count="3"><a href="#" style="font-size: 12px; color: #A1AABB; text-decoration: none; padding: 4px 10px; border: 1px solid #262E3E; border-radius: 4px;">{{l.label}}</a></sc-for>
+</div>
+<h1 style="margin: 0; font-size: 20px; font-weight: 600; line-height: 1.35;">{{sel.title}}</h1>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+<sc-for list="{{sel.stats}}" as="s" hint-placeholder-count="4">
+<div style="padding: 10px 14px; background: #131720; border: 1px solid #262E3E; border-radius: 6px; display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 11px; color: #8590A3;">{{s.label}}</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 500;">{{s.value}}</span>
+<span style="font-size: 11px; color: #8590A3;">{{s.note}}</span>
+</div>
+</sc-for>
+</div>
+<sc-for list="{{sel.exps}}" as="e" hint-placeholder-count="2">
+<div style="border: 1px solid #262E3E; border-radius: 6px; overflow: hidden;">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; background: #131720;">
+<span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500;">{{e.name}}</span>
+<span style="font-size: 11px; color: #8590A3;">{{e.count}}</span>
+<span style="flex: 1;"></span>
+<sc-for list="{{e.axes}}" as="a" hint-placeholder-count="3"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #A1AABB; padding: 1px 6px; background: #1A2030; border-radius: 3px;">{{a.t}}</span></sc-for>
+</div>
+<sc-for list="{{e.runs}}" as="r" hint-placeholder-count="2">
+<div style="display: grid; grid-template-columns: 120px minmax(120px, 1fr) 200px 110px auto; column-gap: 14px; align-items: center; padding: 10px 14px; border-top: 1px solid #1A2030;">
+<span style="display: flex; flex-direction: column;"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{r.when}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8590A3;">{{r.stamp}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;"><sc-if value="{{r.hasShort}}" hint-placeholder-val="{{true}}"><span title="{{r.short}}" style="font: 400 13px/1.35 'IBM Plex Sans', sans-serif; color: #C9D3E3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.short}}</span></sc-if><span style="display: flex; flex-wrap: wrap; gap: 4px;"><sc-for list="{{r.tags}}" as="t" hint-placeholder-count="2"><span style="{{t.st}}">{{t.t}}</span></sc-for></span></span>
+<span style="display: flex; flex-direction: column; gap: 4px;">
+<span style="height: 5px; border-radius: 3px; background: #262E3E; overflow: hidden; display: flex;"><span style="{{r.okBar}}"></span><span style="{{r.errBar}}"></span></span>
+<span style="{{r.cellSt}}">{{r.cellText}}</span>
+</span>
+<span style="text-align: right; display: flex; flex-direction: column;"><span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500;">{{r.best}}</span><span style="font-size: 11px; color: #8590A3;">{{r.bestNote}}</span></span>
+<a onClick="{{r.open}}" style="cursor: pointer; font: 400 12px 'IBM Plex Sans', sans-serif; color: #E4E8EF; background: #1A2030; border: 1px solid #262E3E; border-radius: 4px; padding: 5px 10px; text-decoration: none;">Öffnen</a>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":800},"run":{"editor":null},"openRun":{"editor":null},"setView":{"editor":null}}'>
+class Component extends DCLogic {
+renderVals() {
+  const P = this.props || {};
+  const R = window.RunsData;
+  const st = this.state || {};
+  const set = (p) => this.setState(p);
+  const q = (st.q || '').toLowerCase();
+  const all = R.groups();
+  const selKey = st.sel || all[0].key;
+  const statusColor = { 'In Progress': '#6E9BF5', 'In Review': '#F0B44C', 'Todo': '#A1AABB', 'Done': '#5FD4A0', 'Committed': '#5FD4A0' };
+  const hit = (g) => !q || [g.key, g.issue ? g.issue.title : ''].concat(g.runs.map((r) => r.id + ' ' + r.axes.join(' '))).join(' ').toLowerCase().indexOf(q) >= 0;
+
+  const items = all.filter(hit).map((g) => {
+    const active = g.key === selKey;
+    const c = g.issue ? (statusColor[g.issue.status] || '#A1AABB') : '#8590A3';
+    return {
+      key: g.issue ? g.key : 'Ohne Issue', title: g.issue ? g.issue.title : 'Läufe ohne zugeordnetes Issue',
+      when: R.rel(g.last), meta: g.runs.length + (g.runs.length === 1 ? ' Lauf' : ' Läufe') + (g.issue ? ' · ' + g.issue.status : ''),
+      running: g.runs.some((r) => r.running),
+      dot: 'width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: ' + c + ';',
+      st: 'display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 10px 12px; text-align: left; font: inherit; color: #E4E8EF; cursor: pointer; border-radius: 6px; border: 1px solid ' + (active ? '#2C4572' : 'transparent') + '; background: ' + (active ? '#192640' : 'transparent') + ';',
+      on: () => set({ sel: g.key })
+    };
+  });
+
+  const g = all.find((x) => x.key === selKey) || all[0];
+  const tag = (t, color) => ({ t, st: "font: 400 11px 'IBM Plex Mono', monospace; padding: 1px 6px; border-radius: 3px; color: " + (color || '#A1AABB') + "; border: 1px solid #262E3E;" });
+  const runRow = (r) => {
+    const tags = [];
+    if (r.running) tags.push(tag('läuft', '#6E9BF5'));
+    if (r.epoch !== 'eval-all-windows') tags.push(tag(r.epoch, '#F0B44C'));
+    if (r.migrated) tags.push(tag('migriert'));
+    if (r.curves) tags.push(tag('Kurven'));
+    if (r.pred) tags.push(tag('Vorhersagen'));
+    return {
+      open: () => P.openRun && P.openRun(r.id),
+      when: R.rel(r.date), stamp: r.id.slice(0, 15), tags, short: (window.SHORTS || {})[r.id] || '', hasShort: !!(window.SHORTS || {})[r.id],
+      okBar: 'height: 100%; background: ' + (r.running ? '#6E9BF5' : '#4A5568') + '; width: ' + (r.ok / r.cells * 100).toFixed(1) + '%;',
+      errBar: 'height: 100%; background: #FF6B6B; width: ' + (r.err / r.cells * 100).toFixed(1) + '%;',
+      cellText: r.running ? R.fmt(r.done) + ' / ' + R.fmt(r.cells) + ' Zellen' : R.fmt(r.cells) + ' Zellen' + (r.err ? ' · ' + R.fmt(r.err) + ' Fehler' : ''),
+      cellSt: "font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: " + (r.err && !r.running ? '#FF6B6B' : '#A1AABB') + ";",
+      best: R.fmt(r.best, 2) + ' %', bestNote: 'MAPE · pred_len ' + r.h + (r.running ? ' · vorläufig' : '')
+    };
+  };
+  const best = (h) => { const xs = g.runs.filter((r) => r.h === h && !r.running).map((r) => r.best); return xs.length ? R.fmt(Math.min.apply(null, xs), 2) + ' %' : '–'; };
+  const links = [{ label: 'In Linear ↗' }];
+  if (g.issue && g.issue.analysis) links.push({ label: 'Bericht' });
+  if (g.issue && g.issue.deliverable) links.push({ label: 'Deliverables' });
+  const sel = {
+    key: g.issue ? g.key : 'Ohne Issue', title: g.issue ? g.issue.title : 'Läufe ohne zugeordnetes Issue',
+    status: g.issue ? g.issue.status : '',
+    statusSt: g.issue ? "font: 500 11px 'IBM Plex Sans', sans-serif; padding: 2px 8px; border-radius: 10px; background: #1A2030; color: " + (statusColor[g.issue.status] || '#A1AABB') + ";" : 'display: none;',
+    links: g.issue ? links : [],
+    stats: [
+      { label: 'Läufe', value: String(g.runs.length), note: 'letzter ' + R.rel(g.last) },
+      { label: 'Zellen', value: R.fmt(g.runs.reduce((a, r) => a + r.cells, 0)), note: R.fmt(g.runs.reduce((a, r) => a + r.err, 0)) + ' Fehler' },
+      { label: 'Bester MAPE · 30', value: best(30), note: 'test_mape_real' },
+      { label: 'Bester MAPE · 90', value: best(90), note: 'test_mape_real' }
+    ],
+    exps: g.experiments.map((e) => ({
+      name: g.issue ? e.exp.replace(g.key + '_', '') : e.exp,
+      count: e.runs.length + (e.runs.length === 1 ? ' Lauf' : ' Läufe'),
+      axes: e.runs[0].axes.map((t) => ({ t })),
+      runs: e.runs.map(runRow)
+    }))
+  };
+  return { toList: () => P.setView && P.setView('runs'), q: st.q || '', onQ: (e) => set({ q: e.target.value }), items, sel };
+}
+}
+</script>
+</body>
+</html>

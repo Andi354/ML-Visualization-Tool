@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>E2 · Randnotizen</title>
+<script src="./support.js"></script>
+<script src="./notes-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1016}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,textarea:focus-visible{outline:2px solid #6E9BF5;outline-offset:1px}
+.ib{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid transparent;color:#8590A3}
+.ib.on{border-color:#2C4572;background:#192640;color:#6E9BF5}
+.lab{font-size:11px;color:#8590A3;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.mdb{font-weight:600;color:#F3F5F9}
+.mdi{font-style:italic}
+.mdc{font:400 12px 'IBM Plex Mono',monospace;background:#1A2030;border:1px solid #262E3E;border-radius:3px;padding:0 4px}
+.nb .mdb{color:#FFE2A8}
+.nb .mdc{background:#2A2112;border-color:#5A4420}
+.lnk{background:none;border:0;padding:0;color:#A1AABB;cursor:pointer;font-size:11.5px}
+.lnk:hover{color:#E4E8EF}
+.btn{font:500 12px 'IBM Plex Sans',sans-serif;padding:5px 11px;border-radius:5px;border:1px solid #5A4420;background:#2A2112;color:#F2C66D;cursor:pointer}
+.btn.p{background:#C9922E;border-color:#C9922E;color:#1A1205}
+.btn.g{border-color:#2C3547;background:none;color:#A1AABB}
+.grow{display:grid;grid-template-columns:minmax(0,1fr) 90px 70px 54px;gap:12px;align-items:center;padding:7px 12px;border-bottom:1px solid #1A2030;font-size:12.5px}
+.mk{font:600 11px 'IBM Plex Sans',sans-serif;border:1px solid #5A4420;background:#2A2112;color:#F2C66D;border-radius:9px;padding:0 6px;cursor:pointer;line-height:16px}
+.plus{border:1px dashed #3A2E18;background:none;color:#8F7A52;border-radius:9px;padding:0 6px;cursor:pointer;font-size:11px;line-height:16px}
+.plus:hover{color:#F2C66D;border-color:#5A4420}
+</style>
+</helmet>
+<div style="width: 100%; height: 860px; display: flex; background: #0D1016; color: #E4E8EF; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden; position: relative;">
+<nav style="width: 52px; flex-shrink: 0; background: #131720; border-right: 1px solid #262E3E; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0;">
+<div style="width: 32px; height: 32px; border-radius: 6px; background: #1A2030; border: 1px solid #262E3E; display: flex; align-items: center; justify-content: center; font: 500 12px 'IBM Plex Mono', monospace; color: #A1AABB; margin-bottom: 8px;">rb</div>
+<span class="ib on"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h12M3 9h12M3 13.5h8"/></svg></span>
+<span class="ib"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="3" width="5.5" height="12" rx="1"/><rect x="10" y="3" width="5.5" height="12" rx="1"/></svg></span>
+</nav>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+<div style="flex-shrink: 0; height: 36px; display: flex; background: #131720; border-bottom: 1px solid #262E3E;"><span style="display: flex; align-items: center; padding: 0 14px; color: #8590A3; font-size: 12px; border-right: 1px solid #262E3E;">Läufe</span><span style="display: flex; align-items: center; padding: 0 14px; border-top: 2px solid #6E9BF5; background: #0D1016; font: 400 12px 'IBM Plex Mono', monospace;">TIM-52_best_combined_90</span></div>
+<div style="flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 10px 20px; border-bottom: 1px solid #262E3E;"><span style="font: 600 14px 'IBM Plex Mono', monospace;">TIM-52_best_combined_90</span><span style="font-size: 12px; color: #6E9BF5;">● läuft · 46 %</span><span style="font-size: 12px; color: #8590A3;">2 592 Zellen · pred_len 90</span><span style="flex: 1;"></span><span style="font-size: 12px; color: #F2C66D;">✎ {{noteCount}}</span></div>
+<div style="flex: 1; min-height: 0; display: flex;">
+<div style="flex: 1; min-width: 0; overflow: auto; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 16px;">
+<div style="border: 1px solid #262E3E; border-radius: 8px; background: #131720; padding: 14px 16px;">
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;"><span class="lab" style="margin: 0;">Beschreibung</span><span style="font-size: 11px; color: #6B7385;">aus description.yaml · jetzt mit Markdown</span></div>
+<div style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); gap: 24px; line-height: 1.55;">
+<sc-for list="{{desc}}" as="s" hint-placeholder-count="3"><div style="{{s.st}}"><div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;"><span class="lab" style="margin: 0;">{{s.title}}</span><sc-if value="{{s.hasMk}}"><button class="mk" onClick="{{s.pick}}" title="Notiz zeigen">✎ {{s.count}}</button></sc-if><button class="plus" onClick="{{s.addHere}}" title="Notiz an diesen Abschnitt">+ Notiz</button></div><sc-for list="{{s.md}}" as="l" hint-placeholder-count="2"><div style="{{l.st}}"><sc-if value="{{l.bullet}}"><span style="color: #8590A3;">•</span></sc-if><span><sc-for list="{{l.parts}}" as="p" hint-placeholder-count="1"><span class="{{p.cls}}">{{p.t}}</span></sc-for></span></div></sc-for></div></sc-for>
+</div>
+</div>
+<div style="border: 1px solid #262E3E; border-radius: 8px; background: #131720; overflow: hidden;">
+<div class="grow" style="color: #8590A3; font-size: 11px; text-transform: uppercase; letter-spacing: .05em;"><span>Gruppe</span><span>test_mse_real</span><span>± Seeds</span><span></span></div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="6"><div class="grow" style="{{g.rowSt}}"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{g.label}}</span><span style="{{g.st}}">{{g.mse}}</span><span style="color: #8590A3;">{{g.sd}}</span><span style="display: flex; justify-content: flex-end;"><sc-if value="{{g.hasMk}}"><button class="mk" onClick="{{g.pick}}" title="Notiz zeigen">✎ {{g.count}}</button></sc-if><sc-if value="{{g.noMk}}"><button class="plus" onClick="{{g.addHere}}" title="Notiz an diese Gruppe">+</button></sc-if></span></div></sc-for>
+</div>
+<div style="font-size: 11.5px; color: #6B7385;">+ an Abschnitten und Tabellenzeilen hängt eine Notiz genau dort an · ✎ zeigt, wo schon eine hängt</div>
+</div>
+
+<aside aria-label="Meine Notizen" class="nb" style="width: 360px; flex-shrink: 0; border-left: 1px solid #3A2E18; background: rgba(224,164,58,.035); overflow: auto; padding: 14px 14px 40px; display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; align-items: baseline; gap: 8px;"><span style="color: #F2C66D; font-weight: 600;">✎ Meine Notizen</span><span style="font-size: 11px; color: #8F7A52;">{{noteCount}} · in .mlviz/notes/</span><span style="flex: 1;"></span><button class="plus" onClick="{{addRun}}">+ zum Lauf</button></div>
+
+<sc-if value="{{suggestOpen}}" hint-placeholder-val="{{true}}"><div style="border: 1px dashed #2C4572; border-radius: 6px; background: #151C2B; padding: 10px 11px; display: flex; flex-direction: column; gap: 7px;">
+<div style="font-size: 11.5px; color: #8FB0F5;">✦ Vorschlag des Agenten · an {{suggestAnchor}}</div>
+<sc-if value="{{suggestEditing}}" hint-placeholder-val="{{false}}"><textarea value="{{suggestText}}" onInput="{{onSuggest}}" rows="3" style="width: 100%; box-sizing: border-box; resize: vertical; background: #0D1016; border: 1px solid #2C4572; border-radius: 5px; color: #E4E8EF; font: 400 12.5px 'IBM Plex Sans', sans-serif; padding: 6px 8px;"></textarea></sc-if>
+<sc-if value="{{suggestReading}}" hint-placeholder-val="{{true}}"><div style="line-height: 1.5; color: #C9D3E3; font-size: 12.5px;"><sc-for list="{{suggestMd}}" as="l" hint-placeholder-count="1"><div style="{{l.st}}"><span><sc-for list="{{l.parts}}" as="p" hint-placeholder-count="1"><span class="{{p.cls}}">{{p.t}}</span></sc-for></span></div></sc-for></div></sc-if>
+<div style="display: flex; gap: 6px;"><button class="btn p" onClick="{{acceptSuggest}}">Speichern</button><button class="btn" onClick="{{editSuggest}}">{{suggestEditLabel}}</button><button class="btn g" onClick="{{dropSuggest}}">Verwerfen</button></div>
+</div></sc-if>
+
+<sc-for list="{{notes}}" as="n" hint-placeholder-count="3"><div onClick="{{n.pick}}" style="{{n.cardSt}}">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8F7A52;"><span style="border: 1px solid #3A2E18; border-radius: 9px; padding: 0 7px; color: #C9A86A; max-width: 230px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{n.anchor}}</span><span style="flex: 1;"></span><span>{{n.when}}</span></div>
+<sc-if value="{{n.editing}}"><textarea value="{{n.editText}}" onInput="{{n.onEdit}}" onKeyDown="{{n.onEditKey}}" rows="3" placeholder="Notiz …" style="width: 100%; box-sizing: border-box; resize: vertical; background: #0D1016; border: 1px solid #5A4420; border-radius: 5px; color: #E4E8EF; font: 400 12.5px 'IBM Plex Sans', sans-serif; padding: 6px 8px;"></textarea><div style="display: flex; gap: 6px; align-items: center;"><button class="btn p" onClick="{{n.save}}">Speichern</button><button class="btn g" onClick="{{n.cancel}}">Abbrechen</button><span style="font-size: 10.5px; color: #8F7A52;">**fett** · `code` · - Liste</span></div></sc-if>
+<sc-if value="{{n.reading}}"><div style="line-height: 1.5; font-size: 12.5px;"><sc-for list="{{n.md}}" as="l" hint-placeholder-count="1"><div style="{{l.st}}"><sc-if value="{{l.bullet}}"><span style="color: #C9922E;">•</span></sc-if><span><sc-for list="{{l.parts}}" as="p" hint-placeholder-count="1"><span class="{{p.cls}}">{{p.t}}</span></sc-for></span></div></sc-for></div></sc-if>
+<div style="display: flex; align-items: center; gap: 10px; font-size: 11px;"><sc-if value="{{n.byAgent}}"><span style="color: #8FB0F5;">✦ vom Agenten, von dir bestätigt</span></sc-if><span style="flex: 1;"></span><button class="lnk" onClick="{{n.edit}}">Bearbeiten</button><button class="lnk" onClick="{{n.del}}">Löschen</button></div>
+</div></sc-for>
+</aside>
+</div>
+</div>
+<sc-if value="{{toast}}" hint-placeholder-val="{{false}}"><div style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 9px 14px; background: #1A2030; border: 1px solid #2C4572; border-radius: 6px; font-size: 12px; color: #C9D3E3;">{{toastText}}<sc-if value="{{canUndo}}"><button onClick="{{undo}}" style="background: none; border: 0; color: #6E9BF5; cursor: pointer; font-size: 12px;">Rückgängig</button></sc-if></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":860}}'>
+// E2: notes in a margin, each attached to the run, a description section or a table group; markers show where.
+class Component extends DCLogic {
+renderVals() {
+  const st = this.state || {}, set = (p) => this.setState(p);
+  const D = window.NotesData || { DESC: [], GROUPS: [], NOTES: [], SUGGEST: { text: '', anchor: { kind: 'run' } }, md: () => [] };
+  const lines = (t) => D.md(t).map((l) => ({ bullet: l.bullet, parts: l.parts, st: l.bullet ? 'display: flex; gap: 7px; padding-left: 4px;' : 'min-height: 1.2em;' }));
+  const notes = st.notes || D.NOTES;
+  const sel = st.sel || null;
+  const anchorKey = (a) => a.kind + ':' + (a.key || '');
+  const anchorLabel = (a) => a.kind === 'run' ? 'am Lauf' : a.kind === 'section' ? 'an ' + ((D.DESC.find((s) => s.key === a.key) || {}).title || '') : 'an ' + ((D.GROUPS.find((g) => g.key === a.key) || {}).label || '');
+  const order = (a) => a.kind === 'run' ? 0 : a.kind === 'section' ? 1 + D.DESC.findIndex((s) => s.key === a.key) : 10 + D.GROUPS.findIndex((g) => g.key === a.key);
+  const sorted = notes.slice().sort((x, y) => order(x.anchor) - order(y.anchor));
+  const count = (a) => notes.filter((n) => anchorKey(n.anchor) === anchorKey(a)).length;
+  const selAnchor = (notes.find((n) => n.id === sel) || {}).anchor;
+  const toast = (t, undo) => { set({ toast: t, undoNotes: undo || null }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '', undoNotes: null }), 4000); };
+  const now = () => '18.10. ' + new Date().toTimeString().slice(0, 5);
+  const addAt = (anchor) => { const id = 'n' + Date.now(); set({ notes: notes.concat([{ id, text: '', when: now(), anchor, fresh: true }]), editId: id, editText: '', sel: id }); };
+  const pickFor = (a) => () => { const n = sorted.find((x) => anchorKey(x.anchor) === anchorKey(a)); if (n) set({ sel: n.id }); };
+  const sg = st.sg || 'open';
+  const sgText = st.sgText === undefined ? D.SUGGEST.text : st.sgText;
+  return {
+    noteCount: notes.length + (notes.length === 1 ? ' Notiz' : ' Notizen'),
+    desc: D.DESC.map((s) => { const a = { kind: 'section', key: s.key }, c = count(a), on = selAnchor && anchorKey(selAnchor) === anchorKey(a);
+      return { title: s.title, md: lines(s.text), hasMk: c > 0, count: String(c), pick: pickFor(a), addHere: () => addAt(a),
+        st: on ? 'background: rgba(224,164,58,.08); box-shadow: -8px 0 0 rgba(224,164,58,.08), 8px 0 0 rgba(224,164,58,.08); border-radius: 4px;' : '' }; }),
+    groups: D.GROUPS.map((g) => { const a = { kind: 'group', key: g.key }, c = count(a), on = selAnchor && anchorKey(selAnchor) === anchorKey(a);
+      return { label: g.label, mse: g.mse, sd: g.sd, st: g.best ? 'color: #5FD4A0; font-weight: 600;' : g.warn ? 'color: #E0A43A;' : '',
+        hasMk: c > 0, noMk: c === 0, count: String(c), pick: pickFor(a), addHere: () => addAt(a),
+        rowSt: on ? 'background: rgba(224,164,58,.10); box-shadow: inset 3px 0 0 #E0A43A;' : '' }; }),
+    addRun: () => addAt({ kind: 'run' }),
+    suggestOpen: sg !== 'gone', suggestEditing: sg === 'editing', suggestReading: sg !== 'editing', suggestAnchor: anchorLabel(D.SUGGEST.anchor).replace(/^an /, ''),
+    suggestText: sgText, onSuggest: (e) => set({ sgText: e.target.value }), suggestMd: lines(sgText),
+    suggestEditLabel: sg === 'editing' ? 'Vorschau' : 'Bearbeiten', editSuggest: () => set({ sg: sg === 'editing' ? 'open' : 'editing' }),
+    acceptSuggest: () => { const id = 'a' + Date.now(); set({ sg: 'gone', sel: id, notes: notes.concat([{ id, by: 'agent', text: sgText, when: now(), anchor: D.SUGGEST.anchor }]) }); toast('Vorschlag als Notiz gespeichert'); },
+    dropSuggest: () => { set({ sg: 'gone' }); toast('Vorschlag verworfen'); },
+    notes: sorted.map((n) => {
+      const editing = st.editId === n.id, on = sel === n.id;
+      const text = st.editText === undefined ? n.text : st.editText;
+      const save = () => { if (!text.trim()) { set({ notes: notes.filter((x) => x.id !== n.id), editId: null }); return; } set({ notes: notes.map((x) => (x.id === n.id ? Object.assign({}, x, { text, fresh: false }) : x)), editId: null }); };
+      const cancel = () => set(n.fresh ? { notes: notes.filter((x) => x.id !== n.id), editId: null } : { editId: null });
+      return {
+        anchor: anchorLabel(n.anchor), when: n.when, md: lines(n.text), byAgent: n.by === 'agent', editing, reading: !editing,
+        editText: editing ? text : '', onEdit: (e) => set({ editText: e.target.value }),
+        onEditKey: (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); save(); } if (e.key === 'Escape') cancel(); },
+        edit: () => set({ editId: n.id, editText: n.text, sel: n.id }), save, cancel,
+        del: () => { set({ notes: notes.filter((x) => x.id !== n.id), sel: null }); toast('Notiz gelöscht', notes); },
+        pick: () => set({ sel: n.id }),
+        cardSt: 'border: 1px solid ' + (on ? '#C9922E' : '#3A2E18') + '; border-radius: 6px; background: ' + (on ? 'rgba(224,164,58,.08)' : '#151209') + '; padding: 9px 10px; display: flex; flex-direction: column; gap: 6px; cursor: default;'
+      };
+    }),
+    toast: !!st.toast, toastText: st.toast || '', canUndo: !!st.undoNotes, undo: () => set({ notes: st.undoNotes, toast: '', undoNotes: null })
+  };
+}
+}
+</script>
+</body>
+</html>
