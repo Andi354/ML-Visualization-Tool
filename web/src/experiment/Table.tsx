@@ -24,7 +24,7 @@ export function Table({ result, metrics, visible, columns, sort, onSort, stale, 
   const sdColumn = columns.sd === "column";
   const statCols = [columns.n && "n", columns.min && "min", columns.max && "max", columns.status && "status"].filter(Boolean) as string[];
   const metricSpan = visible.length * (sdColumn ? 2 : 1);
-  const arrow = (k: string) => (result.sort.metric === k && result.sort.stat === "mean" ? (result.sort.dir === "asc" ? "▲" : "▼") : "");
+  const arrow = (k: string) => (result.sort.metric === k && result.sort.stat === "mean" ? (result.sort.dir === "asc" ? "↑" : "↓") : "");
   return (
     <table class={"exp-table" + (stale ? " stale" : "")} data-testid="exp-table">
       <thead>
@@ -63,7 +63,7 @@ export function Table({ result, metrics, visible, columns, sort, onSort, stale, 
             ];
           })}
           {statCols.map((s) => (
-            <th key={s} class="stat-head">
+            <th key={s} class={"stat-head" + (s === "status" ? " status-col" : "")}>
               {s === "status" ? "Status" : s === "n" ? "n" : `${s} ${sortDef?.label ?? ""}`}
             </th>
           ))}
@@ -83,7 +83,7 @@ export function Table({ result, metrics, visible, columns, sort, onSort, stale, 
               <td key={p} class="param-cell">
                 {r.params[p]}
                 {i === 0 && noteCounts[groupKey(r.params)] > 0 && (
-                  <span class="row-notes" data-testid="row-notes" title="Notizen zu dieser Kombination">
+                  <span class="row-notes note-mark" data-testid="row-notes" title="Notizen zu dieser Kombination">
                     ✎ {noteCounts[groupKey(r.params)]}
                   </span>
                 )}
@@ -106,7 +106,7 @@ export function Table({ result, metrics, visible, columns, sort, onSort, stale, 
               ];
             })}
             {statCols.map((s) => (
-              <td key={s} class={"stat-cell" + (s === "status" && r.errors ? " error" : "")}>
+              <td key={s} class={"stat-cell" + (s === "status" ? " status-col" : "") + (s === "status" && r.errors ? " error" : "")}>
                 {s === "n" && formatInt(r.n)}
                 {s === "min" && formatMetric(sortDef, sortMetric ? r.metrics[sortMetric]?.min : null)}
                 {s === "max" && formatMetric(sortDef, sortMetric ? r.metrics[sortMetric]?.max : null)}

@@ -379,23 +379,30 @@
 .exp-table th {
   background: var(--bg);
   text-align: left;
-  font-weight: 500;
   color: var(--text-3);
   white-space: nowrap;
 }
 .exp-table .group-row th {
-  padding: 10px var(--cell-padding) 4px;
-  font-size: var(--size-tiny);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  padding: 10px 10px 2px;
+  font-family: var(--font-sans);
+  font-size: var(--size-small);
+  font-weight: 500;
+  color: var(--text-2);
 }
 .exp-table .col-row th {
-  padding: 4px var(--cell-padding) 6px;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: var(--size-small);
+  font-weight: 400;
   border-bottom: 1px solid var(--line);
 }
-.exp-table .group-sep,
-.exp-table .metric-head:first-of-type {
-  border-left: 0;
+.exp-table .group-sep {
+  border-left: 1px solid var(--line);
+}
+.exp-table .metric-head,
+.exp-table .sd-head,
+.exp-table .stat-head:not(.status-col) {
+  text-align: right;
 }
 .metric-head button {
   font: inherit;
@@ -410,17 +417,25 @@
 }
 .exp-table td {
   height: var(--row-height);
-  padding: 4px var(--cell-padding);
-  border-bottom: 1px solid #161b26;
+  padding: 7px 10px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 .exp-table tbody tr:hover {
   background: var(--raised);
 }
 .metric-cell,
-.sd-cell,
+.sd-cell {
+  text-align: right;
+}
 .stat-cell {
+  text-align: right;
+  color: var(--text-2);
+}
+.stat-cell.status-col {
   text-align: left;
+  color: var(--text-3);
 }
 .metric-cell.best {
   color: var(--best);

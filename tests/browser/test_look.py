@@ -89,3 +89,34 @@ def test_issue_view_has_its_search_in_the_list_column_and_fills_the_height(page)
     tag = page.locator(".exp-run .tags .flag").first
     assert css(tag, "borderTopWidth") == "1px" and "Mono" in css(tag, "fontFamily")
     assert page.locator(".exp-run .bar").first.bounding_box()["height"] == 5
+
+
+# --- H · Run tab ----------------------------------------------------------------------------------
+def test_groups_table_has_the_prototype_heads_and_right_aligned_numbers(page):
+    open_run(page, folder("TIM-71_example"))
+    group = page.locator(".exp-table .group-row th").first
+    assert css(group, "fontSize") == "12px" and css(group, "textTransform") == "none" and "Sans" in css(group, "fontFamily")
+    head = page.get_by_test_id("metric-head").first.locator("xpath=..")
+    assert "Mono" in css(head, "fontFamily") and css(head, "textAlign") == "right" and css(head, "paddingLeft") == "10px"
+    cell = page.locator(".exp-table td.metric-cell").first
+    assert css(cell, "textAlign") == "right" and css(cell, "paddingTop") == "7px"
+    assert css(cell, "borderBottomColor") == "rgb(38, 46, 62)"
+    expect(page.locator(".sort-arrow").first).to_have_text("↑")
+
+
+def test_notes_column_is_the_amber_column_of_the_prototype(page):
+    open_run(page, folder("TIM-71_example"))
+    col = page.get_by_test_id("notes-column")
+    assert col.bounding_box()["width"] == 300 and css(col, "backgroundColor") == "rgb(18, 16, 11)"
+    expect(col.locator(".notes-count")).to_have_text("0 Notizen")
+    add = page.get_by_test_id("note-add-run")
+    assert css(add, "borderTopStyle") == "dashed" and css(add, "borderRadius") == "9px"
+    add.click()
+    page.get_by_test_id("note-input").fill("Seed **auffällig**")
+    page.get_by_test_id("note-save").click()
+    card = page.get_by_test_id("my-note")
+    assert css(card, "backgroundColor") == "rgb(21, 18, 9)" and css(card, "borderRadius") == "6px"
+    assert css(card.locator(".note-anchor"), "borderRadius") == "9px"
+    assert css(card.locator("strong"), "color") == "rgb(255, 226, 168)"
+    expect(card.get_by_test_id("note-edit")).to_have_class("lnk")
+    expect(col.locator(".notes-count")).to_have_text("1 Notiz")

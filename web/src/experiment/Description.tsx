@@ -46,12 +46,12 @@ export function DescriptionBlock({ description: d, open, onToggle, onOpenRun, no
                   <div class="desc-field-label">
                     {s.label}
                     {noteCounts[s.key] > 0 && (
-                      <button class="desc-note-count" data-testid="section-notes" onClick={() => onShowNotes?.(s.key)}>
+                      <button class="desc-note-count note-mark" data-testid="section-notes" onClick={() => onShowNotes?.(s.key)}>
                         ✎ {noteCounts[s.key]}
                       </button>
                     )}
                     {onAddNote && (
-                      <button class="desc-note-add" data-testid="section-add-note" onClick={() => onAddNote(s.key)}>
+                      <button class="desc-note-add plus" data-testid="section-add-note" onClick={() => onAddNote(s.key)}>
                         + Notiz
                       </button>
                     )}

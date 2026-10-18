@@ -33,7 +33,7 @@ def add_run_note(page, text):
 
 
 def test_the_column_shows_while_no_row_is_selected_and_starts_empty(np_):
-    expect(column(np_)).to_contain_text("✎ Meine Notizen · 0")
+    expect(column(np_)).to_contain_text("0 Notizen")
     expect(column(np_)).to_contain_text("Noch keine Notizen")
     assert column(np_).bounding_box()["width"] == 300
 
@@ -43,7 +43,7 @@ def test_a_run_note_is_written_in_markdown_and_stored(np_):
     card = np_.get_by_test_id("my-note")
     expect(card.locator("strong")).to_have_text("wichtig:")
     expect(card).to_contain_text("am Lauf")
-    expect(column(np_)).to_contain_text("✎ Meine Notizen · 1")
+    expect(column(np_)).to_contain_text("1 Notiz")
     assert (np_.writable_root / ".mlviz" / "notes" / f"{BEST_90}.json").exists()
 
 
@@ -139,7 +139,7 @@ def test_a_proposal_of_the_agent_is_saved_only_by_the_user(np_):
     expect(np_.get_by_test_id("my-note")).to_have_count(0)  # only the proposal card, nothing saved
     assert not (np_.writable_root / ".mlviz" / "notes" / f"{BEST_90}.json").exists()
     np_.get_by_test_id("proposal-save").click()
-    expect(np_.get_by_test_id("by-agent")).to_have_text(" · ✦ vom Agenten, von dir bestätigt")
+    expect(np_.get_by_test_id("by-agent")).to_have_text("✦ vom Agenten, von dir bestätigt")
     assert (np_.writable_root / ".mlviz" / "notes" / f"{BEST_90}.json").exists()
 
 
