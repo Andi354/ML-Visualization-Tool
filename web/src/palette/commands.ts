@@ -50,6 +50,7 @@ export const COMMANDS: Command[] = [
   { id: "runs.list", cat: "Läufe", label: "Als Liste zeigen", run: (c) => { c.dispatch({ type: "select-area", area: "runs" }); c.dispatch({ type: "set-runs-view", view: "list" }); } },
   { id: "runs.issues", cat: "Läufe", label: "Nach Issue gruppieren", run: (c) => { c.dispatch({ type: "select-area", area: "runs" }); c.dispatch({ type: "set-runs-view", view: "issues" }); } },
   { id: "run.analyse", cat: "Lauf", label: "Diesen Lauf analysieren", blocked: inRun, run: (c) => c.dispatch({ type: "open-analysis", run: c.frame.active!, combo: {} }) },
+  { id: "run.note", cat: "Lauf", label: "Notiz hinzufügen", blocked: inRun, run: (c) => call(`add_note:${c.frame.active}`)() },
   { id: "run.filters", cat: "Lauf", label: "Filter zurücksetzen", blocked: inRun, run: (c) => call(`reset_filters:${c.frame.active}`)() },
   { id: "run.description", cat: "Lauf", label: "Beschreibung auf- oder zuklappen", blocked: inRun, run: (c) => call(`toggle_description:${c.frame.active}`)() },
   { id: "ana.run", cat: "Analyse", label: "Ein Lauf", run: (c) => c.dispatch({ type: "show-analysis-view", view: "run" }) },

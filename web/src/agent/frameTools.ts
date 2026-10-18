@@ -4,7 +4,7 @@ import type { MutableRef } from "preact/hooks";
 import { getRuns } from "../api";
 import { getInstructions, putInstructions } from "./api";
 import type { FrameAction, FrameState } from "../state/frame";
-import { collectView, provide, provideView, setFrame, type Outcome } from "./bus";
+import { collectView, provide, provideView, setFrame, waitForHandler, type Outcome } from "./bus";
 import { problemSummary, reportFor, whenLoaded } from "../widgets/status";
 import { glow, settled } from "./commands";
 
@@ -38,6 +38,15 @@ export function useFrameTools(latest: MutableRef<FrameState>, dispatch: (a: Fram
       provide("open_run", async ({ run }) => {
         const name = await runName(String(run));
         return change(`Tab geöffnet · ${name}`, `Tab geschlossen · ${name}`, [{ type: "open-run", run: String(run) }], `[data-testid="tab-run"][title="${run}"]`);
+      }),
+      provide("propose_note", async (a) => {
+        // the user confirmed the card in the chat; the proposal waits in the notes column until he saves it there
+        const run = String(a.run);
+        if (!latest.current.tabs.includes(run)) dispatch({ type: "open-run", run });
+        else dispatch({ type: "focus-run", run });
+        const h = await waitForHandler(`propose_note:${run}`);
+        await h(a);
+        return { summary: `Notiz vorgeschlagen · ${await runName(run)}` };
       }),
       provide("focus_tab", async ({ run }) => {
         if (run === "pinned") return change("Fester Tab fokussiert", "Fokus zurückgesetzt", [{ type: "focus-pinned" }]);

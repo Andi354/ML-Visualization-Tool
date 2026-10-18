@@ -22,6 +22,7 @@ from .project import Project
 from .agent_store import MAX_INSTRUCTIONS
 from . import progress
 from .project import now as clock
+from .notes import NoteStore, clean_anchor
 from .runs import get_run, list_runs
 from .settings import SettingsStore
 from .templates import TemplateStore
@@ -114,6 +115,14 @@ _add(Tool("read_run", READ, "Liest Ergebnisse (summary: beste Gruppen je Metrik)
 _add(Tool("run_progress", READ, "Fortschritt eines Laufs: Zellen fertig und geplant, fehlgeschlagene, Tempo, Restzeit, voraussichtlich fertig, hängt seit.", {
     "run": _RUN,
 }, ["run"], side="backend"))
+_add(Tool("read_notes", READ, "Liest die eigenen Notizen des Nutzers zu einem Lauf (am Lauf, an Abschnitten der Beschreibung, an Gruppen der Tabelle).", {
+    "run": _RUN,
+}, ["run"], side="backend"))
+_add(Tool("propose_note", CHANGE, "Schlägt dem Nutzer eine Notiz zu einem Lauf vor. Sie wird nie ohne seine Bestätigung gespeichert: im Chat fragt eine Karte, danach erscheint der Vorschlag in der Notizspalte des Lauf-Tabs.", {
+    "run": _RUN, "text": _s("Text der Notiz, Markdown ist erlaubt"),
+    "anchor": {"type": "object", "description": "Woran die Notiz hängt: {kind: run} (Standard), {kind: section, key: purpose|shows|expectation|notes} oder {kind: group, key: \"lstm_layer=2 · lr_epochs=40\"}",
+               "properties": {"kind": {"type": "string", "enum": ["run", "section", "group"]}, "key": {"type": "string"}}},
+}, ["run", "text"], describe=lambda a: "Notiz vorschlagen", always_confirm=True))
 _add(Tool("list_widgets", READ, "Listet die Widgets (Katalog und eigene) einer Analyse-Ansicht mit Einstellungen.", {"scope": _SCOPE}, side="backend"))
 _add(Tool("list_templates", READ, "Listet die gespeicherten Vorlagen (Boards ohne Läufe) einer Analyse-Ansicht.", {"scope": _SCOPE}, side="backend"))
 _add(Tool("choose_run", READ, "Fragt den Nutzer, welcher von mehreren Läufen gemeint ist (anklickbare Karten). Liefert die gewählte Lauf-ID.", {
@@ -274,7 +283,7 @@ def run_tool(project: Project, name: str, args: dict) -> Any:
             cfg = info.get("config_values") or {}
             if any(not any(k.split(".", 1)[-1] == f and str(v) == str(want) for k, v in cfg.items()) for f, want in (args.get("feature") or {}).items()):
                 continue
-            out.append({k: info.get(k) for k in ("id", "name", "issue", "short", "started", "state", "axes", "cells", "planned", "best", "merkmal")})
+            out.append({k: info.get(k) for k in ("id", "name", "issue", "short", "started", "state", "axes", "cells", "planned", "best", "merkmal", "notes")})
         out.sort(key=lambda i: str(i["started"] or ""), reverse=True)
         limit = int(args.get("limit") or 20)
         return {"count": len(out), "runs": out[:limit]}
@@ -293,6 +302,11 @@ def run_tool(project: Project, name: str, args: dict) -> Any:
             raise ValueError("Mehrere Läufe passen: " + ", ".join(many) if many else "Lauf nicht gefunden")
         p = progress.run_progress(run, clock(), int(SettingsStore(project).get("runs.stallMin")))
         return {k: p[k] for k in ("state", "cells_done", "cells_planned", "cells_failed", "rate_per_hour", "remaining", "eta", "last_cell_at", "stalled_since")}
+    if name == "read_notes":
+        run, many = _resolve(project, str(args.get("run") or ""))
+        if run is None:
+            raise ValueError("Mehrere Läufe passen: " + ", ".join(many) if many else "Lauf nicht gefunden")
+        return {"run": run.id, "notes": [{k: n[k] for k in ("id", "text", "anchor", "created", "by")} for n in NoteStore(project).list(run.id)]}
     if name == "list_widgets":
         scope = args.get("scope")
         cat_scope = {"one": "run", "two": "two-runs", "project": "project"}.get(scope)

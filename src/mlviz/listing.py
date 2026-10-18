@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from . import store
+from .notes import NoteStore
 from .project import Metric, Project
 from .runs import Run
 
@@ -80,7 +81,7 @@ def pick_merkmal(candidates: list[str], setting: str) -> str | None:
 
 def run_listing(project: Project, run: Run, candidates: list[str], feature: str = "auto", metric_key: str = "yaml") -> dict[str, Any]:
     if run.problem:  # a store_version this package does not know: no numbers, only the reason
-        return {**run.info(), "cells": 0, "planned": 0, "errors": 0, "best": None, "merkmal": None, "config_values": {}}
+        return {**run.info(), "cells": 0, "planned": 0, "errors": 0, "best": None, "merkmal": None, "config_values": {}, "notes": 0}
     metric = project.metric(metric_key) if metric_key != "yaml" else None  # a metric the project does not know: the default
     metric = metric or project.first_real_metric() or (project.metric(project.primary_metric or "") if project.primary_metric else None)
     best = None
@@ -107,5 +108,6 @@ def run_listing(project: Project, run: Run, candidates: list[str], feature: str 
         "errors": run.error_count(),
         "best": best,
         "merkmal": merkmal,
+        "notes": NoteStore(project).count(run.id),
         "config_values": {k: flat[k] for k in candidates if k in flat},
     }

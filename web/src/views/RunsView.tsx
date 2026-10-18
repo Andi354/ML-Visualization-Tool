@@ -72,9 +72,11 @@ export function RunsView({ project, view, onView, onOpen, onCompare }: Props) {
     };
     load();
     const t = setInterval(load, 10_000);
+    window.addEventListener("mlviz:notes-changed", load); // a note was added or deleted: the count in the list follows
     return () => {
       alive = false;
       clearInterval(t);
+      window.removeEventListener("mlviz:notes-changed", load);
     };
   }, []);
 

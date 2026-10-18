@@ -1,3 +1,6 @@
+import { countBy, groupKey } from "../notes/model";
+import { NotesColumn } from "../notes/NotesColumn";
+import { propose, useNotes } from "../notes/store";
 import { setting } from "../settings/store";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getDescription, getDims, getRuns, NotFound, type Description, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type RunRow, type TableResult, type TableRow } from "../api";
@@ -67,6 +70,22 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
     setFolds(next);
     saveFolds(project.name, next); // at once: a reload right after the click must keep it
   };
+
+  // own notes on the run (v0.3.0)
+  const nt = useNotes(run.id);
+  const [sectionHl, setSectionHl] = useState<string | null>(null);
+  const noteApi = useRef(nt);
+  noteApi.current = nt;
+  useEffect(() => {
+    const offs = [
+      provide(`add_note:${run.id}`, () => noteApi.current.startDraft({ kind: "run", key: "" })),
+      provide(`propose_note:${run.id}`, (a) => {
+        propose(run.id, String(a.text), a.anchor ?? { kind: "run", key: "" });
+        return { summary: "Notiz vorgeschlagen" };
+      }),
+    ];
+    return () => offs.forEach((o) => o());
+  }, [run.id]);
 
   // the palette: commands of this run tab (the tab that has the focus is addressed by its run)
   const mine = useRef({ toggleDescription, reset: () => setState({}) });
@@ -163,6 +182,9 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
   const shownChips = useMemo(() => chips(dims, state), [dims, state]);
   const visible = visibleMetrics(columns, project.metrics, info?.primary_metric ?? project.primary_metric);
   const sortMetric = result?.sort.metric ?? null;
+  const tableKeys = (result?.rows ?? []).map((r) => groupKey(r.params));
+  const sectionCounts = countBy(nt.notes, (n) => (n.anchor.kind === "section" ? n.anchor.key : null));
+  const groupCounts = countBy(nt.notes, (n) => (n.anchor.kind === "group" ? n.anchor.key : null));
   const sortDef = project.metrics.find((m) => m.key === sortMetric);
   const primary = info?.primary_metric ?? project.primary_metric;
 
@@ -192,6 +214,10 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
               open={!folded}
               onToggle={toggleDescription}
               onOpenRun={onOpenRun}
+              noteCounts={sectionCounts}
+              onAddNote={(section) => nt.startDraft({ kind: "section", key: section })}
+              onShowNotes={(section) => { nt.show({ kind: "section", key: section }); setSectionHl(section); setTimeout(() => setSectionHl(null), 2500); }}
+              highlight={sectionHl}
             />
           )}
           <OverviewLine open={overview} onToggle={() => setOverview(!overview)} />
@@ -244,6 +270,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
                   stale={loading}
                   selectedKey={selected?.key ?? null}
                   onRow={setSelected}
+                  noteCounts={groupCounts}
                 />
                 {result.rows.length === 0 && (
                   <div class="empty" data-testid="exp-empty">
@@ -254,8 +281,10 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
             )}
           </div>
         </main>
-        {selected && (
-          <DetailPanel run={run} project={project} row={selected} onClose={() => setSelected(null)} onAnalyse={onAnalyse} />
+        {selected ? (
+          <DetailPanel run={run} project={project} row={selected} onClose={() => setSelected(null)} onAnalyse={onAnalyse} notes={nt} />
+        ) : (
+          <NotesColumn api={nt} tableKeys={tableKeys} />
         )}
       </div>
     </div>

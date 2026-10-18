@@ -107,7 +107,7 @@ def test_the_system_prompt_tells_the_agent_to_report_widgets_with_a_problem():
 
 def test_a_tool_that_always_asks_is_named_in_the_modes_and_its_topic_exists():
     always = [name for name, tool in agent_tools.TOOLS.items() if tool.always_confirm]
-    assert always == ["set_instructions"]
+    assert always == ["propose_note", "set_instructions"]
     modes = agent_guide.sections()["modi"][1]
     for name in always:
         assert f"`{name}`" in modes and "in jedem Modus" in modes

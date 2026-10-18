@@ -778,3 +778,126 @@ button:disabled,
   gap: 12px;
   margin-top: 8px;
 }
+
+/* Own notes (v0.3.0, E): amber is for Tim's notes only */
+.notes-col {
+  position: relative;
+  flex: none;
+  width: var(--notes-column);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--note-bg);
+  border-left: 1px solid var(--note-line);
+}
+.notes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--note-line);
+}
+.notes-title {
+  font-weight: 600;
+  color: var(--note-text);
+}
+.notes-col .link,
+.dp-notes .link {
+  color: var(--note-text);
+}
+.notes-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.notes-empty {
+  color: var(--text-3);
+}
+.my-note {
+  padding: 8px 10px;
+  color: var(--text-2);
+  border: 1px solid var(--note-line);
+  border-radius: var(--radius-control);
+}
+.my-note.hl {
+  border-color: var(--note);
+}
+.my-note.proposal {
+  border: 1px dashed var(--accent-line);
+  background: var(--accent-bg);
+}
+.my-note-where {
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--note-text);
+}
+.my-note.proposal .my-note-where,
+.by-agent {
+  color: var(--accent);
+}
+.my-note-actions,
+.note-edit-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+.note-edit textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 6px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--note-line);
+  border-radius: var(--radius-control);
+}
+.notes-toast {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  padding: 8px 10px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--note-line);
+  border-radius: var(--radius-control);
+}
+.dp-notes {
+  margin: 8px 0;
+  padding: 8px 10px;
+  background: var(--note-bg);
+  border: 1px solid var(--note-line);
+  border-radius: var(--radius-control);
+}
+.dp-notes .notes-head {
+  padding: 0 0 6px;
+  border: 0;
+}
+.desc-field-label .desc-note-add {
+  visibility: hidden;
+  margin-left: 8px;
+  color: var(--note-text);
+}
+[data-field]:hover .desc-note-add {
+  visibility: visible;
+}
+.desc-note-count {
+  margin-left: 8px;
+  color: var(--note-text);
+}
+.desc-hl {
+  background: var(--note-bg);
+}
+.row-notes,
+.run-notes {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--note-text);
+}
+.note-cell {
+  width: 48px;
+  text-align: right;
+}

@@ -18,6 +18,7 @@ from .agent_attachments import AttachmentError
 from .agent_store import MAX_INSTRUCTIONS, AgentStore, ChatNotFound, InstructionsChanged
 from .store import StoreError
 from . import progress
+from .notes import NoteNotFound, NoteStore
 from .progress import ProgressWatcher
 from .listing import merkmal_candidates, run_listing
 from .project import Project, now
@@ -279,6 +280,53 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
         if any(runner.running(c["id"]) for c in agent.list()):
             raise HTTPException(409, "a chat is still working")
         return {"deleted": agent.delete_all()}
+
+    # --- own notes on runs (v0.3.0, E) -----------------------------------------------------------
+    note_store = NoteStore(project)
+
+    def _run_or_404(run_id: str):
+        run = get_run(project, run_id)
+        if run is None:
+            raise HTTPException(404, "run not found")
+        return run
+
+    @app.get("/api/notes/counts")
+    def api_note_counts() -> dict:
+        return note_store.counts()
+
+    @app.get("/api/notes/search")
+    def api_note_search(q: str = "") -> list[dict]:
+        return note_store.search(q)
+
+    @app.get("/api/runs/{run_id}/notes")
+    def api_notes(run_id: str) -> list[dict]:
+        _run_or_404(run_id)
+        return note_store.list(run_id)
+
+    @app.post("/api/runs/{run_id}/notes")
+    def api_note_add(run_id: str, payload: dict = Body(...)) -> dict:
+        """`{text, anchor?: {kind, key}, by?, id?, created?}` (id and created restore a deleted note)."""
+        _run_or_404(run_id)
+        try:
+            return note_store.add(run_id, payload.get("text"), payload.get("anchor"), str(payload.get("by") or "user"), payload.get("id"), payload.get("created"))
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+
+    @app.put("/api/runs/{run_id}/notes/{note_id}")
+    def api_note_update(run_id: str, note_id: str, payload: dict = Body(...)) -> dict:
+        try:
+            return note_store.update(run_id, note_id, payload.get("text"))
+        except NoteNotFound:
+            raise HTTPException(404, "note not found")
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+
+    @app.delete("/api/runs/{run_id}/notes/{note_id}")
+    def api_note_delete(run_id: str, note_id: str) -> dict:
+        try:
+            return note_store.delete(run_id, note_id)
+        except NoteNotFound:
+            raise HTTPException(404, "note not found")
 
     # --- progress and events of running runs (v0.3.0) ---------------------------------------------
     watcher = ProgressWatcher(project, agent.settings, interval=float(os.environ.get("MLVIZ_PROGRESS_INTERVAL", "10")))

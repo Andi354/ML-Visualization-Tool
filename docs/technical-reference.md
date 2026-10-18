@@ -426,6 +426,22 @@ session (a reload starts with an empty bell), shows each as a notification for 9
 `runs.notifyMac` is on, as a browser notification. `StatusBar.tsx` is the bar along the bottom of the window (progress,
 agent status, project and version, bell); `model.ts` holds the texts.
 
+## Own notes on runs (v0.3.0)
+
+`src/mlviz/notes.py`: `NoteStore` keeps `<project>/.mlviz/notes/<run-id>.json`, a list of `{id, text, created, updated,
+anchor: {kind, key}, by}`. An anchor is `run`, `section` (`purpose`, `shows`, `expectation`, `notes` of the description)
+or `group` (the axis values of a table row, sorted by axis: `lr_epochs=40 · lstm_layer=2`, so a note survives
+filters, sorting and splits). API: `GET/POST /api/runs/<id>/notes`, `PUT/DELETE .../notes/<note>` (a POST with `id` and
+`created` restores a deleted note), `GET /api/notes/counts`, `GET /api/notes/search?q=`. `run_listing` has `notes`
+(count) per run, `find_runs` passes it on. Agent tools: `read_notes` (read) and `propose_note` (always asks; the browser
+puts the proposal in the notes column, only "Speichern" there writes it, marked `by: "agent"`).
+
+Browser (`web/src/notes/`): `store.ts` (`useNotes(run)`: notes, draft, edit, delete with undo, proposals of the agent kept in
+memory), `NotesColumn.tsx` (column and the notes of one group in the detail panel), `model.ts` (order, labels, group
+key). The run tab (`ExperimentView`) provides the bus handlers `add_note:<run>` and `propose_note:<run>`; the frame
+provides `propose_note` (opens the tab, then calls the handler of that run). Descriptions are rendered with the
+Markdown reader of the chat (`agent/Markdown.tsx`); the short line in Läufe stays plain text.
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.

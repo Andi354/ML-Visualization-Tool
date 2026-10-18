@@ -1,3 +1,4 @@
+import { searchNotes } from "../notes/api";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { RunRow } from "../api";
 import { handlerFor } from "../agent/bus";
@@ -43,6 +44,14 @@ export function Palette({ ctx, request, onClose }: { ctx: Ctx; request: Request;
     setStep(null);
   }, [request.n]);
   useEffect(() => setSel(0), [input, step]);
+  // notes whose text matches the search (quick open without a prefix)
+  const [noteHits, setNoteHits] = useState<{ run: string; id: string; excerpt: string }[]>([]);
+  useEffect(() => {
+    const { mode, query } = parseInput(input);
+    if (step || mode !== "runs" || query.trim().length < 2) return setNoteHits([]);
+    const t = setTimeout(() => searchNotes(query).then(setNoteHits).catch(() => setNoteHits([])), 150);
+    return () => clearTimeout(t);
+  }, [input, step]);
   // templates and widgets are the ones of the board that is mounted
   const [board, setBoard] = useState<{ templates: string[]; widgets: { key: string; label: string; question?: string }[] }>({ templates: [], widgets: [] });
   useEffect(() => {
@@ -99,7 +108,11 @@ export function Palette({ ctx, request, onClose }: { ctx: Ctx; request: Request;
         out = [...recent.map((c) => ({ ...make(c), group: "zuletzt verwendet" })), ...COMMANDS.filter((c) => !recent.includes(c)).map((c, i) => ({ ...make(c), group: i === 0 ? "weitere Befehle" : undefined }))];
       }
     } else if (query.trim()) {
-      out = [...fromRank(ctx.runs, (r) => [runLabel(r), r.issue ?? "", r.short ?? ""], (r) => run(r)), ...fromRank(issueTitles, (i) => [i], issue)];
+      const noteItems: Item[] = noteHits.map((h) => {
+        const r = ctx.runs.find((x) => x.id === h.run);
+        return { key: `note:${h.id}`, label: `✎ ${r ? runLabel(r) : h.run} · ${h.excerpt}`, at: [], run: () => choose(() => ctx.dispatch({ type: "open-run", run: h.run })) };
+      });
+      out = [...fromRank(ctx.runs, (r) => [runLabel(r), r.issue ?? "", r.short ?? ""], (r) => run(r)), ...fromRank(issueTitles, (i) => [i], issue), ...noteItems];
     } else {
       out = [...newest(ctx.runs).slice(0, 5).map((r, i) => ({ ...run(r), group: i === 0 ? "zuletzt geöffnet" : undefined })), ...issueTitles.slice(0, 3).map((i, k) => ({ ...issue(i), group: k === 0 ? "Issues" : undefined }))];
     }

@@ -16,17 +16,19 @@ Marken und die Datensätze der eigenen Widgets mit dem Code.
 - Eigene Widgets entwerfen (als Entwurf im Board, den der Nutzer behält oder verwirft) und einen offenen Entwurf behalten.
 - Widgets des Boards als Bilder im Deliverable-Ordner des Projekts speichern.
 - Projekt-Anweisungen des Nutzers neu schreiben (`set_instructions`), aber nur auf seinen ausdrücklichen Wunsch und immer mit seiner Bestätigung (siehe `anweisungen`).
+- Notizen lesen und vorschlagen: `read_notes` liest die eigenen Notizen des Nutzers zu einem Lauf, `propose_note` schlägt eine vor. Sie wird erst gespeichert, wenn der Nutzer sie in der Notizspalte bestätigt.
 - Projektdateien lesen (`Read`, `Glob`, `Grep`), zum Beispiel die Konfiguration oder eine `description.yaml` eines Laufs.
 - Bilder ansehen, die der Nutzer in den Chat gibt (Screenshots, Diagramme): Sie stehen als `[Bild n: Pfad]` in seiner Nachricht, mit `Read` auf diesen Pfad liest er sie. Bis zu 4 Bilder je Nachricht, PNG, JPEG, WebP oder GIF, höchstens 5 MB je Bild. Das Tool selbst kann er nicht fotografieren, nur was der Nutzer ihm schickt.
 
 **Der Agent kann nicht:**
 - Läufe starten, stoppen oder löschen, Konfigurationen oder andere Projektdateien ändern. Schreiben kann er nur über `save_deliverable` (Bilder in den Deliverable-Ordner), über die Werkzeuge für Vorlagen und eigene Widgets und über `set_instructions` (die Projekt-Anweisungen).
 - Seinen festen System-Prompt ändern oder seine eigenen Grenzen wegschreiben: Die Projekt-Anweisungen kommen nur zusätzlich dazu.
+- Notizen ohne Bestätigung speichern, ändern oder löschen. Die Beschreibungen der Läufe (`description.yaml`) bleiben schreibgeschützt.
 - Gespeicherte Vorlagen oder eigene Widgets löschen.
 - Spalten der Tabelle, das Detail-Panel oder den Bild-Export einstellen.
 - Beschreibungen von Läufen schreiben (sie werden nur gelesen).
 - Mit Sprache arbeiten (der Mikrofon-Knopf ist noch ohne Funktion).
-- Ohne den geöffneten Tab im Browser arbeiten: Alles außer den Nachschlage-Werkzeugen (`find_runs`, `read_run`, `run_progress`, `list_widgets`, `list_templates`, `choose_run`, `help`) ist ein Befehl an den offenen Tab.
+- Ohne den geöffneten Tab im Browser arbeiten: Alles außer den Nachschlage-Werkzeugen (`find_runs`, `read_run`, `run_progress`, `read_notes`, `list_widgets`, `list_templates`, `choose_run`, `help`) ist ein Befehl an den offenen Tab.
 
 **Regeln:**
 - Zahlen und Namen nie raten, mit `find_runs` und `read_run` nachsehen.
@@ -66,6 +68,8 @@ Art `lesen` schlägt nur nach, `Ansicht` ändert, was der Nutzer sieht, `ändern
 | `keep_draft` | ändern | offenen Entwurf als eigenes Widget behalten |
 | `save_deliverable` | ändern | Widgets als Bilder im Deliverable-Ordner speichern |
 | `set_instructions` | ändern | Projekt-Anweisungen neu schreiben (fragt in jedem Modus) |
+| `read_notes` | lesen | eigene Notizen des Nutzers zu einem Lauf |
+| `propose_note` | ändern | Notiz vorschlagen (fragt in jedem Modus) |
 
 ## ansichten · Bereiche und Ansichten des Tools
 
@@ -109,7 +113,7 @@ Der Modus gilt je Projekt, der Nutzer stellt ihn im Agent-Fenster ein. Er steht 
 - „fragt“ heißt: Der Nutzer sieht eine Karte mit Ausführen (oder Speichern) und Ablehnen. Das Werkzeug wartet auf den Klick.
 - Wird abgelehnt, kommt das als Ergebnis zurück: ohne die Aktion weitermachen.
 - Eine neue Nachricht des Nutzers lehnt eine offene Karte ab.
-- **Ausnahme:** `set_instructions` fragt in jedem Modus, auch in Direkt (siehe `anweisungen`).
+- **Ausnahme:** `set_instructions` und `propose_note` fragen in jedem Modus, auch in Direkt (siehe `anweisungen`; eine Notiz wird zusätzlich erst in der Notizspalte gespeichert).
 
 ## anweisungen · Projekt-Anweisungen
 

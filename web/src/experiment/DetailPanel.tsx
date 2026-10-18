@@ -1,3 +1,6 @@
+import { groupKey } from "../notes/model";
+import { GroupNotes } from "../notes/NotesColumn";
+import type { NotesApi } from "../notes/store";
 import { useEffect, useReducer, useState } from "preact/hooks";
 import type { ProjectInfo, RunInfo, TableRow } from "../api";
 import { formatInt } from "../format";
@@ -11,12 +14,13 @@ interface Props {
   row: TableRow;
   onClose: () => void;
   onAnalyse: (combo: Record<string, string>) => void;
+  notes: NotesApi;
 }
 
 const DEFAULT = ["curves", "forecast", "replicates", "config"]; // config last
 
 /** Detail of one combination (feature F): head with its facts, and a mini board of widgets. */
-export function DetailPanel({ run, project, row, onClose, onAnalyse }: Props) {
+export function DetailPanel({ run, project, row, onClose, onAnalyse, notes }: Props) {
   const catalog = useCatalog("combination");
   const known = catalog.map((c) => c.key);
   const [board, dispatch] = useReducer(boardReducer, null, () => loadBoard(project.name, "combination", DEFAULT, makeBoard("combination", DEFAULT)));
@@ -51,6 +55,7 @@ export function DetailPanel({ run, project, row, onClose, onAnalyse }: Props) {
             ))}
           </div>
         )}
+        <GroupNotes api={notes} groupKey={groupKey(combo)} />
         <div class="dp-metrics" data-testid="dp-metrics">
           {project.metrics
             .filter((m) => row.metrics[m.key])

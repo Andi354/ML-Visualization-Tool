@@ -11,6 +11,11 @@ export function Flags({ run, current }: { run: RunRow; current: string | null })
           {f.text}
         </span>
       ))}
+      {(run.notes ?? 0) > 0 && (
+        <span class="run-notes" data-testid="run-notes" title="Eigene Notizen">
+          ✎ {run.notes}
+        </span>
+      )}
     </>
   );
 }
