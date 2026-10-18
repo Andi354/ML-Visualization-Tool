@@ -1,3 +1,4 @@
+import { setting } from "../settings/store";
 import { render } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getConfig, getJson, postWidget, type CatalogEntry, type ConfigInfo, type IssueInfo, type ProjectInfo, type RunInfo, type WidgetRequest, type WidgetResult } from "../api";
@@ -5,7 +6,7 @@ import type { BoardWidget } from "../widgets/board";
 import { EXPORT_WIDTH, ExportCard, footerFor, type Part, type Theme } from "../widgets/ExportCard";
 import { rasterize, settle } from "../widgets/rasterize";
 import { FolderPicker } from "./FolderPicker";
-import { combine, defaultName, detach, groupTitle, patchImage, reorder, reselect, setLayout, singles, split, type Image } from "./images";
+import { combine, defaultName, targetFolder, detach, groupTitle, patchImage, reorder, reselect, setLayout, singles, split, type Image } from "./images";
 
 export interface Loaded {
   result: WidgetResult;
@@ -54,7 +55,7 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
   const [selected, setSelected] = useState<string[]>(initial);
   const [focus, setFocus] = useState<string | null>(initial[0] ?? widgets[0]?.id ?? null);
   const [loaded, setLoaded] = useState<Record<string, Loaded>>({});
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(setting<Theme>("exp.theme"));
   const [withConfigs, setWithConfigs] = useState(false);
   const [base, setBase] = useState(project.paths.deliverables ?? "deliverables");
   const [folderTitle, setFolderTitle] = useState(defaultTitle);
@@ -122,7 +123,7 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
     setFocus(out.id);
   };
 
-  const target = `${base}/${day(project.now)} ${folderTitle}`.replace(/\/+/g, "/");
+  const target = targetFolder(base, day(project.now), folderTitle, issue);
   const focused = images.find((i) => i.id === focus);
   const focusedParts = focused ? partsOf(focused) : null;
   const n = ordered.filter(ready).length;
@@ -153,7 +154,7 @@ export function SaveDialog({ project, req, run, footerRuns, footerText, defaultT
           host,
         );
         await settle(host);
-        const data = await rasterize(host.firstElementChild as HTMLElement, { pixelRatio: 2 });
+        const data = await rasterize(host.firstElementChild as HTMLElement, { pixelRatio: Number(setting("exp.scale")) });
         render(null, host);
         host.remove();
         files.push({ name: nameOf(img), data, title: titleOf(img) });

@@ -54,3 +54,10 @@ export const PaperclipIcon = ({ size = 15 }: { size?: number }) => (
     <path d="M14.5 8.5 9 14a3.5 3.5 0 0 1-5-5l6-6a2.3 2.3 0 0 1 3.3 3.3l-6 6a1.1 1.1 0 0 1-1.6-1.6L10.5 5" />
   </svg>
 );
+
+export const GearIcon = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" />
+  </svg>
+);

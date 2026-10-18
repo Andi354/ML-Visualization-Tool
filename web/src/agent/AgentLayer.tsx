@@ -1,3 +1,4 @@
+import { setting } from "../settings/store";
 // The agent window and its capsule (feature A), floating above the content.
 import type { RefObject } from "preact";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
@@ -420,7 +421,7 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
               <button class="agent-menu-item" disabled={!chat.session_id} onClick={copySession} data-testid="agent-copy-session">
                 Session-ID kopieren
               </button>
-              {limitsLine(limits) && (
+              {setting<boolean>("agent.quota") && limitsLine(limits) && (
                 <div class="agent-popover-head" data-testid="agent-limits">
                   {limitsLine(limits)}
                 </div>

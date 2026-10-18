@@ -1,3 +1,4 @@
+import { setting } from "../settings/store";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getDescription, getDims, getRuns, NotFound, type Description, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type RunRow, type TableResult, type TableRow } from "../api";
 import { provide, provideView } from "../agent/bus";
@@ -37,7 +38,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
   const [info, setInfo] = useState<DimsInfo | null>(null);
   const [state, setState] = useState<DimState>({});
   const [sort, setSort] = useState<Sort>({ metric: null, stat: "mean", dir: null });
-  const [overview, setOverview] = useState(true);
+  const [overview, setOverview] = useState(() => setting<boolean>("runs.overview"));
   const [columns, setColumns] = useState<Columns>(() => loadColumns(project.name));
   const [result, setResult] = useState<TableResult | null>(null);
   const [error, setError] = useState(false);
@@ -46,6 +47,8 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
   const seq = useRef(0);
   const [description, setDescription] = useState<Description | null>(null);
   const [folds, setFolds] = useState<Folds>(() => loadFolds(project.name));
+  /** Folded: the stored choice for this run, else the setting for the first open. */
+  const folded = run.id in folds ? folds[run.id] : setting<string>("runs.descOpen") === "closed";
   const [toolbarHeight, setToolbarHeight] = useState(49);
   const toolbarBox = useRef<HTMLDivElement>(null);
 
@@ -60,7 +63,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
     };
   }, [run.id]);
   const toggleDescription = () => {
-    const next = { ...folds, [run.id]: !folds[run.id] };
+    const next = { ...folds, [run.id]: !folded };
     setFolds(next);
     saveFolds(project.name, next); // at once: a reload right after the click must keep it
   };
@@ -178,7 +181,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
           {description && (
             <DescriptionBlock
               description={description}
-              open={!folds[run.id]}
+              open={!folded}
               onToggle={toggleDescription}
               onOpenRun={onOpenRun}
             />

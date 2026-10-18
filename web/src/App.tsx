@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "preact/hooks";
-import { getProject, type ProjectInfo } from "./api";
+import { getProject, getTemplates, type ProjectInfo } from "./api";
 import { IconBar } from "./frame/IconBar";
 import { TabStrip } from "./frame/TabStrip";
 import { AgentLayer } from "./agent/AgentLayer";
 import { useFrameTools } from "./agent/frameTools";
 import { contextLabel } from "./agent/model";
 import { loadAgent, saveAgent, toggleFromIcon } from "./agent/state";
-import { frameReducer, initialFrame, loadFrame, saveFrame } from "./state/frame";
+import { SETTINGS_TAB, frameReducer, initialFrame, loadFrame, saveFrame } from "./state/frame";
+import { SettingsView } from "./settings/SettingsView";
+import { load as loadSettings } from "./settings/store";
 import { AnalysisView } from "./views/AnalysisView";
 import { RunsView } from "./views/RunsView";
 import { RunTab } from "./views/RunTab";
@@ -25,6 +27,21 @@ function Frame({ project }: { project: ProjectInfo }) {
   const latest = useRef(frame);
   latest.current = frame;
   useFrameTools(latest, dispatch);
+  useEffect(() => {
+    void loadSettings().catch(() => undefined);
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === ",") {
+        e.preventDefault();
+        dispatch({ type: "open-settings" });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const [templates, setTemplates] = useState<string[]>([]);
+  useEffect(() => {
+    getTemplates("one").then((t) => setTemplates(t.map((x) => x.name))).catch(() => undefined);
+  }, [frame.settings]);
   const [agent, setAgent] = useState(() => loadAgent(project.name));
   const agentLatest = useRef(agent);
   agentLatest.current = agent;
@@ -51,6 +68,8 @@ function Frame({ project }: { project: ProjectInfo }) {
         onSelect={(area) => dispatch({ type: "select-area", area })}
         agentActive={agent.mode !== "closed"}
         onAgent={() => changeAgent({ mode: toggleFromIcon(agent.mode) })}
+        settingsActive={frame.active === SETTINGS_TAB}
+        onSettings={() => dispatch({ type: "open-settings" })}
       />
       <div class="main">
         {project.warnings.length > 0 && (
@@ -67,6 +86,9 @@ function Frame({ project }: { project: ProjectInfo }) {
           onFocusPinned={() => dispatch({ type: "focus-pinned" })}
           onFocus={(run) => dispatch({ type: "focus-run", run })}
           onClose={(run) => dispatch({ type: "close-run", run })}
+          settings={frame.settings}
+          onFocusSettings={() => dispatch({ type: "open-settings" })}
+          onCloseSettings={() => dispatch({ type: "close-settings" })}
         />
         <div class="content">
           {/* Both areas stay mounted, so a search or filter in Läufe survives an area switch. */}
@@ -82,6 +104,11 @@ function Frame({ project }: { project: ProjectInfo }) {
           <div class="pane" hidden={frame.active !== null || frame.area !== "analysis"}>
             <AnalysisView project={project} compare={frame.compare} request={frame.analysis} viewRequest={frame.analysisView} />
           </div>
+          {frame.settings && (
+            <div class="pane" hidden={frame.active !== SETTINGS_TAB}>
+              <SettingsView project={project} templates={templates} />
+            </div>
+          )}
           {/* Every open run stays mounted, so filters, sorting and scroll survive tab switches. */}
           {frame.tabs.map((run) => (
             <div class="pane" key={run} hidden={frame.active !== run}>

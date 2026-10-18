@@ -99,7 +99,7 @@ export function useFrameTools(latest: MutableRef<FrameState>, dispatch: (a: Fram
     });
     const offView = provideView("frame", () => {
       const f = latest.current;
-      return { area: f.area, runs_view: f.runsView, tabs: f.tabs, focused_tab: f.active ?? "pinned", compare: f.compare };
+      return { area: f.area, runs_view: f.runsView, tabs: f.tabs, focused_tab: f.active === "@settings" ? "settings" : (f.active ?? "pinned"), compare: f.compare };
     });
     return () => {
       offs.forEach((o) => o());

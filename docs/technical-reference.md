@@ -373,6 +373,30 @@ fields `short`, `purpose`, `shows`, `notes`, `expectation`, `compare_to` and a l
   is measured (`ResizeObserver`) into `--toolbar-h`, and the table head (`thead`, both rows as one block)
   sticks at `top: var(--toolbar-h)`. The detail panel stays beside the column.
 
+## Settings (v0.3.0)
+
+`<project>/.mlviz/settings.json` is a flat JSON object with only the values that differ from the default
+(`{"look.scale": 110, "agent.mode": "direct"}`). `src/mlviz/settings.py` knows every setting that holds a value
+(`SPECS`: kind, default, range or options); `SettingsStore` reads, changes (`change(set, unset)`, atomic, nothing is
+written if one value is unusable) and keeps what it does not know (a newer tool may have written it). A file that
+cannot be read means all defaults and a warning in the screen; it is only overwritten when a value is changed.
+`agent.mode` and `agent.debug` live here too (the `agent.json` of v0.2 is still read until a value is set).
+
+API: `GET /api/settings` (`values`, `defaults`, `warning`, `file`, `project_path`, `version`, `env`),
+`PUT /api/settings` with `{set, unset}`, `DELETE /api/agent/chats` (Einstellungen › Daten).
+
+Screen (`web/src/settings/`): `catalog.ts` is the list of rows (category, section, control, text; a new setting is one
+entry there and one `Spec` in `settings.py`; `tests/settings_defaults.json` is compared by pytest and vitest),
+`model.ts` the logic (steps for undo/redo, search), `store.ts` the values with a queue for changes, undo/redo (session
+only) and `applyEffects` (`data-density`, `data-motion`, `zoom` on `<html>`, the decimal sign of `format.ts`).
+Code that needs a value calls `setting(key)`; it is read when used, so a change applies without a reload.
+The tab is `SETTINGS_TAB` (`"@settings"`) in the frame state; Ctrl/Cmd+, opens it.
+
+Effects of the settings: `look.*` (see above), `runs.feature`/`runs.metric` (`listing.run_listing`), `runs.descOpen` and
+`runs.overview` (first open of a run tab), `ana.width` (width of widgets added), `ana.template` (first board),
+`exp.*` (`analysis/images.ts`: file name, folder; `SaveDialog`, `agentSave`: background, pixel ratio, footer),
+`agent.cacheWarn`, `agent.quota`, `agent.claude` (`agent_run.command`).
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.

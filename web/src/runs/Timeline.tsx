@@ -1,3 +1,4 @@
+import { formatNumber } from "../format";
 import type { ProjectInfo, RunRow } from "../api";
 import { seriesVar } from "./components";
 import { buildTimeline } from "./model";
@@ -14,7 +15,7 @@ interface Props {
 export function Timeline({ runs, project, focus, merkmalLabel, onPick }: Props) {
   const tl = buildTimeline(runs, project);
   if (!tl) return <div class="timeline muted">Noch keine Läufe mit Bestwert.</div>;
-  const title = (r: { id: string }, v: number) => `${r.id} · ${v.toFixed(2).replace(".", ",")}`;
+  const title = (r: { id: string }, v: number) => `${r.id} · ${formatNumber(v, 2)}`;
   return (
     <div class="timeline" data-testid="timeline">
       <div class="timeline-head">

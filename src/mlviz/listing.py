@@ -67,10 +67,22 @@ def group_best(run: Run, metric: Metric) -> float | None:
     return _best(str(run.path), store.version(run.path), metric.key, metric.direction, tuple(run.axes))
 
 
-def run_listing(project: Project, run: Run, candidates: list[str]) -> dict[str, Any]:
+def pick_merkmal(candidates: list[str], setting: str) -> str | None:
+    """The Lauf-Merkmal by the setting `runs.feature`: `auto` the first candidate, `none` none, else the candidate named
+    (`block.name` or just `name`); a name that is no candidate falls back to `auto`."""
+    if setting == "none":
+        return None
+    for key in candidates:
+        if setting in (key, key.split(".", 1)[-1]):
+            return key
+    return candidates[0] if candidates else None
+
+
+def run_listing(project: Project, run: Run, candidates: list[str], feature: str = "auto", metric_key: str = "yaml") -> dict[str, Any]:
     if run.problem:  # a store_version this package does not know: no numbers, only the reason
         return {**run.info(), "cells": 0, "planned": 0, "errors": 0, "best": None, "merkmal": None, "config_values": {}}
-    metric = project.first_real_metric() or (project.metric(project.primary_metric or "") if project.primary_metric else None)
+    metric = project.metric(metric_key) if metric_key != "yaml" else None  # a metric the project does not know: the default
+    metric = metric or project.first_real_metric() or (project.metric(project.primary_metric or "") if project.primary_metric else None)
     best = None
     if metric is not None:
         value = group_best(run, metric)
@@ -84,8 +96,8 @@ def run_listing(project: Project, run: Run, candidates: list[str]) -> dict[str, 
             }
     flat = flat_config(run)
     merkmal = None
-    if candidates:
-        key = candidates[0]
+    key = pick_merkmal(candidates, feature)
+    if key is not None:
         if key in flat:
             merkmal = {"key": key, "label": key.split(".", 1)[1], "value": flat[key]}
     return {

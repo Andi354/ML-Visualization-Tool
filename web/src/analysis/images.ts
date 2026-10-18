@@ -1,3 +1,5 @@
+import { fillPattern } from "../settings/model";
+import { setting } from "../settings/store";
 // Model of the images in the save dialog: one image = one file; an image holds one widget or, after
 // "Zu einem Bild", several (a group). Pure functions, no UI.
 
@@ -26,7 +28,7 @@ export const single = (widgetId: string): Image => ({
   nameEdited: false,
   title: null,
   hints: true,
-  footer: true,
+  footer: setting<boolean>("exp.footer"),
 });
 
 export const singles = (widgetIds: string[]): Image[] => widgetIds.map(single);
@@ -94,7 +96,15 @@ export const setLayout = (images: Image[], id: string, layout: Layout): Image[] 
 export const patchImage = (images: Image[], id: string, patch: Partial<Image>): Image[] => images.map((i) => (i.id === id ? { ...i, ...patch } : i));
 
 /** Default file name: `NN_<type>.png`, a group `NN_<type>+<type>.png`. */
-export const defaultName = (position: number, types: string[]): string => `${String(position + 1).padStart(2, "0")}_${types.join("+")}.png`;
+/** File name of an image by the pattern of the setting `exp.name` (`{nr}`, `{widget}`). */
+export const defaultName = (position: number, types: string[]): string =>
+  fillPattern(setting<string>("exp.name") || "{nr}_{widget}.png", { nr: String(position + 1).padStart(2, "0"), widget: types.join("+") });
+
+/** Target folder by the pattern of the setting `exp.folder` (`{deliverables}`, `{datum}`, `{titel}`, `{issue}`). */
+export const targetFolder = (deliverables: string, datum: string, titel: string, issue = ""): string =>
+  fillPattern(setting<string>("exp.folder") || "{deliverables}/{datum} {titel}/", { deliverables, datum, titel, issue })
+    .replace(/\/+/g, "/")
+    .replace(/\/$/, "");
 
 /** Default title of a group from its widget names: "A und B", "A, B und C". */
 export function groupTitle(labels: string[]): string {

@@ -44,7 +44,8 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     def api_runs() -> list[dict]:
         runs = list_runs(project)
         candidates = merkmal_candidates(runs)
-        return [run_listing(project, r, candidates) for r in runs]
+        feature, metric = agent.settings.get("runs.feature"), agent.settings.get("runs.metric")
+        return [run_listing(project, r, candidates, feature, metric) for r in runs]
 
     @app.get("/api/issues")
     def api_issues() -> dict:

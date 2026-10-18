@@ -1,3 +1,4 @@
+import { setting } from "../settings/store";
 // Pure logic of the Läufe area (feature C): filtering, grouping into issue blocks, texts, timeline.
 import type { IssueInfo, ProjectInfo, RunRow } from "../api";
 import { formatInt, formatNumber } from "../format";
@@ -74,6 +75,10 @@ export function relTime(nowIso: string, iso: string | number | null): string {
   const now = new Date(nowIso);
   const d = new Date(iso);
   const days = Math.floor((now.getTime() - d.getTime()) / DAY);
+  if (setting<string>("look.time") === "abs") {
+    const hm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    return days <= 0 ? hm : `${d.getDate()}.${d.getMonth() + 1}. ${hm}`;
+  }
   if (days <= 0) return `heute ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   if (days === 1) return "gestern";
   if (days < 7) return `vor ${days} Tagen`;

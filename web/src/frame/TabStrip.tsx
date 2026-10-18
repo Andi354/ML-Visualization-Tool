@@ -1,4 +1,4 @@
-import type { Area } from "../state/frame";
+import { SETTINGS_TAB, type Area } from "../state/frame";
 import { CloseIcon } from "./icons";
 
 export const AREA_LABEL: Record<Area, string> = { runs: "Läufe", analysis: "Analyse" };
@@ -17,9 +17,12 @@ interface Props {
   onFocusPinned: () => void;
   onFocus: (run: string) => void;
   onClose: (run: string) => void;
+  settings: boolean;
+  onFocusSettings: () => void;
+  onCloseSettings: () => void;
 }
 
-export function TabStrip({ area, tabs, active, onFocusPinned, onFocus, onClose }: Props) {
+export function TabStrip({ area, tabs, active, onFocusPinned, onFocus, onClose, settings, onFocusSettings, onCloseSettings }: Props) {
   return (
     <div class="tab-strip" role="tablist" data-testid="tab-strip">
       <button
@@ -31,6 +34,23 @@ export function TabStrip({ area, tabs, active, onFocusPinned, onFocus, onClose }
       >
         {AREA_LABEL[area]}
       </button>
+      {settings && (
+        <div
+          role="tab"
+          tabIndex={0}
+          class={"tab run" + (active === SETTINGS_TAB ? " active" : "")}
+          aria-selected={active === SETTINGS_TAB}
+          data-testid="tab-settings"
+          onClick={onFocusSettings}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onFocusSettings()}
+          onMouseUp={(e) => e.button === 1 && onCloseSettings()}
+        >
+          <span class="tab-label">Einstellungen</span>
+          <button class="tab-close" aria-label="Einstellungen schließen" data-testid="settings-close" onClick={(e) => { e.stopPropagation(); onCloseSettings(); }}>
+            <CloseIcon />
+          </button>
+        </div>
+      )}
       {tabs.map((run) => (
         <div
           key={run}

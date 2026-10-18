@@ -1,3 +1,4 @@
+import { setting } from "../settings/store";
 import type { ComponentChildren } from "preact";
 import { useEffect, useReducer, useRef, useState } from "preact/hooks";
 import { deleteOwnWidget, deleteTemplate, getJson, getOwnWidgets, getTemplates, keepOwnWidget, markTemplateUsed, saveTemplate, OwnWidgetRefused, type CatalogEntry, type ProjectInfo, type RunInfo, type WidgetRequest } from "../api";
@@ -33,6 +34,7 @@ interface Props {
  *  the save dialog. The selection of widgets is remembered per project and scope. */
 export function BoardPage({ project, scope, catalog, req, run, footerRuns, footerText, defaultTitle, defaultIssue, controls, selection }: Props) {
   const known = catalog.map((c) => c.key);
+  const addWidth = (w: Width): Width => { const s = setting<string>("ana.width"); return s === "half" || s === "full" ? s : w; };
   const defaults = catalog.filter((c) => !c.optional).map((c) => c.key); // optional widgets start off
   const widths = Object.fromEntries(catalog.map((c) => [c.key, c.width])) as Record<string, Width>;
   // a scope without a stored board starts with the template used last (else Standard), see the templates effect
@@ -125,7 +127,8 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
   useEffect(() => {
     if (!startsFresh.current || templates === null) return;
     startsFresh.current = false;
-    const t = lastUsed(templates);
+    const wanted = setting<string>("ana.template");
+    const t = wanted === "last" ? lastUsed(templates) : (templates.find((x) => x.name === wanted) ?? lastUsed(templates));
     if (t) {
       dispatch({ type: "reset", board: { ...board, widgets: widgetsFromTemplate(t.widgets, known.concat(own.map((o) => o.key))) } });
       setCurrent(t.name);
@@ -325,7 +328,7 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
   const present = known.filter((k) => board.widgets.some((w) => w.type === k));
   const toggleType = (key: string) => {
     if (present.includes(key)) board.widgets.filter((w) => w.type === key).forEach((w) => dispatch({ type: "remove", id: w.id }));
-    else dispatch({ type: "add", widget: key, id: newId(key), width: widths[key] });
+    else dispatch({ type: "add", widget: key, id: newId(key), width: addWidth(widths[key]) });
   };
 
   return (
@@ -414,7 +417,7 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
                   data-testid="add-widget-item"
                   data-widget={c.key}
                   onClick={() => {
-                    dispatch({ type: "add", widget: c.key, id: newId(c.key), width: c.width });
+                    dispatch({ type: "add", widget: c.key, id: newId(c.key), width: addWidth(c.width) });
                     setMenu(null);
                   }}
                 >
@@ -437,7 +440,7 @@ export function BoardPage({ project, scope, catalog, req, run, footerRuns, foote
                     data-testid="add-widget-own-item"
                     data-widget={c.key}
                     onClick={() => {
-                      dispatch({ type: "add", widget: c.key, id: newId(c.key), width: c.width });
+                      dispatch({ type: "add", widget: c.key, id: newId(c.key), width: addWidth(c.width) });
                       setMenu(null);
                     }}
                   >

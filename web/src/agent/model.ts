@@ -1,3 +1,4 @@
+import { setting } from "../settings/store";
 // Pure logic of the agent window (feature A): chats, the display of context and cache, texts.
 import type { FrameState } from "../state/frame";
 
@@ -53,9 +54,6 @@ export interface Chat extends ChatInfo {
 
 /** Window of the model the context bar is measured against, if Claude Code does not report one. */
 export const CONTEXT_WINDOW = 200_000;
-/** A message into a cold chat above this size is held back with a hint (feature F). */
-export const BIG_CHAT_TOKENS = 50_000;
-
 export const MODES: { key: AgentMode; label: string; icon: string; desc: string; hint: string }[] = [
   { key: "direct", label: "Direkt", icon: "⏵⏵", desc: "Handelt sofort. Jede Aktion lässt sich rückgängig machen.", hint: "handelt ohne Rückfrage" },
   {
@@ -78,6 +76,7 @@ export function nextMode(m: AgentMode): AgentMode {
 
 /** What the agent sees, shown in the chip under the header. */
 export function contextLabel(f: Pick<FrameState, "area" | "active" | "runsView">): string {
+  if (f.active === "@settings") return "Einstellungen";
   if (f.active) return "Lauf · " + f.active.replace(/^\d{4}-\d{2}-\d{2}_\d{4,6}_/, "");
   if (f.area === "analysis") return "Analyse";
   return f.runsView === "issues" ? "Läufe · Issues" : "Läufe · Liste";
@@ -136,9 +135,9 @@ export function chatMeta(c: ChatInfo, nowIso: string, nowMs: number): string {
   return `${when} · ${k(c.tokens)} · ${cacheState(c, nowMs).kind === "warm" ? "warm" : "kalt"}`;
 }
 
-/** A message into a cold chat of this size or more is held back (see BIG_CHAT_TOKENS): nothing is sent yet. */
+/** A message into a cold chat of this size or more is held back (setting `agent.cacheWarn`, 50k by default): nothing is sent yet. */
 export const needsColdHint = (c: Pick<ChatInfo, "tokens" | "last_turn_at" | "cache_ttl_s">, nowMs: number) =>
-  c.tokens > BIG_CHAT_TOKENS && cacheState(c, nowMs).kind === "cold";
+  c.tokens > setting<number>("agent.cacheWarn") * 1000 && cacheState(c, nowMs).kind === "cold";
 
 /** /compact needs a warm cache (it reads the chat once itself) and a chat worth compacting. */
 export const COMPACT_MIN_TOKENS = 10_000;

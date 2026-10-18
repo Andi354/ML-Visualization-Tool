@@ -88,3 +88,11 @@ def test_delete_all_chats(client):
     client.post("/api/agent/chats", json={})
     assert client.delete("/api/agent/chats").json() == {"deleted": 2}
     assert client.get("/api/agent").json()["chats"] == []
+
+
+def test_the_defaults_match_the_ones_of_the_screen():
+    """`web/tests/settings.test.ts` compares the catalog of the screen with the same file."""
+    from pathlib import Path
+
+    expected = json.loads((Path(__file__).parent / "settings_defaults.json").read_text())
+    assert DEFAULTS == expected
