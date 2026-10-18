@@ -48,3 +48,9 @@ export const BugIcon = ({ size = 15 }: { size?: number }) => (
     <path d="M7 5a2 2 0 0 1 4 0M9 7.5v6M5.5 9H3M12.5 9H15M5.7 6.2 4 4.5M12.3 6.2 14 4.5M5.7 12.3 4 14M12.3 12.3 14 14" />
   </svg>
 );
+
+export const PaperclipIcon = ({ size = 15 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M14.5 8.5 9 14a3.5 3.5 0 0 1-5-5l6-6a2.3 2.3 0 0 1 3.3 3.3l-6 6a1.1 1.1 0 0 1-1.6-1.6L10.5 5" />
+  </svg>
+);

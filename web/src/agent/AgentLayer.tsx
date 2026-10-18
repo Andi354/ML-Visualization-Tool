@@ -1,10 +1,12 @@
 // The agent window and its capsule (feature A), floating above the content.
 import type { RefObject } from "preact";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
-import { AgentIcon, BugIcon, MicIcon } from "../frame/icons";
+import { AgentIcon, BugIcon, MicIcon, PaperclipIcon } from "../frame/icons";
+import { attachmentUrl, checkImages, imagesOf, IMAGE_TYPES } from "./attachments";
+import { Markdown } from "./Markdown";
 import { carryOut } from "./commands";
 import { undoFor } from "./bus";
-import { compactChat, decide, getAgent, markAction, getChat, getSetup, newChat, runMessage, setDebug, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
+import { compactChat, decide, getAgent, markAction, getChat, getSetup, newChat, runMessage, setDebug, uploadImage, setMode as putMode, stopChat, type AgentOverview, type AgentSetup, type Limits, type RunSnapshot } from "./api";
 import { defaultRect, fit, moved, resized, type Bounds, type Rect } from "./geometry";
 import {
   cacheState,
@@ -24,6 +26,13 @@ import type { AgentWindowState } from "./state";
 import "./agent.css";
 
 const MIC_TIP = "Sprache kommt in einem späteren Update";
+
+/** An image waiting to go with the next message. */
+interface Img {
+  file: string;
+  name: string;
+  url: string;
+}
 
 interface Props {
   agent: AgentWindowState;
@@ -59,7 +68,15 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
   const [limits, setLimits] = useState<Limits | null>(null);
   const [busyChat, setBusyChat] = useState<string | null>(null);
   /** The message held back because a cold chat would be read in full again (nothing was sent). */
-  const [hint, setHint] = useState<{ text: string } | null>(null);
+  const [hint, setHint] = useState<{ text: string; images: Img[] } | null>(null);
+  /** Images waiting to go with the next message (already kept in the project), the ones being uploaded, and a note about refused ones. */
+  const [images, setImages] = useState<Img[]>([]);
+  const [uploading, setUploading] = useState(0);
+  const [imageNote, setImageNote] = useState<string | null>(null);
+  const [dropping, setDropping] = useState(false);
+  /** Why a Rückgängig or Wiederholen did not work (shown above the input until the next try or message). */
+  const [actionError, setActionError] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const fetchedAt = useRef(Date.now());
   const messagesEnd = useRef<HTMLDivElement>(null);
   const opened = agent.mode !== "closed";
@@ -185,60 +202,85 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
     if (snap.limits) setLimits(snap.limits);
   };
   /** Sends `text` to `target` (or the current chat, or a new one) and shows the answer as it comes in. */
-  const start = async (text: string, opts: { resend?: boolean; target?: Chat } = {}) => {
+  const start = async (text: string, opts: { resend?: boolean; target?: Chat; images?: Img[] } = {}) => {
     const target = opts.target ?? chat ?? (await newChat());
     setChat(target);
     onChange({ chat: target.id });
     setBusyChat(target.id);
+    const sent = (opts.images ?? []).map(({ file, name }) => ({ file, name }));
     try {
-      await runMessage(target.id, { text, context, resend: opts.resend }, onSnapshot);
+      await runMessage(target.id, { text, context, resend: opts.resend, ...(sent.length ? { images: sent } : {}) }, onSnapshot);
     } catch {
       /* the chat on disk shows what arrived */
     }
     setBusyChat(null);
     const next = queued.current;
     queued.current = null;
-    if (next) start(next, { target }).catch(() => {});
+    if (next) start(next.text, { target, images: next.images }).catch(() => {});
     getChat(target.id).then((c) => setChat((cur) => (cur && cur.id !== c.id ? cur : c))).catch(() => {});
     refresh().catch(() => {});
   };
   const cards = (chat?.messages ?? []).filter((m) => (m.k === "confirm" || m.k === "choice") && m.cid);
   /** A message typed while a card is open rejects the card; the message is sent as soon as the agent has gone on. */
-  const queued = useRef<string | null>(null);
+  const queued = useRef<{ text: string; images: Img[] } | null>(null);
   const send = () => {
     const text = draft.trim();
-    if (!text || !ready) return;
+    if ((!text && !images.length) || !ready || uploading) return;
+    const withImages = images;
     if (busy) {
       if (!cards.length) return;
-      queued.current = text;
+      queued.current = { text, images: withImages };
       setDraft("");
+      setImages([]);
       cards.forEach((c) => decide(c.cid!, { approve: false }).catch(() => {}));
       return;
     }
     if (chat && needsColdHint(chat, nowMs())) {
-      setHint({ text }); // check before any call: nothing is sent
+      setHint({ text, images: withImages }); // check before any call: nothing is sent
       return;
     }
     setDraft("");
-    start(text).catch(() => {});
+    setImages([]);
+    setImageNote(null);
+    setActionError(null);
+    start(text, { images: withImages }).catch(() => {});
   };
   const sendAnyway = () => {
     if (!hint) return;
-    const { text } = hint;
+    const { text, images: sent } = hint;
     setHint(null);
     setDraft("");
-    start(text).catch(() => {});
+    setImages([]);
+    start(text, { images: sent }).catch(() => {});
   };
   const sendInNewChat = async () => {
     if (!hint) return;
-    const { text } = hint;
+    const { text, images: sent } = hint;
     setHint(null);
     setDraft("");
-    start(text, { target: await newChat() }).catch(() => {});
+    setImages([]);
+    start(text, { target: await newChat(), images: sent }).catch(() => {});
   };
   const resend = () => {
     const last = [...(chat?.messages ?? [])].reverse().find((m) => m.k === "user");
-    if (last) start(last.t, { resend: true }).catch(() => {});
+    if (last) start(last.t, { resend: true, images: (last.images ?? []).map((i) => ({ ...i, url: attachmentUrl(i.file) })) }).catch(() => {});
+  };
+  /** Images that were pasted, dropped or picked: refused ones are named, the others are kept in the project and shown as chips. */
+  const addFiles = async (files: File[]) => {
+    const picked = files.map((f) => ({ name: f.name || "Bild", type: f.type, size: f.size }));
+    const { accept, problems } = checkImages(images.length + uploading, picked);
+    setImageNote(problems.length ? problems.join(" · ") : null);
+    if (!accept.length) return;
+    setUploading((n) => n + accept.length);
+    for (const i of accept) {
+      try {
+        const kept = await uploadImage(files[i]);
+        setImages((cur) => (cur.some((c) => c.file === kept.file) ? cur : [...cur, { file: kept.file, name: kept.name, url: kept.url }]));
+      } catch (e) {
+        setImageNote(`${files[i].name || "Bild"}: ${(e as Error).message}`);
+      }
+      setUploading((n) => n - 1);
+    }
   };
   const compact = async () => {
     if (!chat) return;
@@ -253,7 +295,14 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
   const flip = async (cid: string, to: "done" | "reverted") => {
     const entry = undoFor(cid);
     if (!entry || !chat) return;
-    const text = (await (to === "reverted" ? entry.undo() : entry.redo?.())) ?? "";
+    setActionError(null);
+    let text: string;
+    try {
+      text = (await (to === "reverted" ? entry.undo() : entry.redo?.())) ?? "";
+    } catch (e) {
+      setActionError(`${to === "reverted" ? "Rückgängig" : "Wiederholen"} ging nicht: ${(e as Error).message}`); // the line stays as it was
+      return;
+    }
     const updated = await markAction(chat.id, cid, to, to === "reverted" ? `↶ ${text}` : text).catch(() => null);
     if (updated) setChat(updated);
   };
@@ -393,13 +442,22 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
           if (msg.k === "user")
             return (
               <div key={i} class="agent-msg user" data-testid="agent-msg-user">
+                {(msg.images?.length ?? 0) > 0 && (
+                  <div class="agent-msg-images" data-testid="agent-msg-images">
+                    {msg.images!.map((im) => (
+                      <a key={im.file} href={attachmentUrl(im.file)} target="_blank" rel="noopener noreferrer" title={im.name}>
+                        <img src={attachmentUrl(im.file)} alt={im.name} data-testid="agent-msg-image" />
+                      </a>
+                    ))}
+                  </div>
+                )}
                 {msg.t}
               </div>
             );
           if (msg.k === "agent")
             return (
               <div key={i} class="agent-msg agent" data-testid="agent-msg-agent">
-                {msg.t}
+                <Markdown text={msg.t} />
               </div>
             );
           if (msg.k === "confirm")
@@ -411,8 +469,8 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
                 </div>
                 {msg.details?.length ? (
                   <div class="agent-card-detail mono" data-testid="agent-confirm-detail">
-                    {msg.details.map((d) => (
-                      <div key={d}>{d}</div>
+                    {msg.details.map((d, n) => (
+                      <div key={n}>{d || "\u00a0"}</div>
                     ))}
                   </div>
                 ) : null}
@@ -501,6 +559,11 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
             Der Agent läuft über API-Key, nicht über das Abo.
           </div>
         )}
+        {actionError && (
+          <div class="agent-notice warn small" data-testid="agent-action-error">
+            {actionError}
+          </div>
+        )}
         {hint && chat && (
           <div class="agent-notice warn" data-testid="agent-cold-hint">
             <div>
@@ -519,13 +582,59 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
             </div>
           </div>
         )}
-        <div class="agent-input-row">
+        {(images.length > 0 || uploading > 0 || imageNote) && (
+          <div class="agent-images" data-testid="agent-images">
+            {images.map((im, k) => (
+              <span class="agent-image-chip" key={im.file} title={im.name} data-testid="agent-image-chip">
+                <img src={im.url} alt={im.name} />
+                <button class="agent-image-x" aria-label={`${im.name} entfernen`} onClick={() => setImages(images.filter((_, n) => n !== k))} data-testid="agent-image-remove">
+                  ×
+                </button>
+              </span>
+            ))}
+            {uploading > 0 && (
+              <span class="agent-image-chip loading" data-testid="agent-image-uploading">
+                lädt …
+              </span>
+            )}
+            {imageNote && (
+              <span class="agent-image-note" data-testid="agent-image-note">
+                {imageNote}
+              </span>
+            )}
+          </div>
+        )}
+        <div
+          class={"agent-input-row" + (dropping ? " dropping" : "")}
+          onDragOver={(e) => {
+            if (e.dataTransfer?.types.includes("Files")) {
+              e.preventDefault();
+              setDropping(true);
+            }
+          }}
+          onDragLeave={() => setDropping(false)}
+          onDrop={(e) => {
+            setDropping(false);
+            const files = imagesOf(e.dataTransfer?.files);
+            if (files.length) {
+              e.preventDefault();
+              addFiles(files).catch(() => {});
+            }
+          }}
+        >
           <input
             value={draft}
             disabled={!ready}
             placeholder="Frag oder sag dem Agenten, was er tun soll …"
             data-testid="agent-input"
             onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
+            onPaste={(e) => {
+              const files = imagesOf(e.clipboardData?.files);
+              if (files.length) {
+                e.preventDefault(); // a pasted screenshot is an image to send, not text
+                addFiles(files).catch(() => {});
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.isComposing) {
                 e.preventDefault();
@@ -538,6 +647,22 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
               }
             }}
           />
+          <input
+            ref={fileInput}
+            type="file"
+            accept={IMAGE_TYPES.join(",")}
+            multiple
+            hidden
+            data-testid="agent-file"
+            onChange={(e) => {
+              const input = e.target as HTMLInputElement;
+              addFiles(imagesOf(input.files)).catch(() => {});
+              input.value = "";
+            }}
+          />
+          <button class="agent-attach" disabled={!ready} title="Bild anhängen (auch einfügen oder hineinziehen)" aria-label="Bild anhängen" onClick={() => fileInput.current?.click()} data-testid="agent-attach">
+            <PaperclipIcon />
+          </button>
           <button class="agent-mic" disabled title={MIC_TIP} aria-label="Sprechen (später)" data-testid="agent-mic">
             <MicIcon />
           </button>
@@ -546,7 +671,7 @@ export function AgentLayer({ agent, onChange, context, appRef }: Props) {
               ■
             </button>
           ) : (
-            <button class="agent-send" title="Senden (Enter)" aria-label="Senden (Enter)" disabled={!ready} onClick={send} data-testid="agent-send">
+            <button class="agent-send" title="Senden (Enter)" aria-label="Senden (Enter)" disabled={!ready || uploading > 0} onClick={send} data-testid="agent-send">
               ↑
             </button>
           )}

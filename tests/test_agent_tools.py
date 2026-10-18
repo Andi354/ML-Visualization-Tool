@@ -416,3 +416,68 @@ def test_debug_is_a_setting_of_the_project_next_to_the_mode(client):
     assert overview["mode"] == "confirm" and overview["debug"] is True
     client.put("/api/agent/debug", json={"on": False})
     assert client.get("/api/agent").json()["debug"] is False and client.get("/api/agent").json()["mode"] == "confirm"
+
+
+# --- v0.2.3 · M: set_instructions asks in every mode ----------------------------------------------------------------
+@pytest.fixture(autouse=True)
+def instructions_empty_again(client):
+    yield
+    client.put("/api/agent/instructions", json={"text": ""})
+
+
+@pytest.mark.parametrize("mode", ["direct", "mixed", "confirm"])
+def test_changing_the_instructions_asks_in_every_mode_also_in_direkt(client, runner, chat, mode):
+    set_mode(client, mode)
+    client.put("/api/agent/instructions", json={"text": "Kurz antworten."})
+    c = Call(runner, chat, "set_instructions", {"text": "Kurz antworten.\nTabellen bevorzugen."})
+    card = wait_for_card(client, chat)
+    assert card["t"] == "Projekt-Anweisungen ändern" and card["tool"] == "set_instructions" and not card["save"]
+    assert card["details"] == [
+        "Neuer Text (ersetzt den bisherigen):", "Kurz antworten.", "Tabellen bevorzugen.", "",
+        "Bisher:", "Kurz antworten.", "",
+        "Gilt ab der nächsten Nachricht. Der Cache dieses Chats ist danach einmal kalt.",
+    ]
+    assert all("command" not in i for i in list(c.live.out.queue))  # nothing is done before the click
+    client.post(f"/api/agent/commands/{card['cid']}/decision", json={"approve": False})
+    text, is_error = c.finish()
+    assert "abgelehnt" in text and not is_error
+    assert client.get("/api/agent/instructions").json()["text"] == "Kurz antworten."  # unchanged
+
+
+def test_after_the_click_the_browser_is_asked_and_the_answer_goes_back_to_the_agent(client, runner, chat):
+    set_mode(client, "direct")
+    c = Call(runner, chat, "set_instructions", {"text": "Neu."})
+    card = wait_for_card(client, chat)
+    client.post(f"/api/agent/commands/{card['cid']}/decision", json={"approve": True})
+    cmd = c.next_command()
+    assert cmd["tool"] == "set_instructions" and cmd["args"] == {"text": "Neu."}
+    reply(client, cmd, summary="Projekt-Anweisungen gespeichert · 4 Zeichen", undoable=True)
+    text, is_error = c.finish()
+    assert not is_error and "gespeichert" in text
+    (line,) = messages(client, chat)
+    assert line["k"] == "action" and line["t"] == "Projekt-Anweisungen gespeichert · 4 Zeichen" and not line.get("auto")
+
+
+def test_a_text_over_the_limit_is_an_error_for_the_agent_and_no_card(client, runner, chat):
+    set_mode(client, "direct")
+    runner.live[chat] = ChatRun()
+    text, is_error = runner.call_tool(chat, "set_instructions", {"text": "x" * 4001})
+    assert is_error and "4000" in text and "kürzer" in text
+    assert [m["k"] for m in messages(client, chat)] == ["info"] and messages(client, chat)[0]["error"]
+    text, is_error = runner.call_tool(chat, "set_instructions", {})
+    assert is_error and "text fehlt" in text
+    assert not any(m["k"] == "confirm" for m in messages(client, chat))
+
+
+def test_a_stop_closes_an_open_instructions_card_as_rejected(client, runner, chat):
+    set_mode(client, "direct")
+    c = Call(runner, chat, "set_instructions", {"text": "Neu."})
+    wait_for_card(client, chat)
+    runner._procs[chat] = None  # a request is "running"
+    assert runner.stop(chat)
+    c.finish()
+    runner._procs.pop(chat, None)
+    runner._sweep(chat)
+    (line,) = messages(client, chat)
+    assert line["k"] == "action" and line["rejected"] is True
+    assert client.get("/api/agent/instructions").json()["text"] == ""
