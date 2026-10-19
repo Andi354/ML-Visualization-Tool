@@ -8,24 +8,43 @@ Prototype: follows · Builds on: v0.3.1.1
 | Block | Status |
 |---|---|
 | P · Läufe-Bildschirm | decided (P5 list, P6 issues) |
-| M · Große Läufe im Lauf-Tab: "x von y", mehr laden | running |
+| M · Große Läufe im Lauf-Tab: "x von y", mehr laden | decided (M3 · Seiten) |
 | N · Tab-Menü | open |
 | O · Projektkopf in den Einstellungen | open |
 | Q · Widget-Kopf und Config-Titel (design from v0.2.4) | open |
 
-Running block M: M1 · Knopf am Tabellenende ("Weitere 200 laden", "Bis 1 000 laden"), M2 · automatisch
-beim Scrollen, M3 · Seiten (200 pro Seite); all three in the run tab drawn in the new style
-(`M-Lauf`, a component with prop `mode`). Counter "x von y Kombinationen geladen" in the toolbar in all
-three. Default proposed: the server limit stays 1 000 rows; beyond that the tab asks to filter or group.
-
 Style: the P5/P6 style (graphite, periwinkle accent, rounded shapes) is tried in the remaining blocks;
-whether it becomes the style of the whole tool is decided after them. In the overall prototype only the
+Tim likes it in the run tab too (M). Whether it becomes the style of the whole tool is still to decide. In the overall prototype only the
 two Läufe views use it so far (`L-Liste`, `L-Issues`).
 
 ## Goal
 To be written.
 
 ## Features
+
+### M · Große Läufe im Lauf-Tab
+**What:** The groups table of the run tab is paged. The toolbar always says which rows are shown and
+how many combinations there are; a pager under the table moves through all of them. The run tab is
+drawn in the new style (see P).
+**Behaviour:**
+- Open a run → the table shows the first 200 combinations, sorted as today (primary metric); the
+  toolbar shows "Zeilen 1–200 von 2 592" as a pill (accent tint while not all rows fit on one page,
+  plain when they do).
+- Run with ≤ 200 combinations → no pager; the pill says "n Kombinationen".
+- Under the table → "Seite 1 von 13" on the left, in the middle ‹ 1 2 3 … 13 › (first, last, current
+  and its neighbours, "…" for gaps), on the right "200 pro Seite ▾" with 100 / 200 / 500.
+- Click a page number or ‹ / › → the table shows that page and scrolls to its top; the pill updates.
+- Change sort, filter, grouping or rows per page → back to page 1.
+- The header of the tab also names the size: "2 592 Kombinationen · 31 104 Zellen · n Fehler".
+- The best value of the sort metric stays marked on whichever page it is (it is on page 1 when sorted
+  by that metric).
+**Data:** the groups query takes `offset` next to `limit` (limit 100, 200 or 500); the response keeps
+`groups` (total combinations) so the pill and pager can be drawn. No row cap beyond the page size.
+**In the prototype:** `M-Lauf.dc.html` with `mode` = `pages` (`pages`, `prev`, `next`, `countText`);
+`M3-Seiten` on the canvas. The rest of the run tab (detail panel, overview, notes, deliverable
+dialog) behaves as in `P-Run-03`; only its look follows `M-Lauf`.
+**Rejected:** M1 (button "Weitere 200 laden", cap 1 000) and M2 (load on scroll, cap 1 000): Tim finds
+pages the most flexible, every row stays reachable.
 
 ### P · Läufe-Bildschirm
 **What:** Both views of Läufe get a new, calmer look. The list view shows three overview tiles on top
