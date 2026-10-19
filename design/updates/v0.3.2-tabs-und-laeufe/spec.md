@@ -9,9 +9,15 @@ Prototype: follows · Builds on: v0.3.1.1
 |---|---|
 | P · Läufe-Bildschirm | decided (P5 list, P6 issues) |
 | M · Große Läufe im Lauf-Tab: "x von y", mehr laden | decided (M3 · Seiten) |
-| N · Tab-Menü | open |
+| N · Tab-Menü | running |
 | O · Projektkopf in den Einstellungen | open |
 | Q · Widget-Kopf und Config-Titel (design from v0.2.4) | open |
+| R · Neuer Stil im ganzen Tool | open |
+
+Running block N: N1 · Rechtsklick-Menü (Schließen, Andere, Rechts, Alle, Laufnamen kopieren, In Läufe
+zeigen; undo toast), N2 · N1 plus a "n Tabs ▾" list of all open tabs at the end of the tab row,
+N3 · N1 plus pinning (pinned tabs stay left and survive "Andere/Rechts/Alle schließen"). Component
+`N-Tabs` with prop `variant`; tabs wrap below the search row as built in v0.3.1.1.
 
 Style: the P5/P6 style (graphite, periwinkle accent, rounded shapes) is tried in the remaining blocks;
 Tim likes it in the run tab too (M). Whether it becomes the style of the whole tool is still to decide. In the overall prototype only the
