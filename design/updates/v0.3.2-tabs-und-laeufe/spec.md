@@ -10,9 +10,14 @@ Prototype: follows · Builds on: v0.3.1.1
 | P · Läufe-Bildschirm | decided (P5 list, P6 issues) |
 | M · Große Läufe im Lauf-Tab: "x von y", mehr laden | decided (M3 · Seiten) |
 | N · Tab-Menü | decided (N3: menu + pinning) |
-| O · Projektkopf in den Einstellungen | open |
+| O · Projektkopf in den Einstellungen | running |
 | Q · Widget-Kopf und Config-Titel (design from v0.2.4) | open |
 | R · Neuer Stil im ganzen Tool | open |
+
+Running block O: O1 · rows Anzeigename, Kürzel, Farbe under Einstellungen › Läufe & Experiment › Projekt
+with a preview card and "Aus project.yaml"; O2 · O1 plus a popover at the project symbol in the rail;
+O3 · O1 plus an own image instead of the letters. Component `O-Projekt` with prop `variant`. Values are
+display only, stored in `.mlviz/settings.json`, empty = from `project.yaml`.
 
 Style: the P5/P6 style (graphite, periwinkle accent, rounded shapes) is tried in the remaining blocks;
 Tim likes it in the run tab (M) and the tab row (N); it becomes the style of the whole tool (feature R).
