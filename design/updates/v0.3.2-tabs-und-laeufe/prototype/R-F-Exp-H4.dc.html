@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>H4 · Rahmen-Inhalt · neuer Stil</title>
+<script src="./support.js"></script>
+<script src="./R-exp-data.js"></script>
+<script src="./R-desc-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+*{scrollbar-width:thin;scrollbar-color:#34343C transparent}*::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{background:#34343C;border-radius:6px;border:3px solid transparent;background-clip:padding-box}*::-webkit-scrollbar-thumb:hover{background:#45454F;background-clip:padding-box}
+body{margin:0;background:#131315}
+input[type=checkbox]{accent-color:#8AA4FF;margin:0;width:14px;height:14px}
+input[type=search]{font:400 12px 'IBM Plex Sans',sans-serif;color:#EEEEF1;background:#131315;border:1px solid #2E2E35;border-radius:8px;padding:6px 8px;width:100%;box-sizing:border-box}
+button:focus-visible,input:focus-visible{outline:2px solid #8AA4FF;outline-offset:1px}
+</style>
+</helmet>
+<div style="width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; background: #131315; color: #EEEEF1; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px;">
+<div style="flex-shrink: 0; min-height: 48px; box-sizing: border-box; padding: 8px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-bottom: 1px solid #2E2E35;">
+<a onClick="{{toRuns}}" style="cursor: pointer; color: #B0B0BA;">Läufe</a><span style="color: #7C7C87;">/</span><span style="font-family: 'IBM Plex Mono', monospace;">{{runName}}</span>
+<span style="flex: 1;"></span>
+<span style="display: flex; padding: 2px; gap: 2px; background: #1C1C20; border: 1px dashed #45454F; border-radius: 9px;" title="nur im Prototyp"><sc-for list="{{demoModes}}" as="d" hint-placeholder-count="3"><button onClick="{{d.on}}" style="{{d.st}}">{{d.label}}</button></sc-for></span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #B0B0BA; padding: 3px 8px; border: 1px solid #2E2E35; border-radius: 8px;">Epoche eval-all-windows</span>
+</div>
+<div style="flex: 1; min-height: 0; display: flex;">
+<aside style="flex: 0 0 270px; height: 100%; overflow-y: auto; box-sizing: border-box; padding: 14px 14px 20px; display: flex; flex-direction: column; gap: 14px; background: #1C1C20; border-right: 1px solid #2E2E35;">
+<input type="search" placeholder="Achse oder Wert suchen" aria-label="Achse oder Wert suchen" value="{{q}}" onChange="{{onQ}}">
+<sc-for list="{{sections}}" as="sec" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; align-items: center; padding: 0 6px 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #7C7C87;"><span style="flex: 1;">{{sec.name}}</span><span>{{sec.count}}</span></div>
+<sc-for list="{{sec.items}}" as="a" hint-placeholder-count="2">
+<div style="{{a.boxSt}}">
+<button style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px; background: transparent; border: 0; color: #EEEEF1; cursor: pointer; font: 400 12px 'IBM Plex Mono', monospace; text-align: left;" onClick="{{a.toggleOpen}}" aria-expanded="{{a.open}}">
+<span style="width: 10px; color: #7C7C87; font-size: 10px;">{{a.caret}}</span>
+<span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{a.key}}</span>
+<span style="{{a.stateSt}}">{{a.state}}</span>
+</button>
+<sc-if value="{{a.open}}" hint-placeholder-val="{{false}}">
+<div style="padding: 2px 6px 8px 24px; display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; padding: 2px; gap: 2px; background: #131315; border: 1px solid #2E2E35; border-radius: 9px;">
+<sc-for list="{{a.modes}}" as="m" hint-placeholder-count="2"><button style="{{m.st}}" onClick="{{m.on}}">{{m.label}}</button></sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px;">
+<sc-for list="{{a.vals}}" as="v" hint-placeholder-count="3">
+<label style="display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #B0B0BA; cursor: pointer;"><input type="checkbox" checked="{{v.on}}" onChange="{{v.toggle}}"><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{v.label}}</span><span style="font-size: 11px; color: #7C7C87;">{{v.n}}</span></label>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-for>
+<sc-if value="{{konst.show}}" hint-placeholder-val="{{true}}">
+<div style="margin-top: auto; border: 1px solid #2E2E35; border-radius: 12px; background: #161618;">
+<button style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; background: transparent; border: 0; cursor: pointer; font: 500 12px 'IBM Plex Sans', sans-serif; color: #B0B0BA; text-align: left;" onClick="{{konst.toggle}}" aria-expanded="{{konst.open}}">
+<span style="width: 10px; font-size: 10px; color: #7C7C87;">{{konst.caret}}</span>
+<span style="flex: 1;">Konstante Werte</span>
+<span style="font: 400 11px 'IBM Plex Mono', monospace; color: #7C7C87; padding: 1px 6px; border-radius: 7px; background: #24242A;">{{konst.count}}</span>
+</button>
+<sc-if value="{{konst.open}}" hint-placeholder-val="{{false}}">
+<div style="padding: 2px 12px 12px 28px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #2E2E35;">
+<sc-for list="{{konst.blocks}}" as="cb" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 3px; padding-top: 8px;">
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #7C7C87;">{{cb.name}}</div>
+<sc-for list="{{cb.rows}}" as="cr" hint-placeholder-count="3">
+<div style="display: flex; align-items: baseline; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;"><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #B0B0BA;">{{cr.k}}</span><span style="color: #EEEEF1; white-space: nowrap;">{{cr.v}}</span></div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</aside>
+<main style="flex: 1 1 0; min-width: 0; height: 100%; overflow: auto; position: relative;">
+<sc-if value="{{desc.has}}" hint-placeholder-val="{{true}}">
+<div style="flex-shrink: 0; border-bottom: 1px solid #2E2E35; background: #18181B; padding: 10px 24px; display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; align-items: baseline; gap: 10px; cursor: pointer;" onClick="{{toggleDesc}}"><span style="font-size: 11px; color: #7C7C87; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;">Beschreibung</span><span style="font-size: 13px; color: #C8C8D0; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{desc.short}}</span><span style="font-size: 12px; color: #8AA4FF; white-space: nowrap;">{{descToggleLabel}}</span></div>
+<sc-if value="{{descOpen}}" hint-placeholder-val="{{true}}">
+<sc-if value="{{desc.hasProblems}}" hint-placeholder-val="{{false}}"><div style="display: flex; gap: 8px; align-items: baseline; padding: 7px 10px; border: 1px solid #5A4420; background: #2E2414; border-radius: 9px; color: #F0B44C; font-size: 12px;"><span style="font-weight: 600; white-space: nowrap;">Beschreibung unvollständig:</span><span>{{probText}}</span></div></sc-if>
+<div style="{{descGridSt}}">
+<sc-for list="{{desc.sections}}" as="s" hint-placeholder-count="3"><div style="{{s.cellSt}}"><div style="font-size: 11px; color: #7C7C87; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px;">{{s.label}}</div><sc-if value="{{s.isText}}"><sc-for list="{{s.paras}}" as="p" hint-placeholder-count="1"><p style="margin: 0 0 6px; line-height: 1.5; color: #EEEEF1;">{{p.t}}</p></sc-for></sc-if><sc-if value="{{s.isList}}"><ul style="margin: 0; padding-left: 18px; line-height: 1.5; color: #EEEEF1;"><sc-for list="{{s.items}}" as="i" hint-placeholder-count="2"><li style="margin-bottom: 2px;">{{i.t}}</li></sc-for></ul></sc-if></div></sc-for>
+</div>
+<sc-if value="{{desc.hasCompare}}" hint-placeholder-val="{{true}}"><div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;"><span style="font-size: 11px; color: #7C7C87; text-transform: uppercase; letter-spacing: .05em; margin-right: 4px;">Vergleichen mit</span><sc-for list="{{desc.compare}}" as="c" hint-placeholder-count="2"><a onClick="{{c.on}}" title="{{c.title}}" style="{{c.st}}">{{c.name}}</a></sc-for></div></sc-if>
+</sc-if>
+</div>
+</sc-if>
+<div style="padding: 8px 24px; display: flex; align-items: baseline; gap: 10px; cursor: pointer; border-bottom: 1px solid #2E2E35; background: #161618;" onClick="{{ovToggle}}"><span style="font-size: 11px; color: #7C7C87; text-transform: uppercase; letter-spacing: .05em;">Überblick</span><span style="font-size: 12px; color: #7C7C87; flex: 1;">{{ovHint}}</span><span style="font-size: 12px; color: #8AA4FF;">{{ovToggleLabel}}</span></div>
+<sc-if value="{{overview}}" hint-placeholder-val="{{true}}">
+<div style="flex-shrink: 0; padding: 12px 24px; display: flex; gap: 10px; overflow-x: auto; border-bottom: 1px solid #2E2E35; background: #161618;">
+<sc-for list="{{cards}}" as="cd" hint-placeholder-count="5">
+<div style="flex: 0 0 230px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; background: #1C1C20; border: 1px solid #2E2E35; border-radius: 12px;">
+<div style="display: flex; align-items: baseline; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;"><span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{cd.key}}</span><span style="font-size: 11px; color: #7C7C87;">{{cd.spread}}</span></div>
+<sc-for list="{{cd.rows}}" as="r" hint-placeholder-count="3">
+<button style="{{r.st}}" onClick="{{r.on}}" aria-label="{{r.aria}}"><span style="width: 64px; flex-shrink: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.label}}</span><span style="position: relative; flex: 1; height: 14px;"><span style="position: absolute; left: 0; right: 0; top: 7px; height: 1px; background: #2E2E35;"></span><span style="{{r.whisker}}"></span><span style="{{r.dot}}"></span></span><span style="{{r.valSt}}">{{r.val}}</span></button>
+</sc-for>
+</div>
+</sc-for>
+<div style="flex: 0 0 230px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: #1C1C20; border: 1px solid #2E2E35; border-radius: 12px;">
+<div style="font-size: 12px; color: #B0B0BA;">{{histTitle}}</div>
+<div style="flex: 1; min-height: 60px; display: flex; align-items: flex-end; gap: 2px;" role="img" aria-label="{{histTitle}}"><sc-for list="{{bins}}" as="b" hint-placeholder-count="14"><div style="{{b.st}}"></div></sc-for></div>
+<div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #7C7C87;"><span style="color: #5FD4A0;">{{histLo}}</span><span>{{histHi}}</span></div>
+</div>
+</div>
+</sc-if>
+<div style="position: sticky; top: 0; z-index: 6; height: 49px; box-sizing: border-box; padding: 0 24px; display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; border-bottom: 1px solid #2E2E35; background: #131315;">
+<button style="{{ovBtn.st}}" onClick="{{ovBtn.on}}" aria-pressed="{{overview}}">Überblick</button>
+<div style="position: relative;">
+<button style="font: 400 13px 'IBM Plex Sans', sans-serif; color: #EEEEF1; background: #24242A; border: 1px solid #2E2E35; border-radius: 8px; padding: 5px 10px; cursor: pointer;" onClick="{{toggleCols}}" aria-expanded="{{colsOpen}}">Spalten <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #B0B0BA; background: #131315; border-radius: 7px; padding: 1px 5px; margin-left: 4px;">{{colCount}}</span> <span style="color: #7C7C87;">▾</span></button>
+<sc-if value="{{colsOpen}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: 280px; max-height: 520px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; background: #24242A; border: 1px solid #3A4166; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+<sc-for list="{{colGroups}}" as="g" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<div style="font-size: 12px; color: #7C7C87;">{{g.name}}</div>
+<sc-for list="{{g.items}}" as="i" hint-placeholder-count="3">
+<label style="display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; cursor: pointer;"><input type="checkbox" checked="{{i.on}}" onChange="{{i.toggle}}"><span style="flex: 1;">{{i.label}}</span><span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 11px; color: #7C7C87;">{{i.tag}}</span></label>
+</sc-for>
+</div>
+</sc-for>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<div style="font-size: 12px; color: #7C7C87;">± sd</div>
+<div style="display: flex; padding: 2px; gap: 2px; background: #131315; border: 1px solid #2E2E35; border-radius: 9px;">
+<sc-for list="{{sdModes}}" as="m" hint-placeholder-count="3"><button style="{{m.st}}" onClick="{{m.on}}">{{m.label}}</button></sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="2">
+<button style="font: 400 12px 'IBM Plex Mono', monospace; color: #EEEEF1; background: transparent; border: 1px solid #2E2E35; border-radius: 12px; padding: 3px 10px; cursor: pointer;" onClick="{{c.on}}">{{c.label}} <span style="color: #7C7C87;">×</span></button>
+</sc-for>
+<span style="flex: 1;"></span>
+<span style="color: #B0B0BA;">{{summary}}</span>
+</div>
+<div style="padding: 0 24px 16px;">
+<table style="border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 100%;">
+<thead style="position: sticky; top: 49px; z-index: 5; background: #131315; box-shadow: 0 1px 0 #2E2E35;">
+<tr>
+<sc-for list="{{groupHeads}}" as="g" hint-placeholder-count="2"><th colspan="{{g.span}}" style="{{g.st}}">{{g.label}}</th></sc-for>
+</tr>
+<tr>
+<sc-for list="{{cols}}" as="h" hint-placeholder-count="6"><th style="{{h.st}}"><button style="font: inherit; color: inherit; background: transparent; border: 0; padding: 0; cursor: pointer;" onClick="{{h.on}}">{{h.label}} <span style="color: #8AA4FF;">{{h.arrow}}</span></button></th></sc-for>
+</tr>
+</thead>
+<tbody style="font-family: 'IBM Plex Mono', monospace;">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+<tr onClick="{{r.open}}" style="{{r.trSt}}"><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="6"><td style="{{c.st}}"><sc-if value="{{c.best}}" hint-placeholder-val="{{false}}"><span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 10px; padding: 0 5px; margin-right: 6px; border: 1px solid #245A45; border-radius: 7px;">Bestwert</span></sc-if>{{c.t}}<sc-if value="{{c.hasSub}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; color: #7C7C87; font-weight: 400;">{{c.sub}}</div></sc-if></td></sc-for></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":800},"run":{"editor":null},"openRun":{"editor":null},"setView":{"editor":null},"onRow":{"editor":null},"selKey":{"editor":null},"embedded":{"editor":null}}'>
+class Component extends DCLogic {
+renderVals() {
+  const P = this.props || {};
+  if (P.run) window.ExpData.useRun(P.run);
+  const E = window.ExpData;
+  const st = this.state || {};
+  const set = (p) => this.setState(p);
+  const dims = st.dims || {};
+  const D = (k, def) => Object.assign({ mode: def, sel: [] }, dims[k] || {});
+  const upd = (k, def, patch) => { const d = Object.assign({}, dims); d[k] = Object.assign(D(k, def), patch); set({ dims: d }); };
+  const openMap = st.open || {};
+  const q = (st.q || '').toLowerCase();
+  const visM = st.visM || { test_mape_real: true, test_mae_real: true, test_commitment_cost: false, test_mse_missing: false };
+  const extra = st.extra || { n: true, min: false, max: false, status: true };
+  const sdMode = st.sd || 'under';
+  const sortKey = st.sort || 'test_mape_real';
+  const dir = st.dir || 1;
+  const overview = st.overview !== false;
+  const colsOpen = !!st.colsOpen;
+
+  const DIMDEF = E.AX.map((a) => ({ key: a.key, sec: a.block, values: a.values, def: 'split' }))
+    .concat([{ key: 'shuffle_seed', sec: 'Wiederholungen', values: E.SEEDS, def: 'agg' }, { key: 'cv_fold', sec: 'Wiederholungen', values: E.FOLDS, def: 'agg' },
+      { key: 'channel', sec: 'Kanäle', values: E.CH, def: 'agg' }]);
+  const split = [], filter = {};
+  DIMDEF.forEach((d) => { const s = D(d.key, d.def); if (s.mode === 'split') split.push(d.key); if (s.sel.length) filter[d.key] = s.sel; });
+  const res = E.aggregate({ split, filter });
+  const rows = E.sortRows(res.rows, sortKey, dir);
+  let best = null;
+  rows.forEach((r) => { const v = r.m[sortKey].mean; if (v !== null && (best === null || v < best)) best = v; });
+
+  // sidebar
+  const segOn = "flex: 1; font: 500 12px 'IBM Plex Sans', sans-serif; color: #EEEEF1; background: #24242A; border: 0; border-radius: 7px; padding: 4px 6px; cursor: pointer;";
+  const segOff = "flex: 1; font: 400 12px 'IBM Plex Sans', sans-serif; color: #7C7C87; background: transparent; border: 0; border-radius: 7px; padding: 4px 6px; cursor: pointer;";
+  const SECS = ['data', 'model', 'train', 'Wiederholungen', 'Kanäle'];
+  const sections = SECS.map((name) => {
+    const items = DIMDEF.filter((d) => d.sec === name)
+      .filter((d) => !q || d.key.toLowerCase().indexOf(q) >= 0 || d.values.some((v) => v.toLowerCase().indexOf(q) >= 0))
+      .map((d) => {
+        const s = D(d.key, d.def);
+        const open = !!openMap[d.key] || (!!q && d.values.some((v) => v.toLowerCase().indexOf(q) >= 0));
+        const selTxt = s.sel.length ? (s.sel.length === 1 ? '= ' + s.sel[0] : s.sel.length + ' von ' + d.values.length) : '';
+        const state = s.mode === 'split' ? (selTxt || 'geteilt') : ('Ø' + (selTxt ? ' · ' + selTxt : ''));
+        return {
+          key: d.key, open, caret: open ? '▾' : '▸', state,
+          stateSt: "font: 400 11px 'IBM Plex Mono', monospace; padding: 1px 6px; border-radius: 7px; white-space: nowrap; " + (s.mode === 'split' ? 'color: #8AA4FF; background: #262B42;' : 'color: #B0B0BA; background: #24242A;'),
+          boxSt: 'border-radius: 9px;' + (open ? ' background: #1F1F24;' : ''),
+          toggleOpen: () => { const o = Object.assign({}, openMap); o[d.key] = !open; set({ open: o }); },
+          modes: [
+            { label: d.key === 'channel' ? 'je Kanal' : 'Teilen', st: s.mode === 'split' ? segOn : segOff, on: () => upd(d.key, d.def, { mode: 'split' }) },
+            { label: d.key === 'channel' ? 'gesamt' : 'Ø mitteln', st: s.mode === 'agg' ? segOn : segOff, on: () => upd(d.key, d.def, { mode: 'agg' }) }
+          ],
+          vals: d.values.map((v) => ({ label: v, n: E.fmt(E.count(d.key, v) || (d.key === 'channel' ? E.cells().length : 0), 0), on: s.sel.indexOf(v) >= 0,
+            toggle: () => { const sel = s.sel.slice(); const i = sel.indexOf(v); if (i >= 0) sel.splice(i, 1); else sel.push(v); upd(d.key, d.def, { sel }); } }))
+        };
+      });
+    return { name, count: String(items.length), items, isAxes: true, isConst: false };
+  }).filter((s) => s.items.length);
+  const CONST = {
+    data: [['pred_len', '30'], ['seq_len', '360'], ['target', 'vm_usage'], ['test_quarters', '4'], ['calendar_mode', 'daily']],
+    model: [['forecaster', 'repnet'], ['encoding_size', '64'], ['representation_module', 'conv']],
+    train: [['weight_decay', '0.0001'], ['loss_function_forecasting', 'mse'], ['calc_real', 'true'], ['calc_per_channel', 'true']]
+  };
+  const hit = (k, v) => !q || k.toLowerCase().indexOf(q) >= 0 || v.toLowerCase().indexOf(q) >= 0;
+  const constBlocks = ['data', 'model', 'train'].map((b) => ({ name: b, rows: CONST[b].filter(([k, v]) => hit(k, v)).map(([k, v]) => ({ k, v })) })).filter((b) => b.rows.length);
+  const constN = constBlocks.reduce((a, b) => a + b.rows.length, 0);
+  const constOpen = !!st.constOpen || (!!q && constN > 0);
+  const konst = { show: constN > 0, count: String(constN), open: constOpen, caret: constOpen ? '▾' : '▸', blocks: constBlocks, toggle: () => set({ constOpen: !constOpen }) };
+
+  // chips: everything not at default
+  const chips = [];
+  DIMDEF.forEach((d) => {
+    const s = D(d.key, d.def);
+    if (s.mode !== d.def) chips.push({ label: (s.mode === 'agg' ? 'Ø ' : 'geteilt: ') + d.key, on: () => upd(d.key, d.def, { mode: d.def }) });
+    if (s.sel.length) chips.push({ label: d.key + ' ∈ ' + s.sel.join(', '), on: () => upd(d.key, d.def, { sel: [] }) });
+  });
+
+  // columns
+  const th = "position: sticky; top: 0; z-index: 2; background: #131315; padding: 8px 10px; border-bottom: 1px solid #2E2E35; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 400; color: #7C7C87; white-space: nowrap;";
+  const gth = "padding: 10px 10px 2px; font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; font-weight: 500; color: #B0B0BA; text-align: left; white-space: nowrap;";
+  const visMetrics = E.METRICS.filter((m) => visM[m.key]);
+  const cols = [];
+  split.forEach((k) => cols.push({ label: k, arrow: '', st: th + ' text-align: left;', on: () => {} }));
+  const paramSpan = cols.length;
+  visMetrics.forEach((m) => {
+    cols.push({ label: m.label, arrow: sortKey === m.key ? (dir === 1 ? '↑' : '↓') : '', st: th + ' text-align: right;' + (sortKey === m.key ? ' color: #EEEEF1;' : ''),
+      on: () => set({ sort: m.key, dir: sortKey === m.key ? -dir : 1 }) });
+    if (sdMode === 'col') cols.push({ label: '± sd', arrow: '', st: th + ' text-align: right;', on: () => {} });
+  });
+  if (extra.min) cols.push({ label: 'min', arrow: '', st: th + ' text-align: right;', on: () => {} });
+  if (extra.max) cols.push({ label: 'max', arrow: '', st: th + ' text-align: right;', on: () => {} });
+  if (extra.n) cols.push({ label: 'n', arrow: '', st: th + ' text-align: right;', on: () => {} });
+  if (extra.status) cols.push({ label: 'Status', arrow: '', st: th + ' text-align: left;', on: () => {} });
+  const groupHeads = [{ label: 'Parameter (' + split.length + ')', span: Math.max(1, paramSpan), st: gth }, { label: 'Metriken (' + visMetrics.length + '/' + E.METRICS.length + ')', span: Math.max(1, cols.length - paramSpan), st: gth + ' border-left: 1px solid #2E2E35;' }];
+
+  const td = 'padding: 7px 10px; border-bottom: 1px solid #2E2E35; white-space: nowrap; vertical-align: top;';
+  const sk = E.metric(sortKey);
+  const LIMIT = 200;
+  const shown = rows.slice(0, LIMIT).map((r) => {
+    const cells = split.map((k) => ({ t: r.parts[k], st: td }));
+    visMetrics.forEach((m) => {
+      const v = r.m[m.key];
+      const isBest = m.key === sortKey && v.mean !== null && v.mean === best;
+      cells.push({ t: E.fmt(v.mean, m.d), best: isBest, hasSub: sdMode === 'under' && v.sd !== null, sub: '± ' + E.fmt(v.sd, m.d),
+        st: td + ' text-align: right;' + (isBest ? ' color: #5FD4A0; font-weight: 500;' : '') });
+      if (sdMode === 'col') cells.push({ t: v.sd === null ? '–' : '±' + E.fmt(v.sd, m.d), st: td + ' text-align: right; color: #7C7C87;' });
+    });
+    if (extra.min) cells.push({ t: E.fmt(r.m[sortKey].min, sk.d), st: td + ' text-align: right; color: #B0B0BA;' });
+    if (extra.max) cells.push({ t: E.fmt(r.m[sortKey].max, sk.d), st: td + ' text-align: right; color: #B0B0BA;' });
+    if (extra.n) cells.push({ t: String(r.n), st: td + ' text-align: right; color: ' + (r.err ? '#F0B44C' : '#B0B0BA') + ';' });
+    if (extra.status) cells.push(r.err ? { t: r.err + ' Fehler', st: td + ' color: #FF6B6B;' } : { t: 'ok', st: td + ' color: #7C7C87;' });
+    const key = JSON.stringify(r.parts), on = P.selKey === key;
+    return { cells, open: () => P.onRow && P.onRow({ key, parts: r.parts, m: r.m, n: r.n, err: r.err }),
+      trSt: (P.onRow ? 'cursor: pointer;' : '') + (on ? ' background: #222330; box-shadow: inset 3px 0 0 #8AA4FF;' : '') };
+  });
+
+  const colGroups = [
+    { name: 'Metriken', items: E.METRICS.map((m) => ({ label: m.key, tag: m.fam, on: !!visM[m.key], toggle: () => { const o = Object.assign({}, visM); o[m.key] = !o[m.key]; set({ visM: o }); } })) },
+    { name: 'Statistik', items: [['n', 'Anzahl Zellen'], ['min', 'Sortiermetrik'], ['max', 'Sortiermetrik'], ['status', 'Fehler']].map(([k, tag]) => ({ label: k, tag, on: !!extra[k], toggle: () => { const o = Object.assign({}, extra); o[k] = !o[k]; set({ extra: o }); } })) }
+  ];
+  const colCount = (visMetrics.length + Object.keys(extra).filter((k) => extra[k]).length + (sdMode === 'off' ? 0 : 1)) + '/' + (E.METRICS.length + 5);
+  const sdModes = [['under', 'unter Wert'], ['col', 'eigene Spalte'], ['off', 'aus']].map(([k, l]) => ({ label: l, st: sdMode === k ? segOn : segOff, on: () => set({ sd: k }) }));
+
+  // overview
+  let cards = [], bins = [], histLo = '', histHi = '';
+  if (overview) {
+    const chFilter = Object.assign({}, filter);
+    const margs = E.AX.map((a) => a.key).concat(['channel']).map((k) => {
+      const rs = E.aggregate({ split: [k], filter: chFilter }).rows.filter((r) => r.m[sortKey].mean !== null);
+      const ms = rs.map((r) => r.m[sortKey].mean);
+      return { k, rs, spread: Math.max.apply(null, ms) - Math.min.apply(null, ms), best: Math.min.apply(null, ms) };
+    });
+    let lo = null, hi = null;
+    margs.forEach((m) => m.rs.forEach((r) => { const v = r.m[sortKey]; if (lo === null || v.mean - v.sd < lo) lo = v.mean - v.sd; if (hi === null || v.mean + v.sd > hi) hi = v.mean + v.sd; }));
+    const span = (hi - lo) || 1;
+    const pos = (x) => ((x - lo) / span * 100).toFixed(1) + '%';
+    margs.sort((a, b) => b.spread - a.spread);
+    cards = margs.map((m) => ({ key: m.k, spread: 'Spanne ' + E.fmt(m.spread, sk.d), rows: m.rs.map((r) => {
+      const v = r.m[sortKey], val = r.parts[m.k], isB = v.mean === m.best;
+      return { label: val, val: E.fmt(v.mean, sk.d), aria: m.k + ' = ' + val,
+        st: "display: flex; align-items: center; gap: 8px; width: 100%; font: 400 11px 'IBM Plex Mono', monospace; color: #EEEEF1; background: transparent; border: 0; padding: 2px 0; cursor: pointer;",
+        whisker: 'position: absolute; top: 6px; height: 3px; border-radius: 2px; background: #45454F; left: ' + pos(v.mean - v.sd) + '; width: ' + ((2 * v.sd) / span * 100).toFixed(1) + '%;',
+        dot: 'position: absolute; top: 3px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; box-shadow: 0 0 0 2px #1C1C20; background: ' + (isB ? '#5FD4A0' : '#1FA3A3') + '; left: ' + pos(v.mean) + ';',
+        valSt: 'width: 40px; text-align: right; ' + (isB ? 'color: #5FD4A0;' : 'color: #B0B0BA;'),
+        on: () => { const dd = DIMDEF.find((x) => x.key === m.k); upd(m.k, dd.def, { sel: [val] }); } };
+    }) }));
+    const all = E.aggregate({ split: E.AX.map((a) => a.key), filter }).rows.map((r) => r.m[sortKey].mean).filter((v) => v !== null);
+    const hlo = Math.min.apply(null, all), hhi = Math.max.apply(null, all), NB = 14, w = (hhi - hlo) / NB || 1;
+    const cnt = new Array(NB).fill(0);
+    all.forEach((v) => { cnt[Math.min(NB - 1, Math.floor((v - hlo) / w))]++; });
+    const cm = Math.max.apply(null, cnt) || 1;
+    bins = cnt.map((c, i) => ({ st: 'flex: 1; border-radius: 2px 2px 0 0; background: ' + (i === 0 ? '#5FD4A0' : '#1FA3A3') + '; height: ' + (c / cm * 100).toFixed(1) + '%;' }));
+    histLo = 'best ' + E.fmt(hlo, sk.d); histHi = E.fmt(hhi, sk.d);
+  }
+
+  const demo = st.demo || 'full';
+  const DD = window.DescData ? window.DescData.view(demo, P.openRun) : { has: false, none: true, short: '', sections: [], problems: [], hasProblems: false, compare: [], hasCompare: false };
+  const open = st.descOpen === undefined ? true : st.descOpen;
+  DD.sections.forEach((s) => { s.cellSt = s.key === 'purpose' ? '' : ''; });
+  const demoModes = [['full', 'mit Beschreibung'], ['problems', 'mit Problemen'], ['none', 'ohne']].map(([k, l]) => ({ label: l, on: () => set({ demo: k }),
+    st: "font: 400 11px 'IBM Plex Sans', sans-serif; border: 0; border-radius: 7px; padding: 3px 8px; cursor: pointer; background: " + (demo === k ? '#24242A' : 'transparent') + '; color: ' + (demo === k ? '#EEEEF1' : '#7C7C87') + ';' }));
+  return {
+    demoModes,
+    ovToggle: () => set({ overview: !overview }), ovToggleLabel: overview ? 'zuklappen ▴' : 'aufklappen ▾', ovHint: overview ? '' : 'Verteilung je Achse, Klick auf einen Wert filtert',
+    desc: DD, descOpen: open, toggleDesc: () => set({ descOpen: !open }), descToggleLabel: open ? 'zuklappen ▴' : 'aufklappen ▾',
+    descGridSt: 'display: grid; grid-template-columns: minmax(0, 1.5fr)' + ' minmax(0, 1fr)'.repeat(Math.max(0, DD.sections.length - 1)) + '; gap: 24px; font-size: 13px;',
+    probText: DD.problems.map((x) => x.t).join(' · '),
+    toRuns: () => P.setView && P.setView('runs'), runName: P.run || '2026-10-14_0900_BEISPIEL_grid',
+    q: st.q || '', onQ: (e) => set({ q: e.target.value }),
+    sections, konst, chips, cols, groupHeads, rows: shown,
+    overview, colsOpen, colGroups, colCount, sdModes,
+    toggleCols: () => set({ colsOpen: !colsOpen }),
+    ovBtn: { st: "font: 400 13px 'IBM Plex Sans', sans-serif; border-radius: 8px; padding: 5px 10px; cursor: pointer; " + (overview ? 'color: #8AA4FF; background: #262B42; border: 1px solid #3A4166;' : 'color: #EEEEF1; background: #24242A; border: 1px solid #2E2E35;'), on: () => set({ overview: !overview }) },
+    summary: E.fmt(rows.length, 0) + (split.indexOf('channel') >= 0 ? ' Zeilen' : ' Gruppen') + ' · ' + E.fmt(res.used, 0) + ' Zellen · sortiert über alle',
+    cards, bins, histLo, histHi, histTitle: 'Alle Gruppen nach ' + sk.label
+  };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>J4 · Config als YAML · neuer Stil</title>
+<script src="./support.js"></script>
+<script src="./R-cfg-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+*{scrollbar-width:thin;scrollbar-color:#34343C transparent}*::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{background:#34343C;border-radius:6px;border:3px solid transparent;background-clip:padding-box}*::-webkit-scrollbar-thumb:hover{background:#45454F;background-clip:padding-box}
+body{margin:0;background:#131315}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,a:focus-visible{outline:2px solid #8AA4FF;outline-offset:1px}
+.card{background:#1C1C20;border:1px solid #2E2E35;border-radius:12px;padding:14px 16px;box-sizing:border-box;min-width:0}
+.ct{font-weight:600;font-size:13px;margin:0 0 2px}
+.cs{font-size:12px;color:#7C7C87;margin:0 0 12px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.chip{font:400 12px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:7px;border:1px solid #2E2E35;background:#24242A;color:#B0B0BA;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 100%; height: {{rootH}}; box-sizing: border-box; display: flex; flex-direction: column; background: #161618; color: #EEEEF1; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden;">
+<div style="flex-shrink: 0; padding: 14px 18px 12px; border-bottom: 1px solid #2E2E35; background: #1C1C20; {{topHide}}">
+<div style="display: flex; align-items: center; gap: 8px;"><span style="font-weight: 600;">Config dieser Kombination</span><span style="flex: 1;"></span><button onClick="{{foldAll}}" style="font: 500 11px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 8px; padding: 3px 9px; border: 1px solid #2E2E35; background: transparent; color: #B0B0BA;">{{foldLabel}}</button><button onClick="{{copy}}" style="font: 500 11px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 8px; padding: 3px 9px; border: 1px solid #2E2E35; background: transparent; color: #B0B0BA;">{{copyLabel}}</button></div>
+<div class="mono" style="font-size: 11px; color: #7C7C87; margin-top: 4px;">{{file}}</div>
+<div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; font-size: 11px; color: #7C7C87;"><span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #262B42; border: 1px solid #3A4166;"></span>im Grid variiert</span><span style="display: flex; align-items: center; gap: 5px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #F0B44C;"></span>weicht von base.yaml ab</span><span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 2px; border: 1px dashed #45454F;"></span>Wiederholungen</span></div>
+</div>
+
+<div style="flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 10px 18px; border-bottom: 1px solid #2E2E35;"><span style="font-size: 11px; color: #8AA4FF; margin-right: 4px;">Im Grid</span><sc-for list="{{sweptTop}}" as="s" hint-placeholder-count="4"><span class="mono" style="font-size: 11px; padding: 1px 6px; border-radius: 7px; background: #262B42; border: 1px solid #3A4166; color: #EEEEF1;">{{s}}</span></sc-for></div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 10px 0 {{padB}};">
+<div style="display: flex; flex-direction: column; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.75;">
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="30">
+<div style="{{l.st}}" onClick="{{l.toggle}}"><span style="width: 34px; flex-shrink: 0; text-align: right; padding-right: 12px; color: #5A5A66; user-select: none;">{{l.no}}</span><span style="{{l.codeSt}}">{{l.arrow}}{{l.key}}<span style="color: #7C7C87;">{{l.colon}}</span><span style="{{l.valSt}}">{{l.val}}</span></span><span style="{{l.noteSt}}">{{l.note}}</span></div>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":680,"height":900},"embedded":{"editor":null}}'>
+class Component extends DCLogic {
+renderVals() {
+  const C = window.CfgData, st = this.state || {}, set = (p) => this.setState(p), P = this.props || {}, closed = st.closed || (P.embedded ? Object.assign({}, ...C.blocks.map((b) => ({ [b.block]: true }))) : {});
+  const lines = [];
+  let no = 0;
+  const row = (bg, border) => 'display: flex; align-items: baseline; gap: 0; padding: 0 18px 0 0; ' + (bg ? 'background: ' + bg + ';' : '') + (border ? ' box-shadow: inset 3px 0 0 ' + border + ';' : '');
+  C.blocks.forEach((b) => {
+    const open = !closed[b.block];
+    no++;
+    lines.push({ no: String(no), arrow: open ? '▾ ' : '▸ ', key: b.block, colon: ':', val: open ? '' : '  … ' + b.entries.length + ' Einträge', note: '',
+      st: row('', '') + ' cursor: pointer;', codeSt: 'flex: 1; min-width: 0; color: #EEEEF1; font-weight: 500;', valSt: 'color: #6A6A74; font-weight: 400;', noteSt: 'display: none;',
+      toggle: () => set({ closed: Object.assign({}, closed, { [b.block]: open }) }) });
+    if (!open) return;
+    b.entries.forEach((e) => {
+      no++;
+      const note = e.sweep ? 'Grid' + (e.pair ? ' ' + e.pair : '') + ': ' + e.sweep.filter((x) => x !== e.v).join(' · ') : e.rep ? 'Wiederholungen' : e.base ? 'base: ' + e.base : '';
+      lines.push({
+        no: String(no), arrow: '', key: '    ' + e.k, colon: ': ', val: e.v, note, toggle: () => {},
+        st: row(e.sweep ? '#20243A' : '', e.sweep ? '#8AA4FF' : e.rep ? '#45454F' : ''),
+        codeSt: 'flex: 1; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: ' + (e.sweep ? '#C9D3FF' : '#B0B0BA') + ';',
+        valSt: e.sweep ? 'color: #EEEEF1; font-weight: 600;' : e.base ? 'color: #F0B44C;' : 'color: #EEEEF1;',
+        noteSt: 'flex-shrink: 0; margin-left: 12px; font-size: 11px; white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; color: ' + (e.sweep ? '#8AA4FF' : e.base ? '#F0B44C' : '#6A6A74') + ';'
+      });
+    });
+  });
+  const allClosed = C.blocks.every((b) => closed[b.block]);
+  return {
+    padB: P.embedded ? '10px' : '40px', rootH: P.embedded ? 'auto' : '900px', topHide: P.embedded ? 'display: none;' : '',
+    sweptTop: (() => { const out = [], seen = {}; C.blocks.forEach((bl) => bl.entries.forEach((e) => { if (!e.sweep) return; if (e.pair) { if (seen[e.pair]) return; seen[e.pair] = 1; const ps = bl.entries.filter((x) => x.pair === e.pair); out.push(e.pair + ' = ' + ps.map((x) => x.v).join(' · ')); } else out.push(e.k + ' = ' + (e.v.length > 14 ? e.v.slice(0, 12) + '…' : e.v)); })); return out; })(),
+    file: C.file, lines,
+    foldLabel: allClosed ? 'Alles aufklappen' : 'Alles zuklappen',
+    foldAll: () => set({ closed: allClosed ? {} : Object.assign({}, ...C.blocks.map((b) => ({ [b.block]: true }))) }),
+    copyLabel: st.copied ? 'Kopiert ✓' : 'YAML kopieren', copy: () => set({ copied: true })
+  };
+}
+}
+</script>
+</body>
+</html>

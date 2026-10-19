@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Tab-Leiste mit Menü</title>
+<script src="./support.js"></script>
+<script src="./runs-data.js"></script>
+<script src="./short-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131315}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,[role=tab]:focus-visible{outline:2px solid #8AA4FF;outline-offset:1px}
+.tab{position:relative;height:30px;display:flex;align-items:center;gap:8px;padding:0 10px 0 14px;border-radius:8px;cursor:pointer;color:#8E8E99;font:400 12px 'IBM Plex Mono',monospace;white-space:nowrap;border:1px solid transparent;box-sizing:border-box}
+.tab:hover{background:#222227;color:#D6D6DE}
+.tab.on{background:#26262D;color:#EEEEF1;border-color:#34343C}
+.tab.sans{font-family:'IBM Plex Sans',sans-serif;font-size:12.5px}
+.x{width:18px;height:18px;border:0;border-radius:5px;background:transparent;color:#7C7C87;cursor:pointer;font-size:14px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}
+.x:hover{background:#34343C;color:#EEEEF1}
+.menu{position:absolute;z-index:40;min-width:250px;padding:5px;background:#222227;border:1px solid #34343C;border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.55);font:400 13px 'IBM Plex Sans',sans-serif;color:#EEEEF1;cursor:default}
+.mi{display:flex;align-items:center;gap:10px;width:100%;height:32px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:#EEEEF1;font:400 13px 'IBM Plex Sans',sans-serif;text-align:left;cursor:pointer}
+.mi:hover{background:#2E3350}
+.mi[disabled]{color:#5E5E68;cursor:default;background:transparent}
+.kb{margin-left:auto;font:400 11px 'IBM Plex Mono',monospace;color:#7C7C87}
+.sep{height:1px;background:#34343C;margin:5px 6px}
+.mh{font-size:11px;font-weight:600;letter-spacing:.06em;color:#7C7C87;padding:6px 10px 4px}
+</style>
+</helmet>
+<div onClick="{{closeMenu}}" style="width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; background: #131315; color: #EEEEF1; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden;">
+<div style="flex: 1; min-height: 0; display: flex;">
+<nav aria-label="Bereiche" style="width: 56px; flex-shrink: 0; background: #18181B; border-right: 1px solid #26262C; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 0;">
+<div style="width: 32px; height: 32px; border-radius: 9px; background: #8AA4FF; display: flex; align-items: center; justify-content: center; font: 600 12px 'IBM Plex Sans', sans-serif; color: #131315; margin-bottom: 10px;">rb</div>
+<button aria-label="Läufe" style="width: 38px; height: 38px; border-radius: 9px; border: 0; background: #262B42; color: #A9BBFF; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5h12M3 9h12M3 13.5h8"></path></svg></button>
+<button aria-label="Analyse" style="width: 38px; height: 38px; border-radius: 9px; border: 0; background: transparent; color: #7C7C87; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="3" width="5.5" height="12" rx="1.5"></rect><rect x="10" y="3" width="5.5" height="12" rx="1.5"></rect></svg></button>
+<span style="flex: 1;"></span>
+<button aria-label="Einstellungen" style="width: 38px; height: 38px; border: 0; background: transparent; color: #7C7C87;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="9" cy="9" r="2.4"></circle><path d="M9 1.8v2M9 14.2v2M1.8 9h2M14.2 9h2M3.9 3.9l1.4 1.4M12.7 12.7l1.4 1.4M3.9 14.1l1.4-1.4M12.7 5.3l1.4-1.4"></path></svg></button>
+<button aria-label="Agent" style="width: 38px; height: 38px; border: 0; background: transparent; color: #7C7C87;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 2.5l1.4 3.6 3.6 1.4-3.6 1.4L9 12.5 7.6 8.9 4 7.5l3.6-1.4z"></path></svg></button>
+</nav>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+<div style="flex-shrink: 0; background: #18181B; border-bottom: 1px solid #26262C;">
+<div style="height: 34px; display: flex; align-items: center; justify-content: center;"><div style="width: 340px; height: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; background: #222227; color: #7C7C87; font-size: 12px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5L14 14"></path></svg>repnet-bench</div></div>
+<div role="tablist" style="display: flex; flex-wrap: wrap; align-items: center; gap: 3px; padding: 0 8px 6px;">
+<div role="tab" class="{{pinnedCls}}" onClick="{{focusPinned}}" onContextMenu="{{ctxPinned}}">Läufe<sc-if value="{{pinnedMenu}}" hint-placeholder-val="{{false}}"><div class="menu" style="top: 34px; left: 0;" onClick="{{stop}}">
+<button class="mi" disabled="{{true}}">Schließen</button>
+<button class="mi" onClick="{{closeAllFromPinned}}">Alle anderen schließen</button>
+</div></sc-if></div>
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="9">
+<div role="tab" tabIndex="0" class="{{t.cls}}" title="{{t.title}}" onClick="{{t.focus}}" onContextMenu="{{t.ctx}}">
+<sc-if value="{{t.pinned}}" hint-placeholder-val="{{false}}"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#8AA4FF" stroke-width="1.4" aria-label="angeheftet"><path d="M4.5 1.5h3l-.5 3 2 1.5v1H3v-1l2-1.5z"></path><path d="M6 7v3.5"></path></svg></sc-if>
+<span>{{t.label}}</span>
+<sc-if value="{{t.closable}}" hint-placeholder-val="{{true}}"><button class="x" aria-label="{{t.closeAria}}" onClick="{{t.close}}">×</button></sc-if>
+<sc-if value="{{t.menu}}" hint-placeholder-val="{{false}}">
+<div class="menu" style="top: 34px; left: 0;" onClick="{{stop}}">
+<button class="mi" onClick="{{t.close}}">Schließen</button>
+<button class="mi" disabled="{{t.noOthers}}" onClick="{{t.closeOthers}}">Andere schließen</button>
+<button class="mi" disabled="{{t.noRight}}" onClick="{{t.closeRight}}">Rechts schließen</button>
+<button class="mi" onClick="{{closeAll}}">Alle schließen</button>
+<sc-if value="{{isPin}}" hint-placeholder-val="{{false}}"><div class="sep"></div><button class="mi" onClick="{{t.togglePin}}">{{t.pinLabel}}</button></sc-if>
+<sc-if value="{{t.isRun}}" hint-placeholder-val="{{true}}"><div class="sep"></div>
+<button class="mi" onClick="{{closeMenu}}">Laufnamen kopieren</button>
+<button class="mi" onClick="{{closeMenu}}">In Läufe zeigen</button></sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+<sc-if value="{{isMore}}" hint-placeholder-val="{{false}}">
+<div style="position: relative; margin-left: auto;">
+<button onClick="{{toggleMore}}" aria-label="Alle offenen Tabs" style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid #2E2E35; border-radius: 8px; background: #1C1C20; color: #B0B0BA; cursor: pointer; font-size: 12px;"><span style="font: 500 11px 'IBM Plex Mono', monospace; background: #2E2E35; border-radius: 5px; padding: 1px 6px; color: #EEEEF1;">{{tabCount}}</span>Tabs ▾</button>
+<sc-if value="{{moreOpen}}" hint-placeholder-val="{{false}}">
+<div class="menu" style="top: 36px; right: 0; width: 320px;" onClick="{{stop}}">
+<div class="mh">OFFENE TABS</div>
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="6"><button class="mi" onClick="{{t.focus}}"><span style="{{t.dot}}"></span><span style="font: 400 12px 'IBM Plex Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{t.label}}</span></button></sc-for>
+<div class="sep"></div>
+<button class="mi" disabled="{{noRightOfActive}}" onClick="{{closeRightOfActive}}">Rechts vom aktiven schließen</button>
+<button class="mi" onClick="{{closeOthersOfActive}}">Alle außer dem aktiven schließen</button>
+<button class="mi" onClick="{{closeAll}}">Alle schließen</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</div>
+<div style="flex: 1; min-height: 0; position: relative;">
+<sc-if value="{{showList}}" hint-placeholder-val="{{true}}"><dc-import name="L-Liste" hint-size="100%,100%"></dc-import></sc-if>
+<sc-if value="{{showRun}}" hint-placeholder-val="{{false}}"><div style="height: 100%; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; color: #7C7C87;"><span style="font: 500 15px 'IBM Plex Mono', monospace; color: #C8C8D0;">{{activeLabel}}</span><span>{{activeHint}}</span></div></sc-if>
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}"><div style="position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 16px; background: #26262C; border: 1px solid #3A3A44; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.5);"><span>{{toast}}</span><button onClick="{{undo}}" style="font: 500 12.5px 'IBM Plex Sans', sans-serif; color: #A9BBFF; background: transparent; border: 0; padding: 6px 8px; cursor: pointer;">Rückgängig</button></div></sc-if>
+</div>
+</div>
+</div>
+<footer style="flex-shrink: 0; height: 26px; display: flex; align-items: center; gap: 16px; padding: 0 14px; background: #18181B; border-top: 1px solid #26262C; font-size: 12px; color: #B0B0BA;">
+<span style="color: #8AA4FF;">● 1 Lauf läuft · 46 %</span><span style="flex: 1;"></span><span>Agent</span><span>repnet-bench · v0.3.2</span>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"select","options":["menu","more","pin"],"default":"pin"},"$preview":{"width":1440,"height":860}}'>
+class Component extends DCLogic {
+renderVals() {
+  const P = this.props || {};
+  const variant = P.variant || 'pin';
+  const st = this.state || {};
+  const set = (p) => this.setState(p);
+  const START = ['SETTINGS', '2026-10-14_0912_TIM-52_best_combined_90', '2026-10-13_1830_TIM-52_best_combined_30', '2026-10-09_1422_TIM-49_ets_gap_90', '2026-10-08_2105_TIM-49_ets_gap_90', '2026-10-06_0030_TIM-67_curve_run', '2026-09-28_144008_TIM-45_g6_combined', '2026-09-26_1012_TIM-44_g5_revin', '2026-09-24_130216_TIM-39_grid_multivariate_30', '2026-09-15_0930_TIM-22_big_grid'];
+  const tabs = st.tabs || START;
+  const pins = st.pins || (variant === 'pin' ? { '2026-10-13_1830_TIM-52_best_combined_30': true } : {});
+  const active = st.active !== undefined ? st.active : '2026-10-09_1422_TIM-49_ets_gap_90';
+  const menu = st.menu !== undefined ? st.menu : (variant === 'more' ? null : '2026-10-09_1422_TIM-49_ets_gap_90');
+  const moreOpen = st.more !== undefined ? st.more : variant === 'more';
+  const label = (id) => id === 'SETTINGS' ? 'Einstellungen' : id.replace(/^\d{4}-\d{2}-\d{2}_\d{4,6}_/, '');
+  // pinned tabs first (variant pin)
+  const ordered = tabs.filter((t) => pins[t]).concat(tabs.filter((t) => !pins[t]));
+  const apply = (rest, what) => {
+    const keep = rest.indexOf(active) >= 0 ? active : null;
+    set({ tabs: rest, active: keep, menu: null, more: false, prev: { tabs, active }, toast: what });
+  };
+  const closeAllList = () => ordered.filter((t) => pins[t]);
+  const closeAll = () => apply(closeAllList(), 'Alle Tabs geschlossen' + (Object.keys(pins).some((k) => pins[k] && tabs.indexOf(k) >= 0) ? ' (angeheftete bleiben)' : ''));
+  const list = ordered.map((id, i) => {
+    const right = ordered.slice(i + 1).filter((t) => !pins[t]);
+    const others = ordered.filter((t) => t !== id && !pins[t]);
+    return {
+      id, label: label(id), title: id === 'SETTINGS' ? 'Einstellungen' : id,
+      cls: 'tab' + (id === active ? ' on' : '') + (id === 'SETTINGS' ? ' sans' : ''),
+      pinned: !!pins[id], closable: !pins[id], isRun: id !== 'SETTINGS', menu: menu === id,
+      closeAria: label(id) + ' schließen',
+      dot: 'width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: ' + (id === active ? '#8AA4FF' : 'transparent') + ';',
+      focus: (e) => { set({ active: id, menu: null, more: false }); },
+      ctx: (e) => { if (e && e.preventDefault) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); set({ menu: id, more: false }); },
+      close: (e) => { if (e && e.stopPropagation) e.stopPropagation(); apply(tabs.filter((t) => t !== id), label(id) + ' geschlossen'); },
+      noOthers: others.length === 0, noRight: right.length === 0,
+      closeOthers: () => apply(tabs.filter((t) => t === id || pins[t]), others.length + ' Tabs geschlossen'),
+      closeRight: () => apply(tabs.filter((t) => right.indexOf(t) < 0), right.length + ' Tabs rechts geschlossen'),
+      pinLabel: pins[id] ? 'Lösen' : 'Anheften',
+      togglePin: () => { const p = Object.assign({}, pins); p[id] = !p[id]; set({ pins: p, menu: null }); }
+    };
+  });
+  const ai = ordered.indexOf(active);
+  const rightOfActive = ai >= 0 ? ordered.slice(ai + 1).filter((t) => !pins[t]) : [];
+  return {
+    isMore: variant === 'more', isPin: variant === 'pin',
+    tabs: list, tabCount: String(tabs.length + 1), moreOpen,
+    pinnedCls: 'tab sans' + (active === null ? ' on' : ''),
+    focusPinned: () => set({ active: null, menu: null, more: false }),
+    pinnedMenu: menu === '__pinned',
+    ctxPinned: (e) => { if (e && e.preventDefault) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); set({ menu: '__pinned' }); },
+    closeAllFromPinned: closeAll, closeAll,
+    toggleMore: (e) => { if (e && e.stopPropagation) e.stopPropagation(); set({ more: !moreOpen, menu: null }); },
+    noRightOfActive: rightOfActive.length === 0,
+    closeRightOfActive: () => apply(tabs.filter((t) => rightOfActive.indexOf(t) < 0), rightOfActive.length + ' Tabs rechts geschlossen'),
+    closeOthersOfActive: () => apply(tabs.filter((t) => t === active || pins[t]), 'Andere Tabs geschlossen'),
+    closeMenu: () => { if (menu !== null || moreOpen) set({ menu: null, more: false }); },
+    stop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
+    showList: active === null, showRun: active !== null, activeLabel: active ? label(active) : '', activeHint: active === 'SETTINGS' ? 'Einstellungen-Tab' : 'Lauf-Tab (Inhalt wie in M)',
+    hasToast: !!st.toast, toast: st.toast || '',
+    undo: () => st.prev && set({ tabs: st.prev.tabs, active: st.prev.active, toast: null, prev: null })
+  };
+}
+}
+</script>
+</body>
+</html>

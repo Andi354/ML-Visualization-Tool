@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>S1 · Einstellungen · neuer Stil</title>
+<script src="./support.js"></script>
+<script src="./R-settings-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+*{scrollbar-width:thin;scrollbar-color:#34343C transparent}*::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{background:#34343C;border-radius:6px;border:3px solid transparent;background-clip:padding-box}*::-webkit-scrollbar-thumb:hover{background:#45454F;background-clip:padding-box}
+body{margin:0;background:#131315}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,input:focus-visible{outline:2px solid #8AA4FF;outline-offset:1px}
+.ib{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid transparent;background:transparent;color:#7C7C87;cursor:pointer}
+.ib.on{border-color:#3A4166;background:#262B42;color:#8AA4FF}
+.rcat{width:100%;display:flex;align-items:center;gap:10px;padding:7px 10px;border:0;border-radius:9px;background:transparent;color:#B0B0BA;cursor:pointer;font-size:13px;text-align:left}
+.rcat.on{background:#262B42;color:#EEEEF1}
+.rsub{width:100%;text-align:left;padding:4px 10px 4px 38px;border:0;background:transparent;color:#7C7C87;cursor:pointer;font-size:12px}
+.rsub:hover{color:#EEEEF1}
+.chip{font:500 12px 'IBM Plex Sans',sans-serif;padding:5px 10px;border-radius:14px;border:1px solid #2E2E35;background:#1C1C20;color:#B0B0BA;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip.on{border-color:#3A4166;background:#262B42;color:#EEEEF1}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto 28px;gap:18px;align-items:center;padding:12px 4px;border-bottom:1px solid #24242A}
+.lab{display:flex;align-items:center;gap:7px;font-weight:500}
+.desc{font-size:12px;color:#7C7C87;margin-top:3px;line-height:1.45}
+.seg{display:flex;padding:2px;gap:2px;background:#131315;border:1px solid #2E2E35;border-radius:12px}
+.segb{font:500 12px 'IBM Plex Sans',sans-serif;border:0;border-radius:8px;padding:5px 10px;background:transparent;color:#7C7C87;cursor:pointer;white-space:nowrap}
+.segb.on{background:#24242A;color:#EEEEF1}
+.sw{width:36px;height:20px;border-radius:10px;border:0;padding:2px;cursor:pointer;display:flex}
+.knob{width:16px;height:16px;border-radius:8px;background:#EEEEF1}
+.stepb{width:26px;height:26px;border-radius:9px;border:1px solid #2E2E35;background:#1C1C20;color:#B0B0BA;cursor:pointer}
+.txt{font:400 12px 'IBM Plex Mono',monospace;width:240px;color:#EEEEF1;background:#131315;border:1px solid #2E2E35;border-radius:9px;padding:6px 8px}
+.btn{font:500 12px 'IBM Plex Sans',sans-serif;padding:6px 12px;border-radius:9px;border:1px solid #2E2E35;background:#1C1C20;color:#EEEEF1;cursor:pointer}
+.btn.danger{border-color:#5A2A2A;color:#FF8A8A}
+.reset{width:24px;height:24px;border:0;background:transparent;color:#7C7C87;cursor:pointer;border-radius:8px}
+.reset:hover{background:#24242A;color:#EEEEF1}
+</style>
+</helmet>
+<div style="{{rootH}} display: flex; background: #131315; color: #EEEEF1; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden; position: relative;">
+<sc-if value="{{framed}}" hint-placeholder-val="{{true}}"><nav style="width: 52px; flex-shrink: 0; background: #1C1C20; border-right: 1px solid #2E2E35; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0;">
+<div title="repnet-bench" style="width: 32px; height: 32px; border-radius: 12px; background: #24242A; border: 1px solid #2E2E35; display: flex; align-items: center; justify-content: center; font: 500 12px 'IBM Plex Mono', monospace; color: #B0B0BA; margin-bottom: 8px;">rb</div>
+<button class="ib" title="Läufe"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h12M3 9h12M3 13.5h8"/></svg></button>
+<button class="ib" title="Analyse"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="3" width="5.5" height="12" rx="1"/><rect x="10" y="3" width="5.5" height="12" rx="1"/></svg></button>
+<span style="flex: 1;"></span>
+<button class="ib on" title="Einstellungen (Strg+,)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="9" r="2.4"/><path d="M9 1.8v2M9 14.2v2M1.8 9h2M14.2 9h2M3.9 3.9l1.4 1.4M12.7 12.7l1.4 1.4M3.9 14.1l1.4-1.4M12.7 5.3l1.4-1.4"/></svg></button>
+<button class="ib" title="Agent"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2.5l1.4 3.6 3.6 1.4-3.6 1.4L9 12.5 7.6 8.9 4 7.5l3.6-1.4z"/></svg></button>
+</nav></sc-if>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+<sc-if value="{{framed}}" hint-placeholder-val="{{true}}"><div style="flex-shrink: 0; height: 36px; display: flex; background: #1C1C20; border-bottom: 1px solid #2E2E35;"><span style="display: flex; align-items: center; padding: 0 14px; border-top: 2px solid #8AA4FF; background: #131315;">Einstellungen</span><span style="display: flex; align-items: center; padding: 0 14px; color: #7C7C87; font: 400 12px 'IBM Plex Mono', monospace; border-left: 1px solid #2E2E35;">TIM-39_grid_multivariate_30</span></div></sc-if>
+<div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #2E2E35;">
+<div style="display: flex; flex-direction: column; min-width: 200px;"><span style="font-size: 15px; font-weight: 600;">Einstellungen</span><span style="font-size: 11px; color: #7C7C87;">repnet-bench · v0.3.0</span></div>
+<label style="flex: 1; max-width: 420px; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid #2E2E35; border-radius: 12px; background: #1C1C20; color: #7C7C87;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input value="{{q}}" onInput="{{onQ}}" placeholder="Einstellungen durchsuchen …" style="flex: 1; background: none; border: 0; outline: none; color: #EEEEF1; font: 400 13px 'IBM Plex Sans', sans-serif;"><kbd style="font: 400 11px 'IBM Plex Mono', monospace; border: 1px solid #2E2E35; border-radius: 7px; padding: 0 5px;">/</kbd></label>
+<span style="flex: 1;"></span>
+<button class="{{modCls}}" onClick="{{toggleMod}}" title="Nur geänderte Einstellungen zeigen">Geändert <span style="font: 500 11px 'IBM Plex Mono', monospace; padding: 0 6px; border-radius: 8px; background: #2E2E35;">{{changed}}</span></button>
+<div style="position: relative;"><button class="chip" onClick="{{togglePresets}}" title="Mehrere Einstellungen auf einmal übernehmen">★ Voreinstellungen ▾</button>
+<sc-if value="{{presetsOpen}}" hint-placeholder-val="{{false}}"><div style="position: absolute; right: 0; top: 36px; z-index: 5; width: 300px; background: #24242A; border: 1px solid #3A4166; border-radius: 8px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.45);"><sc-for list="{{presets}}" as="p" hint-placeholder-count="2"><button onClick="{{p.on}}" style="width: 100%; text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 0; border-radius: 9px; background: transparent; color: #EEEEF1; cursor: pointer;"><span style="font-weight: 500;">{{p.title}}</span><span style="font-size: 12px; color: #7C7C87;">{{p.desc}}</span></button></sc-for></div></sc-if></div>
+<button class="reset" style="width: 30px; height: 30px; border: 1px solid #2E2E35;" onClick="{{undo}}" disabled="{{noUndo}}" title="{{undoTitle}}">↶</button>
+<button class="reset" style="width: 30px; height: 30px; border: 1px solid #2E2E35;" onClick="{{redo}}" disabled="{{noRedo}}" title="Wiederholen (Strg+Shift+Z)">↷</button>
+</div>
+<div style="flex: 1; min-height: 0; display: flex;">
+<aside style="width: 240px; flex-shrink: 0; border-right: 1px solid #2E2E35; background: #18181B; padding: 14px 10px; overflow: auto; display: flex; flex-direction: column; gap: 2px;">
+<div style="font-size: 11px; color: #6A6A74; text-transform: uppercase; letter-spacing: .05em; padding: 0 10px 6px;">Kategorien</div>
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="6"><button class="{{c.cls}}" onClick="{{c.on}}"><svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="{{c.icon}}"/></svg><span style="flex: 1;">{{c.title}}</span><sc-if value="{{c.hasN}}" hint-placeholder-val="{{false}}"><span title="geändert" style="font: 500 11px 'IBM Plex Mono', monospace; color: #8AA4FF;">{{c.n}}</span></sc-if></button>
+<sc-if value="{{c.on2}}" hint-placeholder-val="{{false}}"><sc-for list="{{c.subs}}" as="s" hint-placeholder-count="2"><button class="rsub" onClick="{{s.on}}">{{s.title}}</button></sc-for></sc-if></sc-for>
+<div style="font-size: 11px; color: #6A6A74; text-transform: uppercase; letter-spacing: .05em; padding: 14px 10px 6px;">Mehr</div>
+<button class="{{aboutCls}}" onClick="{{toAbout}}"><svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="6.5"/><path d="M9 8v4.5M9 5.5v.5"/></svg><span>Über</span></button>
+</aside>
+<main id="st-main" style="flex: 1; min-width: 0; overflow: auto; padding: 20px 32px 40px;">
+<div style="max-width: 860px;">
+<sc-if value="{{showHead}}" hint-placeholder-val="{{true}}">
+<div style="font-size: 20px; font-weight: 600;">{{head.title}}</div>
+<div style="color: #7C7C87; margin: 4px 0 14px;">{{head.blurb}}</div>
+<sc-if value="{{head.hasTips}}" hint-placeholder-val="{{true}}"><div style="display: flex; gap: 10px; padding: 10px 12px; border: 1px solid #2E2E35; border-left: 3px solid #8AA4FF; border-radius: 12px; background: #18181B; margin-bottom: 8px; font-size: 12px; color: #B0B0BA; line-height: 1.5;"><span style="color: #8AA4FF;">💡</span><div><sc-for list="{{head.tips}}" as="t" hint-placeholder-count="2"><div>{{t}}</div></sc-for></div></div></sc-if>
+</sc-if>
+<sc-if value="{{isSearch}}" hint-placeholder-val="{{false}}"><div style="color: #7C7C87; margin-bottom: 8px;">{{searchInfo}}</div></sc-if>
+<sc-for list="{{sections}}" as="sec" hint-placeholder-count="2">
+<div style="margin-top: 18px;"><div style="font-size: 11px; color: #7C7C87; text-transform: uppercase; letter-spacing: .06em; padding-bottom: 6px; border-bottom: 1px solid #2E2E35;">{{sec.title}}</div>
+<sc-for list="{{sec.rows}}" as="r" hint-placeholder-count="3">
+<div class="srow">
+<div><div class="lab">{{r.label}}<sc-if value="{{r.mod}}" hint-placeholder-val="{{false}}"><span title="vom Standard geändert" style="width: 7px; height: 7px; border-radius: 8px; background: #8AA4FF;"></span></sc-if></div><div class="desc">{{r.desc}}</div></div>
+<div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+<sc-if value="{{r.isBool}}"><button class="sw" onClick="{{r.toggle}}" role="switch" aria-checked="{{r.on}}" style="{{r.swSt}}"><span class="knob"></span></button></sc-if>
+<sc-if value="{{r.isEnum}}"><div class="seg"><sc-for list="{{r.opts}}" as="o" hint-placeholder-count="2"><button class="{{o.cls}}" onClick="{{o.on}}">{{o.label}}</button></sc-for></div></sc-if>
+<sc-if value="{{r.isNum}}"><button class="stepb" onClick="{{r.dec}}">−</button><input type="range" min="{{r.min}}" max="{{r.max}}" step="{{r.step}}" value="{{r.v}}" onInput="{{r.slide}}" style="width: 140px; accent-color: #8AA4FF;"><button class="stepb" onClick="{{r.inc}}">+</button><span style="font: 500 12px 'IBM Plex Mono', monospace; min-width: 74px;">{{r.vText}}</span></sc-if>
+<sc-if value="{{r.isText}}"><input class="txt" value="{{r.v}}" onChange="{{r.setText}}" placeholder="{{r.ph}}"></sc-if>
+<sc-if value="{{r.isAction}}"><span style="font: 400 12px 'IBM Plex Mono', monospace; color: #B0B0BA;">{{r.info}}</span><button class="{{r.btnCls}}" onClick="{{r.run}}">{{r.button}}</button></sc-if>
+</div>
+<div><sc-if value="{{r.canReset}}" hint-placeholder-val="{{false}}"><button class="reset" onClick="{{r.reset}}" title="{{r.resetTitle}}">↺</button></sc-if></div>
+</div>
+</sc-for>
+</div>
+</sc-for>
+<sc-if value="{{isAbout}}" hint-placeholder-val="{{false}}">
+<div style="font-size: 20px; font-weight: 600;">Über</div>
+<div style="display: grid; grid-template-columns: 180px 1fr; gap: 8px 16px; margin-top: 16px; font-size: 13px;"><span style="color: #7C7C87;">Version</span><span class="mono" style="font-family: 'IBM Plex Mono', monospace;">0.3.0</span><span style="color: #7C7C87;">Projekt</span><span style="font-family: 'IBM Plex Mono', monospace;">~/repnet-bench</span><span style="color: #7C7C87;">Einstellungen</span><span style="font-family: 'IBM Plex Mono', monospace;">.mlviz/settings.json</span></div>
+<div style="font-size: 11px; color: #7C7C87; text-transform: uppercase; letter-spacing: .06em; margin: 24px 0 8px;">Tastenkürzel</div>
+<div style="display: grid; grid-template-columns: 180px 1fr; gap: 6px 16px; font-size: 13px;"><kbd style="font-family: 'IBM Plex Mono', monospace;">Strg + ,</kbd><span>Einstellungen öffnen</span><kbd style="font-family: 'IBM Plex Mono', monospace;">/</kbd><span>Suche in den Einstellungen</span><kbd style="font-family: 'IBM Plex Mono', monospace;">Shift + Tab</kbd><span>Agent-Modus wechseln</span><kbd style="font-family: 'IBM Plex Mono', monospace;">Esc</kbd><span>Agent-Fenster schließen</span></div>
+</sc-if>
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div style="color: #7C7C87; margin-top: 24px;">{{emptyText}}</div></sc-if>
+</div>
+</main>
+</div>
+</div>
+<sc-if value="{{toast}}" hint-placeholder-val="{{false}}"><div style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 9px 14px; background: #24242A; border: 1px solid #3A4166; border-radius: 12px; font-size: 12px; color: #C8C8D0;">{{toastText}}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900},"embedded":{"editor":null}}'>
+// v0.3.0 settings screen after the Agent Dashboard: categories left, search, "Geändert", presets, undo/redo, reset per row.
+const ICONS = {
+  palette: 'M9 2.5a6.5 6.5 0 1 0 0 13c1 0 1.3-.8.9-1.5-.5-.8.1-1.8 1-1.8h1.6a3 3 0 0 0 3-3A6.5 6.5 0 0 0 9 2.5zM5.5 8.5h.01M7.5 5.5h.01M11 5.5h.01',
+  list: 'M3 4.5h12M3 9h12M3 13.5h8', grid: 'M2.5 3h5.5v5.5H2.5zM10 3h5.5v5.5H10zM2.5 10.5h13V15H2.5z',
+  image: 'M2.5 3.5h13v11h-13zM2.5 12l4-4 3 3 2-2 4 4M11.5 6.5h.01', spark: 'M9 2.5l1.4 3.6 3.6 1.4-3.6 1.4L9 12.5 7.6 8.9 4 7.5l3.6-1.4z',
+  db: 'M3 4.5c0-1.1 2.7-2 6-2s6 .9 6 2-2.7 2-6 2-6-.9-6-2zM3 4.5v9c0 1.1 2.7 2 6 2s6-.9 6-2v-9M3 9c0 1.1 2.7 2 6 2s6-.9 6-2'
+};
+class Component extends DCLogic {
+renderVals() {
+  const st = this.state || {}, set = (p) => this.setState(p);
+  const D = window.SetData || { CATS: [], PAGES: [], S: [], PRESETS: [] };
+  const vals = st.vals || {};
+  const val = (d) => (d.key in vals ? vals[d.key] : d.def);
+  const isMod = (d) => d.type !== 'action' && d.key in vals && vals[d.key] !== d.def;
+  const hist = st.hist || [], fut = st.fut || [];
+  const label = (d) => d.label;
+  const change = (patch, what) => {
+    const nv = Object.assign({}, vals);
+    Object.keys(patch).forEach((k) => { const d = D.S.find((x) => x.key === k); if (d && patch[k] === d.def) delete nv[k]; else nv[k] = patch[k]; });
+    set({ vals: nv, hist: hist.concat([{ vals, what }]), fut: [], presetsOpen: false });
+  };
+  const fmtV = (d, v) => d.type === 'num' ? (d.unit === 'k Tokens' ? v + ' 000 Tokens' : v + (d.unit ? ' ' + d.unit : '')) : d.type === 'enum' ? ((d.opts.find((o) => o[0] === v) || [v, v])[1]) : d.type === 'bool' ? (v ? 'an' : 'aus') : (v || 'leer');
+  const toast = (t) => { set({ toast: t }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 2200); };
+  const row = (d) => {
+    const v = val(d), mod = isMod(d);
+    const r = { label: d.label, desc: d.desc, mod, canReset: mod, isBool: d.type === 'bool', isEnum: d.type === 'enum', isNum: d.type === 'num', isText: d.type === 'text', isAction: d.type === 'action',
+      reset: () => change({ [d.key]: d.def }, d.label + ' zurückgesetzt'), resetTitle: 'Auf Standard zurücksetzen (' + fmtV(d, d.def) + ')' };
+    if (d.type === 'bool') Object.assign(r, { on: String(!!v), toggle: () => change({ [d.key]: !v }, d.label), swSt: 'background: ' + (v ? '#5B6FD6' : '#2E2E35') + '; justify-content: ' + (v ? 'flex-end' : 'flex-start') + ';' });
+    if (d.type === 'enum') r.opts = d.opts.map(([k, l]) => ({ label: l, cls: 'segb' + (v === k ? ' on' : ''), on: () => change({ [d.key]: k }, d.label) }));
+    if (d.type === 'num') Object.assign(r, { v: String(v), min: String(d.min), max: String(d.max), step: String(d.step), vText: fmtV(d, v),
+      dec: () => change({ [d.key]: Math.max(d.min, v - d.step) }, d.label), inc: () => change({ [d.key]: Math.min(d.max, v + d.step) }, d.label),
+      slide: (e) => change({ [d.key]: Number(e.target.value) }, d.label) });
+    if (d.type === 'text') Object.assign(r, { v: v, ph: d.key === 'agent.claude' ? 'claude (aus PATH)' : '', setText: (e) => change({ [d.key]: e.target.value }, d.label) });
+    if (d.type === 'action') Object.assign(r, { info: d.info, button: d.button, btnCls: 'btn' + (d.danger ? ' danger' : ''),
+      run: () => d.key === 'data.all' ? (Object.keys(vals).length ? (set({ vals: {}, hist: hist.concat([{ vals, what: 'Alle zurückgesetzt' }]), fut: [] }), toast('Alle Einstellungen auf Standard · Rückgängig mit ↶')) : toast('Nichts geändert'))
+        : toast('„' + d.button.replace(' …', '') + '“ öffnet im Tool einen Dialog (hier nur angedeutet)') });
+    return r;
+  };
+  const q = (st.q || '').trim().toLowerCase();
+  const modOnly = !!st.modOnly;
+  const cat = st.cat || 'look';
+  const changedN = D.S.filter(isMod).length;
+  let sections = [], head = null, searchInfo = '';
+  const match = (d) => (!q || (d.label + ' ' + d.desc + ' ' + d.key).toLowerCase().indexOf(q) >= 0) && (!modOnly || isMod(d));
+  if (q || modOnly) {
+    D.CATS.forEach((c) => { const rows = D.S.filter((d) => d.cat === c.id && match(d)); if (rows.length) sections.push({ title: c.title, rows: rows.map(row) }); });
+    const n = sections.reduce((a, s) => a + s.rows.length, 0);
+    searchInfo = n + (n === 1 ? ' Einstellung' : ' Einstellungen') + (q ? ' für „' + st.q + '“' : '') + (modOnly ? ' · nur geänderte' : '');
+  } else if (cat !== 'about') {
+    const c = D.CATS.find((x) => x.id === cat);
+    head = { title: c.title, blurb: c.blurb, tips: c.tips, hasTips: c.tips.length > 0 };
+    sections = c.subs.map((s) => ({ title: s.title, rows: D.S.filter((d) => d.cat === c.id && d.sub === s.id).map(row) })).filter((s) => s.rows.length);
+  }
+  if (!this._key) { this._key = true; document.addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement && document.activeElement.tagName !== 'INPUT') { const i = document.querySelector('input[placeholder^="Einstellungen"]'); if (i) { e.preventDefault(); i.focus(); } } }); }
+  const lastH = hist[hist.length - 1];
+  const emb = !!(this.props || {}).embedded;
+  return {
+    framed: !emb, rootH: emb ? 'width: 100%; height: 100%; position: absolute; inset: 0;' : 'width: 100%; height: 900px;',
+    q: st.q || '', onQ: (e) => set({ q: e.target.value }),
+    changed: String(changedN), modCls: 'chip' + (modOnly ? ' on' : ''), toggleMod: () => set({ modOnly: !modOnly }),
+    presetsOpen: !!st.presetsOpen, togglePresets: () => set({ presetsOpen: !st.presetsOpen }),
+    presets: D.PRESETS.map((p) => ({ title: p.title, desc: p.desc, on: () => { change(p.set, 'Voreinstellung ' + p.title); toast('„' + p.title + '“ übernommen · ' + Object.keys(p.set).length + ' Einstellungen'); } })),
+    undo: () => { if (!lastH) return; set({ vals: lastH.vals, hist: hist.slice(0, -1), fut: fut.concat([{ vals, what: lastH.what }]) }); toast('Rückgängig: ' + lastH.what); },
+    redo: () => { const f = fut[fut.length - 1]; if (!f) return; set({ vals: f.vals, fut: fut.slice(0, -1), hist: hist.concat([{ vals, what: f.what }]) }); },
+    noUndo: !lastH, noRedo: !fut.length, undoTitle: lastH ? 'Rückgängig: ' + lastH.what + ' (Strg+Z)' : 'Nichts rückgängig zu machen',
+    cats: D.CATS.map((c) => { const n = D.S.filter((d) => d.cat === c.id && isMod(d)).length, on = !q && !modOnly && cat === c.id;
+      return { title: c.title, icon: ICONS[c.icon] || '', cls: 'rcat' + (on ? ' on' : ''), on: () => set({ cat: c.id, q: '', modOnly: false }), n: String(n), hasN: n > 0, on2: on,
+        subs: c.subs.map((s) => ({ title: s.title, on: () => { const m = document.getElementById('st-main'); if (m) m.scrollTop = 0; } })) }; }),
+    aboutCls: 'rcat' + (cat === 'about' && !q && !modOnly ? ' on' : ''), toAbout: () => set({ cat: 'about', q: '', modOnly: false }),
+    showHead: !!head, head: head || { title: '', blurb: '', tips: [], hasTips: false },
+    isSearch: !!(q || modOnly), searchInfo, sections,
+    isAbout: cat === 'about' && !q && !modOnly,
+    empty: (q || modOnly) && sections.length === 0, emptyText: modOnly && !q ? 'Noch nichts geändert, alles steht auf Standard.' : 'Keine Einstellung gefunden.',
+    toast: !!st.toast, toastText: st.toast || ''
+  };
+}
+}
+</script>
+</body>
+</html>

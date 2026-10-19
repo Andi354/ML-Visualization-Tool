@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Widget · neuer Stil</title>
+<script src="./support.js"></script>
+<script src="./R-one-data.js"></script>
+<script src="./R-f-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#131315}</style>
+</helmet>
+<div style="{{rootSt}}">
+<div style="font-size: 16px; font-weight: 600; line-height: 1.35; color: {{T.text}}; {{partHide}}">{{title}}</div>
+<div style="font-size: 12px; color: {{T.text3}}; margin: 4px 0 14px; {{noteHide}}">{{sub}}</div>
+<sc-if value="{{hasLegend}}" hint-placeholder-val="{{false}}"><div style="display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; font-size: 12px; color: {{T.text2}};"><sc-for list="{{legend}}" as="l" hint-placeholder-count="2"><span style="display: flex; align-items: center; gap: 6px;"><span style="{{l.sw}}"></span>{{l.t}}</span></sc-for></div></sc-if>
+<div style="{{gridSt}}">
+<sc-for list="{{cells}}" as="c" hint-placeholder-count="24"><div style="{{c.st}}">{{c.t}}<sc-if value="{{c.hasInner}}"><div style="{{c.inner}}"></div></sc-if><sc-if value="{{c.hasDots}}"><sc-for list="{{c.dots}}" as="d" hint-placeholder-count="20"><span style="{{d}}"></span></sc-for></sc-if><sc-if value="{{c.hasBars}}"><sc-for list="{{c.bars}}" as="b" hint-placeholder-count="2"><div style="{{b.wrap}}"><span style="{{b.lab}}">{{b.t}}</span><div style="{{b.bar}}"></div></div></sc-for></sc-if></div></sc-for>
+</div>
+<sc-if value="{{hasPlot}}" hint-placeholder-val="{{false}}">
+<div style="position: relative; height: {{plotH}}px; margin: 4px 0 22px 52px; border-left: 1px solid {{T.line}}; border-bottom: 1px solid {{T.line}};">
+<svg viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;">
+<path d="{{p0.d}}" stroke="{{p0.c}}" stroke-width="{{p0.w}}" fill="{{p0.f}}" opacity="{{p0.o}}" stroke-dasharray="{{p0.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p1.d}}" stroke="{{p1.c}}" stroke-width="{{p1.w}}" fill="{{p1.f}}" opacity="{{p1.o}}" stroke-dasharray="{{p1.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p2.d}}" stroke="{{p2.c}}" stroke-width="{{p2.w}}" fill="{{p2.f}}" opacity="{{p2.o}}" stroke-dasharray="{{p2.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p3.d}}" stroke="{{p3.c}}" stroke-width="{{p3.w}}" fill="{{p3.f}}" opacity="{{p3.o}}" stroke-dasharray="{{p3.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p4.d}}" stroke="{{p4.c}}" stroke-width="{{p4.w}}" fill="{{p4.f}}" opacity="{{p4.o}}" stroke-dasharray="{{p4.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p5.d}}" stroke="{{p5.c}}" stroke-width="{{p5.w}}" fill="{{p5.f}}" opacity="{{p5.o}}" stroke-dasharray="{{p5.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p6.d}}" stroke="{{p6.c}}" stroke-width="{{p6.w}}" fill="{{p6.f}}" opacity="{{p6.o}}" stroke-dasharray="{{p6.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p7.d}}" stroke="{{p7.c}}" stroke-width="{{p7.w}}" fill="{{p7.f}}" opacity="{{p7.o}}" stroke-dasharray="{{p7.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p8.d}}" stroke="{{p8.c}}" stroke-width="{{p8.w}}" fill="{{p8.f}}" opacity="{{p8.o}}" stroke-dasharray="{{p8.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p9.d}}" stroke="{{p9.c}}" stroke-width="{{p9.w}}" fill="{{p9.f}}" opacity="{{p9.o}}" stroke-dasharray="{{p9.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p10.d}}" stroke="{{p10.c}}" stroke-width="{{p10.w}}" fill="{{p10.f}}" opacity="{{p10.o}}" stroke-dasharray="{{p10.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p11.d}}" stroke="{{p11.c}}" stroke-width="{{p11.w}}" fill="{{p11.f}}" opacity="{{p11.o}}" stroke-dasharray="{{p11.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p12.d}}" stroke="{{p12.c}}" stroke-width="{{p12.w}}" fill="{{p12.f}}" opacity="{{p12.o}}" stroke-dasharray="{{p12.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{p13.d}}" stroke="{{p13.c}}" stroke-width="{{p13.w}}" fill="{{p13.f}}" opacity="{{p13.o}}" stroke-dasharray="{{p13.da}}" vector-effect="non-scaling-stroke"></path>
+</svg>
+<sc-for list="{{yt}}" as="t" hint-placeholder-count="4"><span style="{{t.st}}">{{t.v}}</span></sc-for>
+<sc-for list="{{xt}}" as="t" hint-placeholder-count="5"><span style="{{t.st}}">{{t.v}}</span></sc-for>
+</div>
+<sc-if value="{{hasPlot2}}" hint-placeholder-val="{{false}}">
+<div style="font-size: 11px; color: {{T.text3}}; margin: 0 0 4px 52px;">{{plot2Label}}</div>
+<div style="position: relative; height: 90px; margin: 0 0 22px 52px; border-left: 1px solid {{T.line}}; border-bottom: 1px solid {{T.line}};">
+<svg viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;">
+<path d="{{q0.d}}" stroke="{{q0.c}}" stroke-width="{{q0.w}}" fill="{{q0.f}}" opacity="{{q0.o}}" stroke-dasharray="{{q0.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{q1.d}}" stroke="{{q1.c}}" stroke-width="{{q1.w}}" fill="{{q1.f}}" opacity="{{q1.o}}" stroke-dasharray="{{q1.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{q2.d}}" stroke="{{q2.c}}" stroke-width="{{q2.w}}" fill="{{q2.f}}" opacity="{{q2.o}}" stroke-dasharray="{{q2.da}}" vector-effect="non-scaling-stroke"></path>
+<path d="{{q3.d}}" stroke="{{q3.c}}" stroke-width="{{q3.w}}" fill="{{q3.f}}" opacity="{{q3.o}}" stroke-dasharray="{{q3.da}}" vector-effect="non-scaling-stroke"></path>
+</svg>
+<sc-for list="{{yt2}}" as="t" hint-placeholder-count="3"><span style="{{t.st}}">{{t.v}}</span></sc-for>
+</div>
+</sc-if>
+</sc-if>
+<sc-if value="{{hasStrip}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; justify-content: space-between; font-size: 11px; color: {{T.text3}}; margin: 0 0 3px 52px;"><span>Testzeitraum {{strip.from}}</span><span>{{strip.to}}</span></div>
+<div onClick="{{strip.pick}}" title="Klicken, um das Fenster zu verschieben" style="position: relative; height: 40px; margin-left: 52px; cursor: pointer; border: 1px solid {{T.line}}; border-radius: 7px; overflow: hidden;">
+<svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%;"><path d="{{strip.d}}" stroke="{{strip.line}}" stroke-width="1" fill="none" vector-effect="non-scaling-stroke"></path></svg>
+<div style="{{strip.win}}"></div>
+</div>
+</sc-if>
+<div style="font-size: 11px; color: {{T.text3}}; margin-top: 14px; {{noteHide}}">{{note}}</div>
+<div style="font-size: 11px; color: {{T.text3}}; margin-top: 4px; font-family: 'IBM Plex Mono', monospace; {{partHide}} {{footHide}}">{{foot}}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":520},"type":{"editor":"enum","options":["table","channel","config","effect","stability","curves","forecast","replicates"],"default":"table"},"opts":{"editor":null},"title":{"editor":null},"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"part":{"editor":null},"noNote":{"editor":null},"noFoot":{"editor":null},"onWindow":{"editor":null}}'>
+class Component extends DCLogic {
+renderVals() {
+  const D = window.OneData, P = this.props || {}, o = P.opts || {}, type = P.type || 'table';
+  const T = P.theme === 'light'
+    ? { card: '#FFFFFF', head: '#F1F3F6', line: '#E3E6EB', text: '#222227', text2: '#5A5A66', text3: '#6A6A74', best: '#0F7A52', bestBg: '#E3F4EC', s: ['#1A8C8C', '#7262D9', '#C47F14', '#D9607E'] }
+    : { card: '#1C1C20', head: '#24242A', line: '#2E2E35', text: '#EEEEF1', text2: '#B0B0BA', text3: '#7C7C87', best: '#5FD4A0', bestBg: '#14302A', s: ['#1FA3A3', '#8C7CF0', '#C47F14', '#D9607E'] };
+  const mono = "font-family: 'IBM Plex Mono', monospace;";
+  const cellSt = (x) => 'padding: 9px 12px; border-bottom: 1px solid ' + T.line + '; font-size: 13px; color: ' + T.text + ';' + (x || '');
+  const headSt = (x) => 'padding: 8px 12px; background: ' + T.head + '; font-size: 12px; color: ' + T.text2 + ';' + (x || '');
+  const nm = (dk, v) => { const d = D.dim(dk); return d && d.names ? d.names[v] : v; };
+  const fixTxt = (f) => Object.keys(f || {}).map((k) => k + ' = ' + nm(k, f[k])).join(' · ');
+  const rep = '5 Seeds × 4 Folds gemittelt';
+  let cells = [], gridSt = 'display: grid;', title = '', sub = '', note = '', legend = [];
+
+  if (type === 'table') {
+    const rows = D.dim(o.rows || 'forecaster'), grp = o.groups === 'none' ? null : D.dim(o.groups || 'pred_len');
+    const mets = (o.metrics || ['mape', 'cc']).map(D.metric), fix = o.fix || { features: 'M' };
+    const gv = grp ? grp.values : [null];
+    const cols = [];
+    gv.forEach((g) => mets.forEach((m) => cols.push({ g, m })));
+    const val = {}, best = {};
+    cols.forEach((c, ci) => rows.values.forEach((r) => {
+      const f = Object.assign({}, fix, { [rows.key]: r }); if (c.g) f[grp.key] = c.g;
+      const v = D.stat(f, c.m.key).mean; val[r + ci] = v;
+      if (best[ci] === undefined || v < val[best[ci] + ci]) best[ci] = r;
+    }));
+    gridSt = 'display: grid; grid-template-columns: minmax(130px, 1.3fr) repeat(' + cols.length + ', minmax(0, 1fr));';
+    if (grp) {
+      cells.push({ t: '', st: headSt('background: transparent;') });
+      gv.forEach((g) => cells.push({ t: grp.key + ' = ' + nm(grp.key, g), st: headSt('grid-column: span ' + mets.length + '; text-align: center; font-weight: 600; color: ' + T.text + '; border-left: 1px solid ' + T.line + ';') }));
+    }
+    cells.push({ t: '', st: headSt() });
+    cols.forEach((c, ci) => cells.push({ t: c.m.label, st: headSt('text-align: center;' + (ci % mets.length === 0 ? ' border-left: 1px solid ' + T.line + ';' : '')) }));
+    const wins = {};
+    cols.forEach((c, ci) => { wins[best[ci]] = (wins[best[ci]] || 0) + 1; });
+    rows.values.forEach((r) => {
+      cells.push({ t: nm(rows.key, r), st: cellSt('font-weight: ' + (r === rows.values[0] ? 600 : 400) + ';') });
+      cols.forEach((c, ci) => {
+        const b = best[ci] === r;
+        cells.push({ t: D.fmt(val[r + ci], c.m.d), st: cellSt(mono + ' text-align: center;' + (b ? ' color: ' + T.best + '; background: ' + T.bestBg + '; font-weight: 600;' : ' color: ' + T.text2 + ';') + (ci % mets.length === 0 ? ' border-left: 1px solid ' + T.line + ';' : '')) });
+      });
+    });
+    const top = Object.keys(wins).sort((a, b) => wins[b] - wins[a])[0];
+    title = nm(rows.key, top) + ' ist in ' + wins[top] + ' von ' + cols.length + ' Spalten am besten';
+    sub = rows.label + ' im Vergleich' + (grp ? ' · je ' + grp.label : '') + ' · ' + fixTxt(fix) + ' · ' + rep;
+    note = 'niedriger = besser · grün = bester Wert je Spalte';
+  }
+
+  if (type === 'channel') {
+    const ser = D.dim(o.series || 'features'), m = D.metric('mape'), fix = o.fix || { forecaster: 'REP-Net', pred_len: '30' };
+    const chs = D.dim('channel').values, fmtBars = (o.format || 'table') === 'bars';
+    const v = {}; let max = 0, wins = {};
+    chs.forEach((c) => {
+      let b = null;
+      ser.values.forEach((s) => { const x = D.stat(Object.assign({}, fix, { [ser.key]: s }), 'mape', c).mean; v[c + s] = x; max = Math.max(max, x); if (b === null || x < v[c + b]) b = s; });
+      v[c + 'best'] = b; wins[b] = (wins[b] || 0) + 1;
+    });
+    const top = Object.keys(wins).sort((a, b) => wins[b] - wins[a])[0];
+    title = nm(ser.key, top) + ' ist in ' + wins[top] + ' von ' + chs.length + ' Regionen besser';
+    sub = m.label + ' je Region · ' + ser.label + ' im Vergleich · ' + fixTxt(fix) + ' · ' + rep;
+    if (!fmtBars) {
+      gridSt = 'display: grid; grid-template-columns: minmax(130px, 1.3fr) repeat(' + ser.values.length + ', minmax(0, 1fr));';
+      cells.push({ t: '', st: headSt() });
+      ser.values.forEach((s) => cells.push({ t: nm(ser.key, s), st: headSt('text-align: center; font-weight: 600; color: ' + T.text + ';') }));
+      chs.forEach((c) => {
+        cells.push({ t: c, st: cellSt() });
+        ser.values.forEach((s) => { const b = v[c + 'best'] === s; cells.push({ t: D.fmt(v[c + s], 2), st: cellSt(mono + ' text-align: center;' + (b ? ' color: ' + T.best + '; background: ' + T.bestBg + '; font-weight: 600;' : ' color: ' + T.text2 + ';')) }); });
+      });
+      note = 'niedriger = besser · grün = besser je Region';
+    } else {
+      legend = ser.values.map((s, i) => ({ t: nm(ser.key, s), sw: 'width: 10px; height: 10px; border-radius: 2px; background: ' + T.s[i] + ';' }));
+      gridSt = 'display: grid; grid-template-columns: repeat(' + chs.length + ', minmax(0, 1fr)); column-gap: 18px; border-bottom: 1px solid ' + T.line + ';';
+      const lo = 0, hi = max * 1.12;
+      chs.forEach((c) => cells.push({
+        t: '', st: 'height: 200px; display: flex; align-items: flex-end; justify-content: center; gap: 4px;', hasBars: true,
+        bars: ser.values.map((s, i) => ({ t: D.fmt(v[c + s], 2), wrap: 'display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; height: 100%; width: 44px;', lab: mono + ' font-size: 11px; color: ' + T.text2 + ';', bar: 'width: 100%; border-radius: 2px 2px 0 0; background: ' + T.s[i] + '; height: ' + ((v[c + s] - lo) / (hi - lo) * 82).toFixed(1) + '%;' }))
+      }));
+      chs.forEach((c) => cells.push({ t: c, st: 'text-align: center; font-size: 12px; color: ' + T.text2 + '; padding-top: 6px;' }));
+      note = 'niedriger = besser';
+    }
+  }
+
+  if (type === 'config') {
+    title = 'Beste REP-Net-Konfiguration';
+    sub = 'aus dem Grid in ' + D.RUN.issue + ' · Werte, die je pred_len verschieden sind, fett';
+    gridSt = 'display: grid; grid-template-columns: repeat(2, minmax(0, 0.9fr) minmax(0, 1.1fr)); border-top: 1px solid ' + T.line + ';';
+    D.CONFIG.forEach(([k, val, diff]) => {
+      cells.push({ t: k, st: 'padding: 8px 12px; font-size: 12px; color: ' + T.text2 + '; background: ' + T.head + '; border-bottom: 1px solid ' + T.line + ';' });
+      cells.push({ t: val, st: 'padding: 8px 12px; font-size: 12px; text-align: center; border-bottom: 1px solid ' + T.line + '; ' + mono + ' color: ' + T.text + ';' + (diff ? ' font-weight: 600;' : '') });
+    });
+    note = 'seeds: 5 (Mittelwert)';
+  }
+
+  if (type === 'effect') {
+    const m = D.metric(o.metric || 'mape'), all = D.stat({}, m.key).mean;
+    const eff = D.DIMS.filter((d) => d.key !== 'channel').map((d) => {
+      const means = d.values.map((x) => ({ x, v: D.stat({ [d.key]: x }, m.key).mean }));
+      const lo = Math.min(...means.map((q) => q.v)), hi = Math.max(...means.map((q) => q.v));
+      return { d, spread: (hi - lo) / all * 100, best: means.find((q) => q.v === lo).x };
+    }).sort((a, b) => b.spread - a.spread);
+    const mx = eff[0].spread;
+    title = eff[0].d.label + ' hat den größten Einfluss auf ' + m.label.replace(' (%)', '');
+    sub = 'Spanne zwischen bestem und schlechtestem Wert je Achse, relativ zum Mittel · ' + rep;
+    gridSt = 'display: grid; grid-template-columns: 130px minmax(0, 1fr) 70px 150px; align-items: center; row-gap: 10px; column-gap: 12px;';
+    eff.forEach((e) => {
+      cells.push({ t: e.d.label, st: mono + ' font-size: 13px; color: ' + T.text + ';' });
+      cells.push({ t: '', st: 'height: 14px; background: ' + T.head + '; border-radius: 2px;', hasInner: true, inner: 'height: 100%; border-radius: 2px; background: ' + T.s[0] + '; width: ' + (e.spread / mx * 100).toFixed(1) + '%;' });
+      cells.push({ t: D.fmt(e.spread, 1) + ' %', st: mono + ' font-size: 12px; text-align: right; color: ' + T.text + ';' });
+      cells.push({ t: 'beste: ' + nm(e.d.key, e.best), st: 'font-size: 12px; color: ' + T.text2 + ';' });
+    });
+    note = 'Achsen eines Laufs; Kanäle und Wiederholungen sind gemittelt';
+  }
+
+  if (type === 'stability') {
+    const fix = o.fix || { pred_len: '30', features: 'M' }, rows = D.dim('forecaster').values;
+    const st = rows.map((r) => ({ r, s: D.stat(Object.assign({}, fix, { forecaster: r }), 'mape') }));
+    const all = [].concat(...st.map((q) => q.s.xs)), lo = Math.min(...all) * 0.98, hi = Math.max(...all) * 1.02, x = (v) => ((v - lo) / (hi - lo) * 100).toFixed(2) + '%';
+    title = st[0].r + ' schwankt um ± ' + D.fmt(st[0].s.sd, 2) + ' Prozentpunkte über ' + st[0].s.n + ' Wiederholungen';
+    sub = 'MAPE (%) jeder Wiederholung · Strich = Mittel, Band = ± 1 sd · ' + fixTxt(fix);
+    gridSt = 'display: grid; grid-template-columns: 130px minmax(0, 1fr) 110px; align-items: center; row-gap: 6px; column-gap: 12px;';
+    st.forEach(({ r, s }) => {
+      cells.push({ t: r, st: 'font-size: 13px; color: ' + T.text + ';' });
+      cells.push({
+        t: '', st: 'position: relative; height: 26px; border-bottom: 1px solid ' + T.line + ';', hasDots: true,
+        dots: ['position: absolute; top: 6px; height: 14px; border-radius: 7px; background: ' + T.head + '; left: ' + x(s.mean - s.sd) + '; width: calc(' + x(s.mean + s.sd) + ' - ' + x(s.mean - s.sd) + ');']
+          .concat(s.xs.map((v, i) => 'position: absolute; top: ' + (8 + (i % 3) * 3) + 'px; left: ' + x(v) + '; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; opacity: 0.6; background: ' + T.s[0] + ';'))
+          .concat(['position: absolute; top: 3px; height: 20px; width: 2px; background: ' + T.text + '; left: ' + x(s.mean) + ';'])
+      });
+      cells.push({ t: D.fmt(s.mean, 2) + ' ± ' + D.fmt(s.sd, 2), st: mono + ' font-size: 12px; text-align: right; color: ' + T.text2 + ';' });
+    });
+    note = 'statistische Modelle hängen nicht vom Seed ab, ihre Streuung kommt nur aus den Folds';
+  }
+
+
+  // --- line plots (types curves / forecast): fixed path slots p0–p13 and q0–q3 ---
+  const NOP = { d: 'M0 0', c: 'none', w: 0, f: 'none', o: 0, da: '' };
+  let plotPaths = [], plot2 = [], yt = [], xt = [], yt2 = [], plotH = 220, plot2Label = '', hasPlot = false;
+  const line = (ys, lo, hi, n) => ys.map((v, i) => (i ? 'L' : 'M') + (i / (n - 1) * 1000).toFixed(1) + ' ' + ((1 - (v - lo) / (hi - lo)) * 300).toFixed(1)).join(' ');
+  const ticksY = (lo, hi, k, d) => Array.from({ length: k }, (_, i) => { const v = lo + (hi - lo) * i / (k - 1); return { v: D.fmt(v, d), st: 'position: absolute; right: calc(100% + 6px); font-size: 11px; color: ' + T.text3 + '; ' + mono + ' bottom: ' + (i / (k - 1) * 100) + '%; transform: translateY(50%);' }; });
+  if (type === 'curves') {
+    const F = window.FData, c = F.curves(o.key || 'x'), all = [].concat(...c.runs.map((r) => r.train.concat(r.val))), lo = Math.min(...all) * 0.95, hi = Math.max(...all) * 1.02, n = c.epochs;
+    const reps = o.reps !== 'mean';
+    if (reps) c.runs.forEach((r) => { plotPaths.push({ d: line(r.train, lo, hi, n), c: T.s[0], w: 1, f: 'none', o: 0.25, da: '' }); plotPaths.push({ d: line(r.val, lo, hi, n), c: T.s[1], w: 1, f: 'none', o: 0.25, da: '' }); });
+    plotPaths.push({ d: line(c.train, lo, hi, n), c: T.s[0], w: 2.2, f: 'none', o: 1, da: '' });
+    plotPaths.push({ d: line(c.val, lo, hi, n), c: T.s[1], w: 2.2, f: 'none', o: 1, da: '' });
+    const bx = (c.best / (n - 1) * 1000).toFixed(1);
+    plotPaths.push({ d: 'M' + bx + ' 0 L' + bx + ' 300', c: T.text3, w: 1, f: 'none', o: 1, da: '4 4' });
+    legend = [['train_loss', T.s[0]], ['val_loss', T.s[1]]].map(([t, col]) => ({ t, sw: 'width: 14px; height: 3px; border-radius: 2px; background: ' + col + ';' })).concat([{ t: 'beste Epoche ' + c.best, sw: 'width: 0; height: 12px; border-left: 1px dashed ' + T.text3 + ';' }]);
+    yt = ticksY(lo, hi, 4, 2);
+    xt = [0, 0.25, 0.5, 0.75, 1].map((t) => ({ v: String(Math.round(t * (n - 1))), st: 'position: absolute; top: calc(100% + 4px); font-size: 11px; color: ' + T.text3 + '; ' + mono + ' left: ' + t * 100 + '%; transform: translateX(-50%);' }));
+    title = 'val_loss am niedrigsten in Epoche ' + c.best + ' von ' + n;
+    sub = 'Loss je Epoche · ' + (reps ? 'dünn = einzelne Seeds, dick = Mittel' : 'Mittel über 5 Seeds') + ' · Fold 0';
+    note = 'Strich = Epoche mit dem niedrigsten mittleren val_loss';
+    hasPlot = true;
+  }
+  let strip = null;
+  if (type === 'forecast') {
+    const F = window.FData, reg = o.region || 'us', fc = F.forecast(o.key || 'x', reg, o.start, o.cmp || null), n = fc.days.length, cmp = !!fc.cmp;
+    const vals = fc.actual.concat(fc.hi, fc.lo, cmp ? fc.cmp : []), lo = Math.min(...vals) * 0.97, hi = Math.max(...vals) * 1.02;
+    const band = line(fc.hi, lo, hi, n) + ' ' + fc.lo.slice().reverse().map((v, i) => 'L' + ((n - 1 - i) / (n - 1) * 1000).toFixed(1) + ' ' + ((1 - (v - lo) / (hi - lo)) * 300).toFixed(1)).join(' ') + ' Z';
+    plotPaths.push({ d: band, c: 'none', w: 0, f: T.s[0], o: 0.18, da: '' });
+    if (cmp) plotPaths.push({ d: line(fc.cmp, lo, hi, n), c: T.s[1], w: 1.5, f: 'none', o: 0.95, da: '5 4' });
+    plotPaths.push({ d: line(fc.model, lo, hi, n), c: T.s[0], w: 2, f: 'none', o: 1, da: '' });
+    plotPaths.push({ d: line(fc.actual, lo, hi, n), c: T.text, w: 1.8, f: 'none', o: 1, da: '' });
+    legend = [['Ist', T.text], ['Vorhersage (Mittel der Seeds, Band = min–max)', T.s[0]]].concat(cmp ? [[o.cmpLabel || 'Vergleich', T.s[1]]] : []).map(([t, col]) => ({ t, sw: 'width: 14px; height: 3px; border-radius: 2px; background: ' + col + ';' }));
+    yt = ticksY(lo, hi, 4, 0);
+    const dl = (d) => d.getDate() + '.' + (d.getMonth() + 1) + '.';
+    xt = [0, 7, 14, 21, n - 1].map((i) => ({ v: dl(fc.days[i]), st: 'position: absolute; top: calc(100% + 4px); font-size: 11px; color: ' + T.text3 + '; ' + mono + ' left: ' + (i / (n - 1) * 100) + '%; transform: translateX(-50%);' }));
+    const err = fc.model.map((m, i) => (m / fc.actual[i] - 1) * 100), errC = cmp ? fc.cmp.map((b, i) => (b / fc.actual[i] - 1) * 100) : [];
+    const em = Math.max(5, ...err.map(Math.abs), ...errC.map(Math.abs));
+    plot2 = [{ d: 'M0 150 L1000 150', c: T.text3, w: 1, f: 'none', o: 1, da: '' }, { d: line(err, -em, em, n), c: T.s[0], w: 1.8, f: 'none', o: 1, da: '' }].concat(cmp ? [{ d: line(errC, -em, em, n), c: T.s[1], w: 1.5, f: 'none', o: 0.95, da: '5 4' }] : []);
+    yt2 = ticksY(-em, em, 3, 0);
+    plot2Label = 'Fehler (%)';
+    const mape = err.reduce((a, b) => a + Math.abs(b), 0) / n, mapeC = cmp ? errC.reduce((a, b) => a + Math.abs(b), 0) / n : 0;
+    title = 'Region ' + reg + ', ' + dl(fc.days[0]) + '–' + dl(fc.days[n - 1]) + ': MAPE ' + D.fmt(mape, 1) + ' %' + (cmp ? ' gegenüber ' + D.fmt(mapeC, 1) + ' % (' + (o.cmpLabel || 'Vergleich') + ')' : '');
+    sub = 'Vorhersage gegen Ist · Fenster ' + fc.len + ' Tage · Tageswerte';
+    note = 'Fenster im Testzeitraum unten wählen';
+    hasPlot = true; plotH = 190;
+    // overview of the whole test period with the window marked; click moves the window
+    const N = fc.total, aLo = Math.min(...fc.all), aHi = Math.max(...fc.all);
+    const ov = fc.all.map((v, i) => (i ? 'L' : 'M') + (i / (N - 1) * 1000).toFixed(1) + ' ' + ((1 - (v - aLo) / (aHi - aLo)) * 100).toFixed(1)).join(' ');
+    strip = {
+      d: ov, line: T.text3,
+      win: 'position: absolute; top: 0; bottom: 0; left: ' + (fc.start / N * 100).toFixed(2) + '%; width: ' + (fc.len / N * 100).toFixed(2) + '%; background: ' + T.s[0] + '33; border-left: 2px solid ' + T.s[0] + '; border-right: 2px solid ' + T.s[0] + '; pointer-events: none;',
+      from: dl(fc.allDays[0]) + fc.allDays[0].getFullYear(), to: dl(fc.allDays[N - 1]) + fc.allDays[N - 1].getFullYear(),
+      pick: (e) => { if (!P.onWindow || !e || !e.currentTarget) return; const r = e.currentTarget.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width; P.onWindow(Math.round(x * N - fc.len / 2)); }
+    };
+  }
+  if (type === 'replicates') {
+    const F = window.FData, grid = F.replicates(o.key || 'x', o.mean || 4.2, o.sd || 0.1), all = [].concat(...grid), lo = Math.min(...all), hi = Math.max(...all);
+    gridSt = 'display: grid; grid-template-columns: 70px repeat(4, minmax(0, 1fr)); gap: 3px;';
+    cells.push({ t: '', st: 'font-size: 11px;' });
+    F.FOLDS.forEach((f) => cells.push({ t: 'Fold ' + f, st: 'font-size: 11px; color: ' + T.text3 + '; text-align: center; padding-bottom: 2px;' }));
+    grid.forEach((row, si) => {
+      cells.push({ t: 'Seed ' + F.SEEDS[si], st: 'font-size: 12px; color: ' + T.text2 + '; align-self: center;' });
+      row.forEach((v) => { const t = (v - lo) / (hi - lo || 1); cells.push({ t: D.fmt(v, 2), st: mono + ' font-size: 12px; text-align: center; padding: 7px 0; border-radius: 7px; color: ' + T.text + '; background: rgba(196, 127, 20, ' + (0.08 + t * 0.5).toFixed(2) + ');' }); });
+    });
+    const worst = Math.max(...all), best = Math.min(...all);
+    title = 'Spanne ' + D.fmt(best, 2) + ' bis ' + D.fmt(worst, 2) + ' % über 20 Wiederholungen';
+    sub = 'MAPE (%) je Seed und Fold · dunkler = schlechter';
+    note = 'Folds sind verschiedene Testzeiträume (rolling origin), Seeds verschiedene Initialisierungen';
+  }
+  const pad = (arr, k) => { const out = {}; for (let i = 0; i < k; i++) out[(k === 14 ? 'p' : 'q') + i] = arr[i] || NOP; return out; };
+  return Object.assign(pad(plotPaths, 14), pad(plot2, 4), {
+    hasStrip: !!strip, strip: strip || { d: 'M0 0', line: 'none', win: '', from: '', to: '', pick: () => {} },
+    hasPlot, hasPlot2: plot2.length > 0, plotH, yt, xt, yt2, plot2Label,
+    T, cells, gridSt, legend, hasLegend: legend.length > 0,
+    title: P.title || title, sub, note,
+    foot: D.RUN.id + ' · Epoche ' + D.RUN.epoch + ' · Commit ' + D.RUN.commit,
+    partHide: P.part ? 'display: none;' : '', noteHide: P.noNote ? 'display: none;' : '', footHide: P.noFoot ? 'display: none;' : '',
+    rootSt: P.part ? 'box-sizing: border-box; width: 100%; font-family: \'IBM Plex Sans\', sans-serif; color: ' + T.text + ';' : 'box-sizing: border-box; width: 100%; background: ' + T.card + '; border: 1px solid ' + T.line + '; border-radius: 12px; padding: 18px 20px; font-family: \'IBM Plex Sans\', sans-serif; color: ' + T.text + ';'
+  });
+}
+}
+</script>
+</body>
+</html>

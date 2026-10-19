@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Lauf · neuer Stil</title>
+<script src="./support.js"></script>
+<script src="./R-exp-data.js"></script>
+<script src="./R-one-data.js"></script>
+<script src="./R-f-data.js"></script>
+<script src="./R-cfg-data.js"></script>
+<script src="./R-g-shared.js"></script>
+<script src="./R-notes-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+*{scrollbar-width:thin;scrollbar-color:#34343C transparent}*::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{background:#34343C;border-radius:6px;border:3px solid transparent;background-clip:padding-box}*::-webkit-scrollbar-thumb:hover{background:#45454F;background-clip:padding-box}
+body{margin:0;background:#131315}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,a:focus-visible{outline:2px solid #8AA4FF;outline-offset:1px}
+.card{background:#1C1C20;border:1px solid #2E2E35;border-radius:12px;padding:14px 16px;box-sizing:border-box;min-width:0}
+.ct{font-weight:600;font-size:13px;margin:0 0 2px}
+.cs{font-size:12px;color:#7C7C87;margin:0 0 12px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.chip{font:400 12px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:7px;border:1px solid #2E2E35;background:#24242A;color:#B0B0BA;white-space:nowrap}
+.mdb{font-weight:600;color:#FFE2A8}
+.mdi{font-style:italic}
+.mdc{font:400 12px 'IBM Plex Mono',monospace;background:#2A2112;border:1px solid #5A4420;border-radius:7px;padding:0 4px}
+.lnk{background:none;border:0;padding:0;color:#B0B0BA;cursor:pointer;font-size:11px}
+.nbtn{font:500 12px 'IBM Plex Sans',sans-serif;padding:4px 10px;border-radius:9px;border:1px solid #5A4420;background:#2A2112;color:#F2C66D;cursor:pointer}
+.nbtn.p{background:#C9922E;border-color:#C9922E;color:#1A1205}
+.nbtn.g{border-color:#34343C;background:none;color:#B0B0BA}
+.plus{border:1px dashed #3A2E18;background:none;color:#C9A86A;border-radius:9px;padding:1px 8px;cursor:pointer;font-size:11px}
+</style>
+</helmet>
+<div style="width: 100%; height: 100%; box-sizing: border-box; position: relative; display: flex; flex-direction: row; background: #131315; color: #EEEEF1; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden;">
+<div style="flex: 1; min-width: 0; height: 100%; overflow: hidden;"><dc-import name="R-F-Exp-H4" run="{{runProp}}" set-view="{{setViewProp}}" on-row="{{onRow}}" sel-key="{{selKey}}" hint-size="100%,900px"></dc-import></div>
+<sc-if value="{{noSel}}" hint-placeholder-val="{{true}}"><aside aria-label="Meine Notizen" style="width: 300px; flex-shrink: 0; border-left: 1px solid #3A2E18; background: #12100B; display: flex; flex-direction: column; min-height: 0;">
+<div style="flex-shrink: 0; display: flex; align-items: baseline; gap: 8px; padding: 12px 12px 8px;"><span style="color: #F2C66D; font-weight: 600;">✎ Meine Notizen</span><span style="font-size: 11px; color: #8F7A52;">{{noteCount}}</span><span style="flex: 1;"></span><button class="plus" onClick="{{addRun}}">+ zum Lauf</button></div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 0 12px 30px; display: flex; flex-direction: column; gap: 8px;">
+<sc-for list="{{allNotes}}" as="n" hint-placeholder-count="2"><div style="border: 1px solid #3A2E18; border-radius: 12px; background: #151209; padding: 9px 10px; display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8F7A52;"><span style="border: 1px solid #3A2E18; border-radius: 9px; padding: 0 7px; color: #C9A86A; max-width: 200px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{n.anchor}}</span><span style="flex: 1;"></span><span>{{n.when}}</span></div>
+<sc-if value="{{n.editing}}"><textarea value="{{n.editText}}" onInput="{{n.onEdit}}" onKeyDown="{{n.onEditKey}}" rows="3" placeholder="Notiz … **fett**, `code`, - Liste" style="width: 100%; box-sizing: border-box; resize: vertical; background: #131315; border: 1px solid #5A4420; border-radius: 9px; color: #EEEEF1; font: 400 12.5px 'IBM Plex Sans', sans-serif; padding: 6px 8px;"></textarea><div style="display: flex; gap: 6px;"><button class="nbtn p" onClick="{{n.save}}">Speichern</button><button class="nbtn g" onClick="{{n.cancel}}">Abbrechen</button></div></sc-if>
+<sc-if value="{{n.reading}}"><div style="line-height: 1.5; font-size: 12.5px;"><sc-for list="{{n.md}}" as="l" hint-placeholder-count="1"><div style="{{l.st}}"><sc-if value="{{l.bullet}}"><span style="color: #C9922E;">•</span></sc-if><span><sc-for list="{{l.parts}}" as="p" hint-placeholder-count="1"><span class="{{p.cls}}">{{p.t}}</span></sc-for></span></div></sc-for></div></sc-if>
+<div style="display: flex; align-items: center; gap: 10px; font-size: 11px;"><sc-if value="{{n.byAgent}}"><span style="color: #A9BBFF;">✦ vom Agenten, bestätigt</span></sc-if><span style="flex: 1;"></span><button class="lnk" onClick="{{n.edit}}">Bearbeiten</button><button class="lnk" onClick="{{n.del}}">Löschen</button></div>
+</div></sc-for>
+<div style="font-size: 11px; color: #6A6A74; line-height: 1.5; padding-top: 4px;">Zeile anklicken: Detail der Kombination mit ihren Notizen. Notizen an einer Kombination legst du dort an.</div>
+</div>
+</aside></sc-if>
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+<aside style="width: 640px; flex-shrink: 0; border-left: 1px solid #2E2E35; background: #161618; display: flex; flex-direction: column; min-height: 0;">
+<div style="flex-shrink: 0; padding: 14px 18px 12px; border-bottom: 1px solid #2E2E35; background: #1C1C20;">
+<div style="display: flex; align-items: center; gap: 8px;"><span style="font-weight: 600;">Kombination</span><span style="font-size: 12px; color: #7C7C87;">{{selN}}</span><span style="flex: 1;"></span><button onClick="{{openAnalysis}}" style="font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 8px; padding: 4px 10px; border: 1px solid #3A4166; background: #262B42; color: #EEEEF1; margin-right: 6px;">{{analysisLabel}}</button><button onClick="{{close}}" aria-label="Detail schließen" style="background: none; border: 0; color: #7C7C87; cursor: pointer; font-size: 17px;">×</button></div>
+<div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px;"><sc-for list="{{chips}}" as="c" hint-placeholder-count="3"><span class="chip">{{c}}</span></sc-for></div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px;"><sc-for list="{{kpis}}" as="k" hint-placeholder-count="4"><div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #7C7C87;">{{k.label}}</span><span class="mono" style="font-size: 15px;">{{k.v}}</span><span class="mono" style="font-size: 11px; color: #7C7C87;">{{k.sd}}</span></div></sc-for></div>
+</div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 14px 18px 40px; display: flex; flex-direction: column; gap: 14px;">
+<div style="border: 1px solid #3A2E18; border-left: 3px solid #E0A43A; border-radius: 12px; background: rgba(224,164,58,.04); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; align-items: center; gap: 8px;"><span style="color: #F2C66D; font-weight: 600; font-size: 12.5px;">✎ Notizen zu dieser Kombination</span><span style="font-size: 11px; color: #8F7A52;">{{selNoteCount}}</span><span style="flex: 1;"></span><button class="plus" onClick="{{addSel}}">+ Notiz</button></div>
+<sc-for list="{{selNotes}}" as="n" hint-placeholder-count="2"><div style="border: 1px solid #3A2E18; border-radius: 12px; background: #151209; padding: 9px 10px; display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8F7A52;"><span style="border: 1px solid #3A2E18; border-radius: 9px; padding: 0 7px; color: #C9A86A; max-width: 200px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{n.anchor}}</span><span style="flex: 1;"></span><span>{{n.when}}</span></div>
+<sc-if value="{{n.editing}}"><textarea value="{{n.editText}}" onInput="{{n.onEdit}}" onKeyDown="{{n.onEditKey}}" rows="3" placeholder="Notiz … **fett**, `code`, - Liste" style="width: 100%; box-sizing: border-box; resize: vertical; background: #131315; border: 1px solid #5A4420; border-radius: 9px; color: #EEEEF1; font: 400 12.5px 'IBM Plex Sans', sans-serif; padding: 6px 8px;"></textarea><div style="display: flex; gap: 6px;"><button class="nbtn p" onClick="{{n.save}}">Speichern</button><button class="nbtn g" onClick="{{n.cancel}}">Abbrechen</button></div></sc-if>
+<sc-if value="{{n.reading}}"><div style="line-height: 1.5; font-size: 12.5px;"><sc-for list="{{n.md}}" as="l" hint-placeholder-count="1"><div style="{{l.st}}"><sc-if value="{{l.bullet}}"><span style="color: #C9922E;">•</span></sc-if><span><sc-for list="{{l.parts}}" as="p" hint-placeholder-count="1"><span class="{{p.cls}}">{{p.t}}</span></sc-for></span></div></sc-for></div></sc-if>
+<div style="display: flex; align-items: center; gap: 10px; font-size: 11px;"><sc-if value="{{n.byAgent}}"><span style="color: #A9BBFF;">✦ vom Agenten, bestätigt</span></sc-if><span style="flex: 1;"></span><button class="lnk" onClick="{{n.edit}}">Bearbeiten</button><button class="lnk" onClick="{{n.del}}">Löschen</button></div>
+</div></sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 12px; color: #7C7C87;">Verlaufs-Widgets dieser Kombination</span><span style="flex: 1;"></span>
+<button onClick="{{toggleAdd}}" style="font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 8px; padding: 4px 10px; border: 1px solid #2E2E35; background: #1C1C20; color: #EEEEF1;">+ Widget</button></div>
+<sc-if value="{{add}}" hint-placeholder-val="{{false}}"><div style="display: flex; flex-direction: column; gap: 2px; padding: 6px; background: #1C1C20; border: 1px solid #3A4166; border-radius: 12px;"><sc-for list="{{catalog}}" as="c" hint-placeholder-count="3"><button onClick="{{c.add}}" style="text-align: left; display: flex; flex-direction: column; gap: 2px; background: none; border: 0; border-radius: 8px; padding: 7px 9px; cursor: pointer; color: #EEEEF1;"><span style="font-size: 13px;">{{c.label}}</span><span style="font-size: 12px; color: #7C7C87;">{{c.q}}</span></button></sc-for></div></sc-if>
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #7C7C87;"><span style="color: #B0B0BA; font-weight: 500;">{{t.label}}</span><span>· {{t.q}}</span><span style="flex: 1;"></span>
+<button onClick="{{t.toggle}}" style="{{t.setBtn}}">Einstellen</button><button onClick="{{t.remove}}" aria-label="Widget entfernen" style="background: none; border: 0; color: #7C7C87; cursor: pointer; font-size: 15px;">×</button><button onClick="{{t.saveOne}}" title="Als Deliverable speichern" aria-label="Dieses Widget als Deliverable speichern" style="width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 8px; background: #8AA4FF; color: #131315; cursor: pointer;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2.5 2.5h8.5l2.5 2.5v8.5h-11z"/><path d="M5 2.5v3.5h5.5V2.5"/><rect x="5" y="9" width="6" height="4.5"/></svg></button></div>
+<sc-if value="{{t.open}}" hint-placeholder-val="{{false}}"><div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 8px 10px; background: #1C1C20; border: 1px solid #3A4166; border-radius: 12px;">
+<sc-for list="{{t.ctrls}}" as="g" hint-placeholder-count="2"><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #7C7C87;">{{g.label}}<span style="display: flex; padding: 2px; gap: 2px; background: #131315; border: 1px solid #2E2E35; border-radius: 9px;"><sc-for list="{{g.items}}" as="i" hint-placeholder-count="3"><button style="{{i.st}}" onClick="{{i.on}}">{{i.label}}</button></sc-for></span></span></sc-for>
+<sc-if value="{{t.noCtrl}}"><span style="font-size: 12px; color: #7C7C87;">Keine Einstellungen für dieses Widget</span></sc-if>
+</div></sc-if>
+<sc-if value="{{t.isW}}" hint-placeholder-val="{{true}}"><dc-import name="R-W-Widget" type="{{t.type}}" opts="{{t.opts}}" on-window="{{t.onWindow}}" theme="dark" hint-size="100%,320px"></dc-import></sc-if>
+<sc-if value="{{t.isBlocks}}" hint-placeholder-val="{{false}}"><div style="border: 1px solid #2E2E35; border-radius: 12px; background: #1C1C20; padding: 12px;"><dc-import name="R-J1-Bloecke" embedded="{{true}}" hint-size="100%,260px"></dc-import></div></sc-if>
+<sc-if value="{{t.isYaml}}" hint-placeholder-val="{{false}}"><div style="border: 1px solid #2E2E35; border-radius: 12px; background: #1C1C20; overflow: hidden;"><dc-import name="R-J4-YAML" embedded="{{true}}" hint-size="100%,260px"></dc-import></div></sc-if>
+</div>
+</sc-for>
+
+</div>
+</aside>
+</sc-if>
+<sc-if value="{{dlg}}" hint-placeholder-val="{{false}}">
+<div onClick="{{closeDlg}}" style="position: absolute; inset: 0; background: rgba(6, 8, 12, 0.65);"></div>
+<div role="dialog" aria-label="Als Deliverable speichern" style="position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 1180px; height: 800px; box-sizing: border-box; background: #1C1C20; border: 1px solid #2E2E35; border-radius: 8px; box-shadow: 0 16px 48px rgba(0,0,0,0.55); display: grid; grid-template-columns: 300px minmax(0, 1fr); overflow: hidden;">
+<div style="border-right: 1px solid #2E2E35; padding: 18px; display: flex; flex-direction: column; gap: 14px; overflow: auto;">
+<div style="font-size: 15px; font-weight: 600;">Als Deliverable speichern</div>
+<div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 12px; color: #7C7C87;">Widgets · ein Widget = ein Bild</span>
+<sc-for list="{{pick}}" as="p" hint-placeholder-count="4"><div style="{{p.rowSt}}" onClick="{{p.focus}}"><input type="checkbox" checked="{{p.on}}" onChange="{{p.toggle}}" style="accent-color: #8AA4FF;"><span style="flex: 1; min-width: 0;">{{p.label}}</span><input value="{{p.file}}" onInput="{{p.onName}}" disabled="{{p.off}}" aria-label="Dateiname" class="mono" style="width: 130px; font-size: 11px; color: #EEEEF1; background: #131315; border: 1px solid #2E2E35; border-radius: 7px; padding: 3px 5px;"></div></sc-for></div>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 12px; color: #7C7C87;">Hintergrund</span><div style="display: flex; padding: 2px; gap: 2px; background: #131315; border: 1px solid #2E2E35; border-radius: 9px; align-self: flex-start;"><sc-for list="{{themes}}" as="t" hint-placeholder-count="2"><button style="{{t.st}}" onClick="{{t.on}}">{{t.label}}</button></sc-for></div></div>
+<label style="display: flex; gap: 10px; align-items: center; cursor: pointer;"><input type="checkbox" checked="{{withCfg}}" onChange="{{toggleCfg}}" style="accent-color: #8AA4FF;"><span>Configs des Laufs mitspeichern</span></label>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #131315; border: 1px solid #2E2E35; border-radius: 8px;"><span class="mono" style="font-size: 12px; word-break: break-all;">{{path}}</span><span style="font-size: 12px; color: #7C7C87;">{{fileList}} · verknüpft mit TIM-52</span></div>
+<span style="flex: 1;"></span>
+<div style="display: flex; gap: 8px;"><button onClick="{{closeDlg}}" style="font: 500 13px 'IBM Plex Sans', sans-serif; color: #B0B0BA; background: none; border: 1px solid #2E2E35; border-radius: 8px; padding: 7px 14px; cursor: pointer;">Abbrechen</button><button onClick="{{save}}" disabled="{{noSave}}" style="{{saveSt}} flex: 1; font: 500 13px 'IBM Plex Sans', sans-serif; color: #131315; background: #8AA4FF; border: 0; border-radius: 8px; padding: 7px 14px; cursor: pointer;">{{saveLabel}}</button></div>
+</div>
+<div style="padding: 18px 24px; overflow: auto; background: {{previewBg}};">
+<div style="font-size: 12px; color: #7C7C87; margin-bottom: 10px;">Vorschau · so wird {{previewName}} gespeichert</div>
+<dc-import name="R-W-Widget" type="{{prev.type}}" opts="{{prev.opts}}" title="{{prev.title}}" theme="{{theme}}" hint-size="100%,460px"></dc-import>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{saved}}" hint-placeholder-val="{{false}}"><div style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 16px; background: #11221B; border: 1px solid #245A45; border-radius: 12px; color: #5FD4A0; font-size: 12px; display: flex; gap: 10px; align-items: center;"><span>Gespeichert: {{savedText}}</span><button onClick="{{hideSaved}}" style="background: none; border: 0; color: #7C7C87; cursor: pointer;">×</button></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":860},"run":{"editor":null},"setView":{"editor":null}}'>
+class Component extends DCLogic {
+renderVals() {
+  const st = this.state || {};
+  const set = (p) => this.setState(p);
+  const E = window.ExpData, sel = st.sel || null;
+  const selVals = {
+    noSel: !sel, hasSel: !!sel, selKey: sel ? sel.key : '', close: () => set({ sel: null }),
+    onRow: (row) => set({ sel: row }),
+    chips: sel ? Object.keys(sel.parts).map((k) => k + ' = ' + sel.parts[k]) : [],
+    selN: sel ? 'Mittel über ' + sel.n + ' Zellen' + (sel.err ? ' · ' + sel.err + ' Fehler' : '') : '',
+    kpis: sel ? E.METRICS.map((m) => ({ label: m.label, v: E.fmt(sel.m[m.key].mean, m.d), sd: '± ' + E.fmt(sel.m[m.key].sd, m.d) })) : []
+  };
+
+  // E2: own notes; without a selected row they fill the right column, with one they head its detail
+  const ND = window.NotesData || { NOTES: [], md: () => [] };
+  const lines = (t) => ND.md(t).map((l) => ({ bullet: l.bullet, parts: l.parts, st: l.bullet ? 'display: flex; gap: 7px; padding-left: 4px;' : 'min-height: 1.2em;' }));
+  const notes = st.notes || ND.NOTES.filter((n) => n.anchor.kind !== 'group').concat([{ id: 'g0', text: '**Diese Kombination** für den Modellvergleich vormerken.', when: '15.10. 10:02', anchor: { kind: 'group', key: 'lstm_layer 2 · lr_epochs 0.0005 · 20', label: 'lstm_layer 2 · lr_epochs 0.0005 · 20' } }]);
+  const selLabel = sel ? Object.keys(sel.parts).map((k) => k + ' ' + sel.parts[k]).join(' · ') : '';
+  const anchorLabel = (a) => (a.kind === 'run' ? 'am Lauf' : a.kind === 'section' ? 'an der Beschreibung · ' + ({ purpose: 'Zweck', shows: 'Zeigt', expect: 'Erwartung' }[a.key] || '') : 'an ' + (a.label || a.key));
+  const now = () => '18.10. ' + new Date().toTimeString().slice(0, 5);
+  const addAt = (anchor) => { const id = 'n' + Date.now(); set({ notes: notes.concat([{ id, text: '', when: now(), anchor, fresh: true }]), editId: id, editText: '' }); };
+  const card = (n) => {
+    const editing = st.editId === n.id, text = st.editText === undefined ? n.text : st.editText;
+    const save = () => set(text.trim() ? { notes: notes.map((x) => (x.id === n.id ? Object.assign({}, x, { text, fresh: false }) : x)), editId: null } : { notes: notes.filter((x) => x.id !== n.id), editId: null });
+    const cancel = () => set(n.fresh ? { notes: notes.filter((x) => x.id !== n.id), editId: null } : { editId: null });
+    return { anchor: anchorLabel(n.anchor), when: n.when, md: lines(n.text), byAgent: n.by === 'agent', editing, reading: !editing, editText: editing ? text : '',
+      onEdit: (e) => set({ editText: e.target.value }), onEditKey: (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); save(); } if (e.key === 'Escape') cancel(); },
+      edit: () => set({ editId: n.id, editText: n.text }), save, cancel, del: () => set({ notes: notes.filter((x) => x.id !== n.id) }) };
+  };
+  const order = (a) => (a.kind === 'run' ? 0 : a.kind === 'section' ? 1 : 2);
+  const selNotes = notes.filter((n) => n.anchor.kind === 'group' && n.anchor.key === selLabel);
+  Object.assign(selVals, {
+    noteCount: notes.length + (notes.length === 1 ? ' Notiz' : ' Notizen'),
+    allNotes: notes.slice().sort((x, y) => order(x.anchor) - order(y.anchor)).map(card),
+    addRun: () => addAt({ kind: 'run' }),
+    selNotes: selNotes.map(card), selNoteCount: selNotes.length ? String(selNotes.length) : 'noch keine',
+    addSel: () => addAt({ kind: 'group', key: selLabel, label: selLabel })
+  });
+  const mape = sel ? sel.m[E.METRICS[0].key] : { mean: 4.2, sd: 0.1 };
+  // save dialog (shared by G1–G3): list = [{id, type, opts, title, label}]
+  const saveVals = (list, preselect) => {
+    const sel = st.pickSel || preselect || {}, theme = st.theme || 'light';
+    const chosen = list.filter((w) => sel[w.id]);
+    const focus = list.find((w) => w.id === st.focus) || chosen[0] || list[0];
+    const names = st.names || {};
+    const fname = (w, i) => names[w.id] || String(i + 1).padStart(2, '0') + '_' + w.type + '.png';
+    const files = chosen.map(fname).concat(st.withCfg === false || !chosen.length ? [] : ['configs/']);
+    const path = 'deliverables/2026-10-14 ' + (st.dTitle || 'TIM-52 Modellvergleich') + '/';
+    return {
+      dlg: !!st.dlg, closeDlg: () => set({ dlg: false }),
+      pick: list.map((w, i) => ({
+        label: w.label, on: !!sel[w.id], off: !sel[w.id], file: sel[w.id] ? fname(w, chosen.indexOf(w)) : '–', onName: (e) => set({ names: Object.assign({}, names, { [w.id]: e.target.value }) }),
+        toggle: () => set({ pickSel: Object.assign({}, sel, { [w.id]: !sel[w.id] }) }), focus: () => set({ focus: w.id }),
+        rowSt: 'display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; cursor: pointer; border: 1px solid ' + (focus && focus.id === w.id ? '#3A4166' : 'transparent') + '; background: ' + (focus && focus.id === w.id ? '#262B42' : 'transparent') + ';'
+      })),
+      themes: [['light', 'hell, für Folien'], ['dark', 'dunkel']].map(([k, l]) => ({ label: l, st: window.GShared.seg(theme === k), on: () => set({ theme: k }) })),
+      theme, previewBg: theme === 'light' ? '#E9ECF1' : '#131315',
+      prev: focus ? { type: focus.type, opts: focus.opts, title: focus.title || '' } : { type: 'table', opts: {}, title: '' },
+      previewName: focus ? '„' + focus.label + '“' : '',
+      withCfg: st.withCfg !== false, toggleCfg: () => set({ withCfg: st.withCfg === false }),
+      path, fileList: files.join(', '),
+      saveLabel: chosen.length === 0 ? 'Widgets auswählen' : chosen.length === 1 ? '1 Bild speichern' : chosen.length + ' Bilder speichern',
+      noSave: chosen.length === 0, saveSt: chosen.length ? '' : 'opacity: 0.45; cursor: default;',
+      save: () => { if (chosen.length) set({ dlg: false, saved: true, savedText: path + ' · ' + files.join(', ') }); },
+      saved: !!st.saved, savedText: st.savedText || '', hideSaved: () => set({ saved: false })
+    };
+  };
+  const G = window.GShared, seg = G.seg;
+  const CAT = [
+    { key: 'curves', label: 'Loss-Kurven', q: 'Wann lernt das Modell nicht mehr dazu?', opts: { reps: 'each' } },
+    { key: 'forecast', label: 'Vorhersage', q: 'Wie gut trifft die Vorhersage den Verlauf?', opts: { region: 'us', cmp: '' } },
+    { key: 'replicates', label: 'Wiederholungen', q: 'Wie stark schwanken Seeds und Folds?', opts: {} },
+    { key: 'config', label: 'Config', q: 'Mit welchen Einstellungen lief diese Kombination?', opts: { view: 'blocks' } }
+  ];
+  const key = sel ? sel.key : 'x';
+  const tiles = st.tiles || CAT.map((c, i) => ({ id: 'f' + i, type: c.key, opts: Object.assign({}, c.opts) }));
+  const upd = (id, patch) => set({ tiles: tiles.map((t) => (t.id === id ? Object.assign({}, t, patch) : t)) });
+  const full = (t) => Object.assign({ key, mean: mape.mean, sd: mape.sd }, t.opts, t.opts.cmp ? { cmp: key + '|' + t.opts.cmp, cmpLabel: t.opts.cmp } : { cmp: '' });
+  const grp = (label, cur, vals, names, pick) => ({ label, items: vals.map((v, i) => ({ label: names[i], st: seg(cur === v), on: () => pick(v) })) });
+  const ctrls = (t) => {
+    const set2 = (p) => upd(t.id, { opts: Object.assign({}, t.opts, p) });
+    if (t.type === 'curves') return [grp('Seeds', t.opts.reps, ['each', 'mean'], ['einzeln', 'nur Mittel'], (v) => set2({ reps: v }))];
+    if (t.type === 'forecast') return [grp('Region', t.opts.region, window.FData.REGIONS, window.FData.REGIONS, (v) => set2({ region: v })), grp('Vergleichen mit', t.opts.cmp || '', [''].concat(alts), ['keine'].concat(alts), (v) => set2({ cmp: v }))];
+    if (t.type === 'config') return [grp('Ansicht', t.opts.view, ['blocks', 'yaml'], ['Blöcke', 'YAML'], (v) => set2({ view: v }))];
+    return [];
+  };
+  const byKey = (k) => CAT.find((c) => c.key === k);
+  // comparison candidates: same run, one axis of this combination set to another value
+  const alts = sel ? [].concat(...Object.keys(sel.parts).map((k) => { const ax = E.AX.find((a) => a.key === k); return ax ? ax.values.filter((v) => v !== sel.parts[k]).map((v) => k + ' = ' + v) : []; })) : [];
+  const list = tiles.map((t) => ({ id: t.id, type: t.type, opts: full(t), label: byKey(t.type).label }));
+  return Object.assign(saveVals(list), selVals, {
+    runProp: (this.props || {}).run || '2026-10-14_0900_BEISPIEL_grid', setViewProp: (this.props || {}).setView,
+    analysisLabel: st.sent ? 'In Analyse geöffnet ✓' : 'Als Analyse öffnen', openAnalysis: () => set({ sent: true }),
+    add: !!st.add, toggleAdd: () => set({ add: !st.add }),
+    catalog: CAT.map((c) => ({ label: c.label, q: c.q, add: () => set({ add: false, tiles: tiles.concat({ id: 'f' + Date.now(), type: c.key, opts: Object.assign({}, c.opts) }) }) })),
+    tiles: tiles.map((t) => {
+      const cs = ctrls(t);
+      return {
+        isW: t.type !== 'config', isBlocks: t.type === 'config' && t.opts.view !== 'yaml', isYaml: t.type === 'config' && t.opts.view === 'yaml',
+        onWindow: (i) => upd(t.id, { opts: Object.assign({}, t.opts, { start: i }) }),
+        type: t.type, opts: full(t), label: byKey(t.type).label, q: byKey(t.type).q, open: !!t.open, ctrls: cs, noCtrl: cs.length === 0,
+        setBtn: "font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border-radius: 8px; padding: 3px 9px; border: 1px solid " + (t.open ? '#3A4166' : '#2E2E35') + '; background: ' + (t.open ? '#262B42' : 'transparent') + '; color: #B0B0BA;',
+        saveOne: () => set({ dlg: true, focus: t.id, pickSel: { [t.id]: true } }),
+        toggle: () => upd(t.id, { open: !t.open }), remove: () => set({ tiles: tiles.filter((x) => x.id !== t.id) })
+      };
+    })
+  });
+}
+}
+</script>
+</body>
+</html>

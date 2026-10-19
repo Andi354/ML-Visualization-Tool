@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Q1 · Widget-Kopf im neuen Stil</title>
+<script src="./support.js"></script>
+<script src="./w24-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131315}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible{outline:2px solid #8AA4FF;outline-offset:2px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.card{border:1px solid #2A2A31;border-radius:12px;background:#1C1C20;overflow:hidden}
+.hd{padding:12px 16px;border-bottom:1px solid #26262C;display:flex;align-items:center;gap:8px}
+.ib{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #2E2E35;border-radius:8px;background:transparent;color:#B0B0BA;cursor:pointer;padding:0;font-size:13px}
+.ib:hover{background:#24242A;color:#EEEEF1}
+.pill{font:400 12.5px 'IBM Plex Sans',sans-serif;color:#B0B0BA;background:transparent;border:1px solid #2E2E35;border-radius:16px;padding:5px 12px;cursor:pointer}
+.pill:hover{background:#24242A;color:#EEEEF1}
+.save{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:#8AA4FF;color:#131315;cursor:pointer;padding:0}
+.chip{display:inline-flex;align-items:baseline;gap:6px;font:400 12px 'IBM Plex Mono',monospace;padding:3px 8px;border-radius:6px;border:1px solid #2E2E35;background:#24242A;color:#B0B0BA;white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.chip b{font-weight:400;color:#EEEEF1}
+.lbl{font-size:11px;font-weight:600;letter-spacing:.06em;color:#7C7C87}
+table.t{border-collapse:collapse;width:100%;font:400 13px 'IBM Plex Mono',monospace}
+table.t th{font-weight:400;color:#B0B0BA;text-align:right;padding:9px 12px;background:#18181B;border-bottom:1px solid #26262C}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t td{padding:9px 12px;text-align:right;border-bottom:1px solid #222227;color:#EEEEF1}
+.null{color:#6A6A74;font-style:italic}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 100%; box-sizing: border-box; padding: 28px; background: #131315; color: #EEEEF1; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start;">
+
+<div class="card">
+<div class="hd"><div style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0;"><span style="font-weight: 600;">Je Region</span><span style="color: #7C7C87; font-size: 12px;">Wo gewinnt welcher Wert, Region für Region?</span></div>
+<button class="ib" aria-label="nach oben">↑</button><button class="ib" aria-label="nach unten">↓</button><button class="pill">Einstellen</button><button class="ib" aria-label="Widget entfernen">×</button>
+<button class="save" aria-label="Als Deliverable speichern"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 2.5h8.5l2.5 2.5v8.5h-11z"></path><path d="M5 2.5v3.5h5.5V2.5"></path><rect x="5" y="9" width="6" height="4.5"></rect></svg></button></div>
+<div style="padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px;">
+<div style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em;">{{R.title}}</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; color: #B0B0BA;"><span class="mono" style="color: #C9D3E3;">test_mse_missing</span><span>je Region ×</span><span class="mono" style="color: #C9D3E3;">time_embedding</span><span style="color: #45454F;">·</span><span title="Mittel über alle Seeds und Folds" style="display: inline-flex; align-items: center; gap: 5px; color: #7C7C87;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 5h10M3 8h10M3 11h10"></path></svg>{{R.agg}}</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;"><span class="lbl" style="margin-right: 4px;" title="Achsen, die auf den besten Wert festgesetzt sind">FEST</span><sc-for list="{{shown}}" as="f" hint-placeholder-count="4"><span class="chip" title="{{f.title}}">{{f.k}} <b>{{f.v}}</b></span></sc-for><button onClick="{{toggleMore}}" style="font-size: 12.5px; color: #A9BBFF; background: none; border: 0; cursor: pointer; padding: 3px 4px;">{{moreLabel}}</button></div>
+<div style="border: 1px solid #26262C; border-radius: 10px; overflow: hidden;">
+<table class="t"><thead><tr><sc-for list="{{cols}}" as="c" hint-placeholder-count="5"><th class="{{c.cls}}">{{c.t}}</th></sc-for></tr></thead><tbody><sc-for list="{{tableRows}}" as="r" hint-placeholder-count="4"><tr><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="5"><td style="{{c.st}}">{{c.t}}</td></sc-for></tr></sc-for></tbody></table>
+</div>
+</div>
+</div>
+
+<div class="card">
+<div class="hd"><div style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0;"><span style="font-weight: 600;">Config</span><span style="color: #7C7C87; font-size: 12px;">Mit welcher Config wurde diese Kombination gerechnet?</span></div>
+<button class="ib" aria-label="nach oben">↑</button><button class="ib" aria-label="nach unten">↓</button><button class="pill">Einstellen</button><button class="ib" aria-label="Widget entfernen">×</button>
+<button class="save" aria-label="Als Deliverable speichern"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 2.5h8.5l2.5 2.5v8.5h-11z"></path><path d="M5 2.5v3.5h5.5V2.5"></path><rect x="5" y="9" width="6" height="4.5"></rect></svg></button></div>
+<div style="padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;"><span style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em;">Beste Kombination</span><span style="color: #7C7C87;">{{D.config.metric}} <span class="mono" style="color: #5FD4A0; background: #16261F; border-radius: 6px; padding: 1px 6px;">{{D.config.value}}</span> · {{D.run}}</span></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; border: 1px solid #26262C; border-radius: 10px; padding: 4px 14px;"><sc-for list="{{combo}}" as="c" hint-placeholder-count="6"><div style="{{c.rowSt}}"><span style="color: #7C7C87; flex: 0 0 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{c.k}}</span><span style="{{c.vSt}}" title="{{c.v}}">{{c.v}}</span></div></sc-for></div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":640}}'>
+class Component extends DCLogic {
+renderVals() {
+  const st = this.state || {}, set = (p) => this.setState(p);
+  const D = window.W24 || { run: '', region: { fixed: [], rows: [], cols: [], title: '', agg: '' }, config: { combo: [] } };
+  const R = D.region, C = D.config;
+  const fixedChips = R.fixed.map(([k, v]) => ({ k, v, title: k + ' = ' + v }));
+  const shown = st.more ? fixedChips : fixedChips.slice(0, 4);
+  const cols = R.cols.map((c) => ({ t: c === '' ? 'null' : c, cls: c === '' ? 'null' : '' }));
+  const tableRows = R.rows.map((r) => ({ cells: r.slice(0, 5).map((t, i) => ({ t, st: i === r[5] ? 'background: #16261F; color: #5FD4A0; font-weight: 500;' : '' })) }));
+  const n = C.combo.length;
+  const combo = C.combo.map(([k, v], i) => ({ k, v: v === null ? 'null' : v,
+    rowSt: "display: flex; gap: 10px; align-items: baseline; padding: 7px 2px; font: 400 12px 'IBM Plex Mono', monospace; min-width: 0;" + (i < n - 2 ? ' border-bottom: 1px solid #222227;' : ''),
+    vSt: (v === null ? 'color: #6A6A74; font-style: italic;' : 'color: #EEEEF1;') + ' overflow: hidden; text-overflow: ellipsis; white-space: nowrap;' }));
+  return { D, R, cols, tableRows, shown, combo,
+    toggleMore: () => set({ more: !st.more }), moreLabel: st.more ? 'weniger' : '+' + (fixedChips.length - 4) + ' weitere' };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>E3 · Projektverlauf · neuer Stil</title>
+<script src="./support.js"></script>
+<script src="./R-cmp-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+*{scrollbar-width:thin;scrollbar-color:#34343C transparent}*::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{background:#34343C;border-radius:6px;border:3px solid transparent;background-clip:padding-box}*::-webkit-scrollbar-thumb:hover{background:#45454F;background-clip:padding-box}
+body{margin:0;background:#131315}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,a:focus-visible{outline:2px solid #8AA4FF;outline-offset:1px}
+.card{background:#1C1C20;border:1px solid #2E2E35;border-radius:12px;padding:14px 16px;box-sizing:border-box;min-width:0}
+.ct{font-weight:600;font-size:13px;margin:0 0 2px}
+.cs{font-size:12px;color:#7C7C87;margin:0 0 12px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.chip{font:400 12px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:7px;border:1px solid #2E2E35;background:#24242A;color:#B0B0BA;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 100%; height: {{rootH}}; box-sizing: border-box; display: flex; flex-direction: column; background: #131315; color: #EEEEF1; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden;">
+<div style="flex-shrink: 0; min-height: 48px; box-sizing: border-box; padding: 8px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-bottom: 1px solid #2E2E35; {{headSt}}">
+<span>Vergleich</span><span style="color: #7C7C87;">/</span><span style="color: #B0B0BA;">Projektverlauf</span>
+<span style="flex: 1;"></span>
+<span style="font-size: 12px; color: #7C7C87;">Horizont</span>
+<div style="display: flex; padding: 2px; gap: 2px; background: #1C1C20; border: 1px solid #2E2E35; border-radius: 9px;"><sc-for list="{{hSeg}}" as="s" hint-placeholder-count="3"><button style="{{s.st}}" onClick="{{s.on}}">{{s.label}}</button></sc-for></div>
+<span style="font-size: 12px; color: #7C7C87; margin-left: 10px;">Metrik</span><span class="chip" style="color: #EEEEF1;">test_mape_real</span>
+</div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 18px 28px; display: flex; flex-direction: column; gap: 16px;">
+<div class="card" style="{{w.timeline}}">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 16px;"><p class="ct">Bester Wert je Lauf</p><span style="font-size: 12px; color: #7C7C87;">Linie = bester bisher je Horizont · Klick auf einen Punkt nimmt den Lauf in die Landkarte auf oder raus</span><span style="flex: 1;"></span>
+<span style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #B0B0BA; {{legendSt}}"><span style="display: flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #1FA3A3;"></span>pred_len 30</span><span style="display: flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #8C7CF0;"></span>pred_len 90</span><span style="display: flex; align-items: center; gap: 5px;"><span style="width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid #B0B0BA;"></span>andere Epoche (tsrm6)</span></span></div>
+<div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); margin-top: 12px;">
+<div style="position: relative; height: 170px;"><sc-for list="{{yt}}" as="t" hint-placeholder-count="4"><span class="mono" style="{{t.st}}">{{t.v}}</span></sc-for></div>
+<div style="position: relative; height: 170px; border-left: 1px solid #2E2E35; border-bottom: 1px solid #2E2E35;">
+<svg style="position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"><path d="{{l30}}" stroke="#1FA3A3" stroke-width="1.5" fill="none" vector-effect="non-scaling-stroke" opacity="0.7"></path><path d="{{l90}}" stroke="#8C7CF0" stroke-width="1.5" fill="none" vector-effect="non-scaling-stroke" opacity="0.7"></path></svg>
+<sc-for list="{{dots}}" as="d" hint-placeholder-count="8"><button title="{{d.t}}" aria-label="{{d.t}}" onClick="{{d.on}}" style="{{d.st}}"></button><span class="mono" style="{{d.lSt}}">{{d.l}}</span></sc-for>
+</div>
+<span></span>
+<div style="position: relative; height: 18px;"><sc-for list="{{xt}}" as="t" hint-placeholder-count="5"><span class="mono" style="{{t.st}}">{{t.v}}</span></sc-for></div>
+</div>
+</div>
+<div class="card" style="{{w.map}}">
+<p class="ct">Parameter-Landkarte</p>
+<p class="cs">Wirkung jedes Parameterwerts in jedem ausgewählten Lauf, relativ zum Mittel des Laufs · türkis = weniger Fehler, orange = mehr · leer = im Lauf nicht variiert</p>
+<div style="margin: 0 0 14px; padding: 10px 12px; border-left: 3px solid #F0B44C; background: #1A1810; border-radius: 0 4px 4px 0; line-height: 1.5;">{{insight}}</div>
+<div style="overflow-x: auto;">
+<div style="{{gridSt}}">
+<span></span>
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="7"><div style="{{c.st}}"><span class="mono" style="font-size: 11px; color: #EEEEF1;">{{c.issue}}</span><span style="font-size: 11px; color: #7C7C87;">{{c.date}} · {{c.h}}</span></div></sc-for>
+<span style="font-size: 11px; color: #7C7C87; padding-left: 12px; align-self: end;">Konsistenz</span>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+<span class="mono" style="{{r.lSt}}">{{r.label}}</span>
+<sc-for list="{{r.cells}}" as="x" hint-placeholder-count="7"><span class="mono" style="{{x.st}}" title="{{x.t}}">{{x.v}}</span></sc-for>
+<span style="{{r.cSt}}">{{r.cons}}</span>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+  const C = window.CmpData;
+  const st = this.state || {};
+  const PR = this.props || {};
+  const show = PR.show || {}, w = {};
+  ['diff', 'timeline', 'map'].forEach((k) => { w[k] = show[k] === false ? 'display: none;' : ''; });
+  const set = (p) => this.setState(p);
+  const hf = st.h || 'all';
+  const off = st.off || {};
+  const seg = (on) => "font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border: 0; border-radius: 7px; padding: 3px 10px; background: " + (on ? '#24242A' : 'transparent') + '; color: ' + (on ? '#EEEEF1' : '#7C7C87') + ';';
+  const byH = (PR.colorBy || 'pred_len') === 'pred_len';
+  const col = (h) => (!byH || h === 30 ? '#1FA3A3' : '#8C7CF0');
+  const runs = C.RUNS.filter((r) => hf === 'all' || String(r.h) === hf).slice().sort((a, b) => a.date < b.date ? -1 : 1);
+  const best = (r) => C.combos(r.id)[0].m.mape;
+  const t0 = new Date('2026-09-10').getTime(), t1 = new Date('2026-10-16').getTime();
+  const tx = (d) => (new Date(d).getTime() - t0) / (t1 - t0);
+  const vals = runs.map(best), lo = Math.floor(Math.min.apply(null, vals) - 0.3), hi = Math.ceil(Math.max.apply(null, vals) + 0.3);
+  const ty = (v) => (hi - v) / (hi - lo);
+  const line = (h) => {
+    let b = Infinity, d = '';
+    runs.filter((r) => (h === null || r.h === h) && !r.epoch).forEach((r) => {
+      const v = best(r), X = (tx(r.date) * 1000).toFixed(1);
+      if (v < b) { d += (d ? ' L' + X + ' ' + (ty(b) * 100).toFixed(1) : '') + (d ? ' L' : 'M') + X + ' ' + (ty(v) * 100).toFixed(1); b = v; }
+    });
+    return d ? d + ' L1000 ' + (ty(b) * 100).toFixed(1) : 'M0 0';
+  };
+  const dots = runs.map((r, i) => {
+    const v = best(r), sel = !off[r.id], c = col(r.h), hollow = !!r.epoch;
+    return {
+      t: C.short(r.id) + ' · ' + C.fmt(v, 2) + ' %' + (r.epoch ? ' · Epoche ' + r.epoch : '') + (sel ? ' · in der Landkarte' : ''),
+      on: () => { const o = Object.assign({}, off); o[r.id] = !o[r.id]; set({ off: o }); },
+      st: 'position: absolute; cursor: pointer; padding: 0; left: ' + (tx(r.date) * 100).toFixed(2) + '%; top: ' + (ty(v) * 100).toFixed(2) + '%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; box-sizing: border-box; '
+        + (hollow ? 'background: #1C1C20; border: 2px solid ' + c + ';' : 'background: ' + c + '; border: 0;')
+        + (sel ? ' box-shadow: 0 0 0 2px #1C1C20, 0 0 0 3.5px #8AA4FF;' : ' opacity: 0.45;'),
+      l: r.issue + (r.running ? ' · läuft' : ''),
+      lSt: 'position: absolute; font-size: 11px; color: #B0B0BA; white-space: nowrap; left: ' + (tx(r.date) * 100).toFixed(2) + '%; top: ' + (ty(v) * 100).toFixed(2) + '%; transform: translate(10px, ' + (i % 2 ? '4px' : '-16px') + ');'
+    };
+  });
+  const yt = [0, 1 / 3, 2 / 3, 1].map((t) => ({ v: C.fmt(hi - (hi - lo) * t, 1), st: 'position: absolute; right: 8px; font-size: 11px; color: #7C7C87; top: ' + (t * 100) + '%; transform: translateY(-50%);' }));
+  const xt = ['2026-09-15', '2026-09-22', '2026-09-29', '2026-10-06', '2026-10-13'].map((d) => ({ v: d.slice(8) + '.' + d.slice(5, 7) + '.', st: 'position: absolute; top: 3px; font-size: 11px; color: #7C7C87; transform: translateX(-50%); left: ' + (tx(d) * 100).toFixed(2) + '%;' }));
+
+  const sel = runs.filter((r) => !off[r.id]).sort((a, b) => a.h - b.h || (a.date < b.date ? -1 : 1));
+  const effs = sel.map((r) => C.effects(r.id));
+  const W = 86;
+  const cols = sel.map((r, i) => ({
+    issue: r.issue, date: r.date.slice(8) + '.' + r.date.slice(5, 7) + '.', h: 'pred ' + r.h,
+    st: 'display: flex; flex-direction: column; gap: 2px; padding: 0 6px 8px; border-bottom: 2px solid ' + col(r.h) + ';' + (i > 0 && sel[i - 1].h !== r.h ? ' margin-left: 10px;' : '')
+  }));
+  const rows = [];
+  let insight = '';
+  C.AX.forEach((ax, ai) => ax.values.forEach((v, vi) => {
+    const cells = sel.map((r, i) => {
+      const e = effs[i][ax.key] ? effs[i][ax.key][vi] : null;
+      return {
+        v: e === null ? '' : C.signed(e, 1), t: e === null ? ax.key + ' im Lauf nicht variiert' : C.short(r.id) + ': ' + C.signed(e, 1) + ' %',
+        st: 'height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px; border-radius: 7px; margin: 1px; '
+          + (e === null ? 'color: #5A5A66; border: 1px dashed #2E2E35;' : 'color: #EEEEF1; background: ' + C.effColor(e) + ';')
+          + (i > 0 && sel[i - 1].h !== r.h ? ' margin-left: 11px;' : '')
+      };
+    });
+    const by = {};
+    sel.forEach((r, i) => { const e = effs[i][ax.key] ? effs[i][ax.key][vi] : null; if (e === null) return; const g = by[r.h] || (by[r.h] = { n: 0, good: 0, bad: 0 }); g.n++; if (e < -1) g.good++; if (e > 1) g.bad++; });
+    const parts = Object.keys(by).map((h) => { const g = by[h]; return 'pred ' + h + ': ' + (g.good === g.n ? 'immer besser' : g.bad === g.n ? 'immer schlechter' : g.good + '× besser, ' + g.bad + '× schlechter'); });
+    const g30 = by[30], g90 = by[90];
+    const split = g30 && g90 && ((g30.good === g30.n && g90.bad === g90.n) || (g30.bad === g30.n && g90.good === g90.n));
+    if (split && !insight) insight = ax.key + ' = ' + v + ' ist bei pred_len 30 in allen ' + g30.n + ' Läufen ' + (g30.good ? 'besser' : 'schlechter') + ' als der Schnitt, bei pred_len 90 in allen ' + g90.n + ' Läufen ' + (g90.good ? 'besser' : 'schlechter') + '.';
+    rows.push({
+      label: ax.key + ' = ' + v, cells, cons: parts.join(' · ') || '–',
+      lSt: 'font-size: 12px; color: #B0B0BA; padding-right: 12px; white-space: nowrap;' + (vi === 0 && ai > 0 ? ' margin-top: 8px;' : ''),
+      cSt: 'font-size: 12px; padding-left: 12px; white-space: nowrap; color: ' + (split ? '#F0B44C' : '#B0B0BA') + ';'
+    });
+  }));
+  return {
+    rootH: PR.embedded ? 'auto' : '900px', headSt: PR.embedded ? 'display: none;' : '', w,
+    hSeg: [['all', 'Alle'], ['30', '30'], ['90', '90']].map(([k, l]) => ({ label: l, st: seg(hf === k), on: () => set({ h: k }) })),
+    dots, yt, xt, l30: line(byH ? 30 : null), l90: byH ? line(90) : 'M0 0', legendSt: byH ? '' : 'display: none;',
+    cols, rows, insight: insight || 'Kein Parameterwert wirkt je Horizont gegensätzlich.',
+    gridSt: 'display: grid; grid-template-columns: 200px repeat(' + sel.length + ', ' + W + 'px) auto; align-items: center; width: max-content;'
+  };
+}
+}
+</script>
+</body>
+</html>
