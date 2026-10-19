@@ -9,24 +9,45 @@ Prototype: follows · Builds on: v0.3.1.1
 |---|---|
 | P · Läufe-Bildschirm | decided (P5 list, P6 issues) |
 | M · Große Läufe im Lauf-Tab: "x von y", mehr laden | decided (M3 · Seiten) |
-| N · Tab-Menü | running |
+| N · Tab-Menü | decided (N3: menu + pinning) |
 | O · Projektkopf in den Einstellungen | open |
 | Q · Widget-Kopf und Config-Titel (design from v0.2.4) | open |
 | R · Neuer Stil im ganzen Tool | open |
 
-Running block N: N1 · Rechtsklick-Menü (Schließen, Andere, Rechts, Alle, Laufnamen kopieren, In Läufe
-zeigen; undo toast), N2 · N1 plus a "n Tabs ▾" list of all open tabs at the end of the tab row,
-N3 · N1 plus pinning (pinned tabs stay left and survive "Andere/Rechts/Alle schließen"). Component
-`N-Tabs` with prop `variant`; tabs wrap below the search row as built in v0.3.1.1.
-
 Style: the P5/P6 style (graphite, periwinkle accent, rounded shapes) is tried in the remaining blocks;
-Tim likes it in the run tab too (M). Whether it becomes the style of the whole tool is still to decide. In the overall prototype only the
+Tim likes it in the run tab (M) and the tab row (N); it becomes the style of the whole tool (feature R).
+The tab row and frame go into the overall prototype with R. In the overall prototype only the
 two Läufe views use it so far (`L-Liste`, `L-Issues`).
 
 ## Goal
 To be written.
 
 ## Features
+
+### N · Tab-Menü
+**What:** Right-click on a tab opens a small menu to tidy up many open tabs, as in VS Code. Tabs can be
+pinned; pinned tabs stay on the left and are not closed by the bulk commands. Tabs keep wrapping below
+the search row as built in v0.3.1.1, drawn in the new style.
+**Behaviour:**
+- Right-click a run tab or the settings tab → menu at the tab: Schließen, Andere schließen, Rechts
+  schließen, Alle schließen, separator, Anheften (or Lösen), separator, Laufnamen kopieren, In Läufe
+  zeigen (the last two only on run tabs).
+- An entry that would do nothing is greyed out (Rechts schließen on the last tab, Andere schließen when
+  no other closable tab is open).
+- Schließen / Andere / Rechts / Alle → those tabs close; pinned tabs and the fixed "Läufe" tab never
+  close through these; if the active tab closes, the fixed tab gets the focus.
+- After any of these → toast at the bottom "n Tabs geschlossen · Rückgängig"; Rückgängig restores the
+  tabs and the active tab; the toast goes after 6 s or the next action.
+- Right-click the fixed "Läufe" tab → menu with only "Alle anderen schließen".
+- Anheften → the tab moves to the left end behind the fixed tab (in pin order), shows a pin icon
+  instead of ×; Lösen → back to the normal tabs, right of the pinned ones.
+- Laufnamen kopieren → full run folder name to the clipboard; In Läufe zeigen → Läufe list view with
+  that run's issue open and the run's card highlighted.
+- Click anywhere else or Esc → menu closes.
+- Pinned tabs are remembered like the open tabs today (frame state).
+**In the prototype:** `N-Tabs.dc.html` with `variant` = `pin` (`tabs`, `ctx`, `closeOthers`,
+`closeRight`, `closeAll`, `togglePin`, `undo`); `N3-Anheften` on the canvas.
+**Rejected:** N2 (extra "n Tabs ▾" list): not needed next to the wrapping tab row.
 
 ### M · Große Läufe im Lauf-Tab
 **What:** The groups table of the run tab is paged. The toolbar always says which rows are shown and
