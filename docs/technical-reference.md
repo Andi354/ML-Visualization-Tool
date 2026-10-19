@@ -393,7 +393,7 @@ Code that needs a value calls `setting(key)`; it is read when used, so a change 
 The tab is `SETTINGS_TAB` (`"@settings"`) in the frame state; Ctrl/Cmd+, opens it.
 
 Effects of the settings: `look.*` (see above), `runs.feature`/`runs.metric` (`listing.run_listing`), `runs.descOpen` and
-`runs.overview` (first open of a run tab), `ana.width` (width of widgets added), `ana.template` (first board),
+`runs.overview` (first open of a run tab), `runs.columns` (metrics open as columns until the user picks their own; names by key or label, `presetMetrics` in `experiment/model.ts`), `ana.width` (width of widgets added), `ana.template` (first board),
 `exp.*` (`analysis/images.ts`: file name, folder; `SaveDialog`, `agentSave`: background, pixel ratio, footer),
 `agent.cacheWarn`, `agent.quota`, `agent.claude` (`agent_run.command`).
 

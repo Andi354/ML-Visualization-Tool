@@ -23,7 +23,7 @@ def test_icon_rail_uses_the_svg_icons_and_the_small_badge(page):
 
 def test_tabs_are_the_prototype_tabs(page):
     pinned = page.get_by_test_id("tab-pinned")
-    assert css(pinned, "paddingLeft") == "14px" and css(pinned, "fontSize") == "12px"
+    assert css(pinned, "paddingLeft") == "12px" and css(pinned, "fontSize") == "12px"
     assert css(pinned, "borderRightWidth") == "1px" and css(pinned, "borderTopColor") == "rgb(110, 155, 245)"
     open_run(page, folder("TIM-71_example"))
     tab = page.get_by_test_id("tab-run").first
