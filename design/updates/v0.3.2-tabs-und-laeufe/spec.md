@@ -12,17 +12,53 @@ Prototype: follows · Builds on: v0.3.1.1
 | N · Tab-Menü | decided (N3: menu + pinning) |
 | O · Projektkopf in den Einstellungen | decided (O2: rows + popover) |
 | Q · Widget-Kopf und Config-Titel (design from v0.2.4) | decided (as v0.2.4, new style) |
-| R · Neuer Stil im ganzen Tool | open |
+| R · Neuer Stil im ganzen Tool | decided (colour mapping, rounder shapes) |
 
 Style: the P5/P6 style (graphite, periwinkle accent, rounded shapes) is tried in the remaining blocks;
-Tim likes it in the run tab (M) and the tab row (N); it becomes the style of the whole tool (feature R).
-The tab row and frame go into the overall prototype with R. In the overall prototype only the
+It is the style of the whole tool (feature R); the overall prototype `Prototyp-03` uses it everywhere. In the overall prototype only the
 two Läufe views use it so far (`L-Liste`, `L-Issues`).
 
 ## Goal
 To be written.
 
 ## Features
+
+### R · Neuer Stil im ganzen Tool
+**What:** The style chosen in P and M (graphite instead of blue-grey, periwinkle accent, rounder
+shapes, own scrollbar) becomes the style of every screen: frame, Läufe, run tab, analysis and widgets,
+settings, agent window, command palette, status bar and notifications. The layout of each screen stays
+as it is; only colours, radii and the scrollbar change, unless P, M, N, O or Q say more.
+**Colour mapping (old → new, also the token change):**
+
+| Token | old | new |
+|---|---|---|
+| `bg` | `#0D1016` | `#131315` |
+| `surface` | `#131720` | `#1C1C20` |
+| `raised` | `#1A2030` | `#24242A` |
+| `line` | `#262E3E` | `#2E2E35` |
+| `line-strong` (new) | `#2C3547`, `#3A4458` | `#34343C`, `#45454F` |
+| `chrome` (new: rail, tab row, status bar) | `#131720` | `#18181B` |
+| `text` | `#E4E8EF` | `#EEEEF1` |
+| `text-2` | `#A1AABB` | `#B0B0BA` |
+| `text-3` | `#8590A3` | `#7C7C87` |
+| `accent` | `#6E9BF5` | `#8AA4FF` |
+| `accent-bg` | `#192640` | `#262B42` |
+| `accent-line` | `#2C4572` | `#3A4166` |
+| `selected-row` | `#172238` | `#222330` |
+| button fill under white text | `#2F5BD3` | `#5B6FD6` |
+
+`best`, `error`, `warn`, `note*`, `series`, `diverging` and `export-light` stay. A running run uses
+`accent` (not `warn`).
+**Shapes:** radius 4 → 8 (controls), 6 → 12 (panels, cards), 3 → 7 (chips, segment buttons),
+5 → 9 (segment groups); filter chips, view switches and primary buttons as pills (radius 16–18).
+**Scrollbar:** every scroll area: thin, no track, thumb `#34343C` (hover `#45454F`), radius 6.
+**Behaviour:**
+- Open any screen at 1440 × 860 → it matches the same screen in `Prototyp-03.dc.html` (whose parts are
+  the `R-…` components, `L-Liste`, `L-Issues`) in colours, radii and scrollbar.
+- Where a screen has its own new design in this update (P, M, N, O, Q), that design wins.
+**In the prototype:** `Prototyp-03.dc.html` and the components `R-P-Run-03`, `R-F-Exp-H4`,
+`R-J1-Bloecke`, `R-J4-YAML`, `R-W-Widget`, `R-P-Analyse-02`, `R-E4-Analyse`, `R-E1-Duell`,
+`R-E2-Abgleich`, `R-E3-Verlauf`, `R-G-Vorlagen`, `R-S1-Einstellungen` with their `R-…js` data files.
 
 ### Q · Widget-Kopf und Config-Titel
 **What:** The widget header and the config widget title as designed and chosen in v0.2.4 (TIM-97,
@@ -181,3 +217,14 @@ error `#FF6B6B`. Pills (radius 16–18) for filter chips, the view switch and bu
 alternatives `P5-Liste`, `P6-Issues` on the canvas.
 **Rejected:** P1 (only polish, still feels crowded); P3 colours (lavender) and its run rows, its layout
 lives on in P6; P4 issue tiles and per-issue colours (the three overview tiles live on in P5).
+
+## Changes to principles.md / tokens.json
+- `tokens.json`: colours as in the table of R (`line-strong`, `chrome` new); `radius.control` 8px,
+  `radius.panel` 12px, new `radius.chip` 7px and `radius.pill` 18px; `size.icon-bar` 56px,
+  `size.tab-strip` 38px, `size.status-bar` 26px.
+- `principles.md`, "Colour carries meaning": everything is graphite (instead of slate grey); a running
+  run is `accent`.
+- `principles.md`, "Density": radii 8 px (controls), 12 px (panels and cards), pills for chips, view
+  switches and primary buttons; own thin scrollbar everywhere.
+- `principles.md`, new section "No hint lines": no explanatory, legend or "how to read" lines under
+  widgets, tables or screens, and none added by the agent, unless Tim asks for them.
