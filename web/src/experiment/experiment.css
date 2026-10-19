@@ -579,3 +579,22 @@
   text-decoration: line-through;
   cursor: default;
 }
+
+/* the primary metric (v0.3.1.1) */
+.ov-metric {
+  font-size: var(--size-small);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.primary-star,
+.primary-tag {
+  color: var(--accent);
+}
+.primary-tag {
+  font-size: var(--size-tiny);
+  white-space: nowrap;
+}
+.pop-title {
+  display: flex;
+  justify-content: space-between;
+}

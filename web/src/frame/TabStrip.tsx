@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "preact/hooks";
 import { SETTINGS_TAB, type Area } from "../state/frame";
 import { SearchIcon } from "./icons";
 
@@ -24,9 +25,32 @@ interface Props {
   onPalette: () => void;
 }
 
+/** Room the tabs have left of the centred search box (half the strip minus half the box and a gap). */
+const SEARCH_HALF = 170 + 12;
+
 export function TabStrip({ area, tabs, active, onFocusPinned, onFocus, onClose, settings, onFocusSettings, onCloseSettings, projectName, onPalette }: Props) {
+  const strip = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLDivElement>(null);
+  // Too many tabs for the left half: the search box gets its own row on top and the tabs wrap below it.
+  const [wrapped, setWrapped] = useState(false);
+  useEffect(() => {
+    const el = strip.current;
+    const tabsEl = list.current;
+    if (!el || !tabsEl) return;
+    const check = () => {
+      const natural = [...tabsEl.children].reduce((n, c) => n + (c as HTMLElement).offsetWidth, 0);
+      setWrapped(natural > el.clientWidth / 2 - SEARCH_HALF);
+    };
+    check();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    ro.observe(tabsEl);
+    return () => ro.disconnect();
+  }, [tabs.length, settings, area]);
   return (
-    <div class="tab-strip" role="tablist" data-testid="tab-strip">
+    <div class={"tab-strip" + (wrapped ? " wrapped" : "")} role="tablist" data-testid="tab-strip" ref={strip}>
+      <div class="tab-list" ref={list}>
       <button
         role="tab"
         class={"tab pinned" + (active === null ? " active" : "")}
@@ -87,6 +111,7 @@ export function TabStrip({ area, tabs, active, onFocusPinned, onFocus, onClose, 
           </button>
         </div>
       ))}
+      </div>
       <button class="palette-box" data-testid="palette-box" aria-label="Befehlspalette öffnen" onClick={onPalette}>
         <SearchIcon />
         {projectName}

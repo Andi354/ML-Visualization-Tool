@@ -120,12 +120,41 @@ button:disabled,
   position: relative;
   flex: none;
   display: flex;
-  height: var(--tab-strip);
-  overflow-x: auto;
-  overflow-y: hidden;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
-  scrollbar-width: thin;
+}
+.tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.tab-strip:not(.wrapped) {
+  height: var(--tab-strip);
+}
+.tab-strip:not(.wrapped) .tab-list {
+  height: 100%;
+  overflow: hidden;
+}
+/* more tabs than fit left of the search box: the box moves to its own slim row, the tabs wrap below it */
+.tab-strip.wrapped {
+  flex-direction: column;
+}
+.tab-strip.wrapped .palette-box {
+  position: static;
+  order: -1;
+  align-self: center;
+  transform: none;
+  margin: 4px 0;
+  height: 22px;
+}
+.tab-strip.wrapped .tab {
+  height: 30px;
+  border-top-width: 0;
+  border-bottom: 2px solid transparent;
+}
+.tab-strip.wrapped .tab.active,
+.tab-strip.wrapped .tab.active:hover {
+  border-bottom-color: var(--accent);
 }
 
 .tab {
@@ -134,7 +163,7 @@ button:disabled,
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 14px;
+  padding: 0 12px;
   color: var(--text-3);
   border-top: 2px solid transparent;
   border-right: 1px solid var(--line);

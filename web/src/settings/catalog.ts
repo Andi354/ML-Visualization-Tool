@@ -66,6 +66,7 @@ export const ROWS: Row[] = [
   choice("runs.metric", "runs", "project", "Primäre Metrik", "Nach dieser Metrik sortieren Tabelle und „bester Wert“.", "yaml", [["yaml", "aus project.yaml"]]),
   seg("runs.descOpen", "runs", "open", "Beschreibung", "Ob die Beschreibung eines Laufs beim ersten Öffnen aufgeklappt ist.", "open", [["open", "aufgeklappt"], ["closed", "zugeklappt"]]),
   bool("runs.overview", "runs", "open", "Überblick", "Grafiken je Achse über der Tabelle.", true),
+  txt("runs.columns", "runs", "open", "Metriken in der Tabelle", "Metriken, die beim Öffnen eines Laufs als Spalten offen sind, mit Komma getrennt (Name oder Bezeichnung). Leer = Primärmetrik und die erste echte Metrik. Wer die Spalten im Lauf selbst ändert, behält seine Auswahl bis „Vorgabe“.", ""),
   bool("runs.notifyMac", "runs", "notify", "Mitteilung auf dem Mac", "Browser-Mitteilung bei fertigen, fehlerhaften oder hängenden Läufen, wenn der Tab nicht sichtbar ist.", true),
   num("runs.errWarn", "runs", "notify", "Hinweis bei Fehlern ab", "Anteil fehlgeschlagener Zellen eines laufenden Laufs.", 5, 1, 50, 1, "%"),
   num("runs.stallMin", "runs", "notify", "Hängt nach", "So lange ohne neue Zelle gilt ein laufender Lauf als hängend.", 30, 10, 240, 10, "min"),
