@@ -487,6 +487,6 @@ as they stand in the prototype. The agent window's bounds end at the top of the 
 - `web/src/runs/model.ts`: pure logic of the Läufe area (filters, blocks, texts, timeline); components next to it.
 - `src/mlviz/server.py`: FastAPI app, `/api/...`, serves `src/mlviz/static` (the built frontend).
 - `src/mlviz/fixture.py`: synthetic demo project in the run format, written with the writers of `ds-store` (`mlviz demo`), the base of all tests. The package's `write_example_run` (8 cells) is too small for the views; `tests/test_store.py` uses it to check that the tool reads what the package writes.
-- `web/src/state/frame.ts`: frame state (areas, tabs). Stored per project in `localStorage`
+- `web/src/state/frame.ts`: frame state (areas, tabs, `pinned` tabs, which stay left and are skipped by the bulk closes of the tab menu `frame/TabMenu.tsx`; `close-tabs`, `pin-tab`, `unpin-tab`, `restore-tabs`, `show-in-runs`). Stored per project in `localStorage`
   (`mlviz:v1:<project>:...`), every access guarded.
 - `web/src/tokens.css` is generated from `design/tokens.json` (`npm run tokens`); never edit it.

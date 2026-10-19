@@ -22,6 +22,10 @@ export interface FrameState {
   analysisView: { view: "run" | "two" | "project"; n: number } | null;
   /** The settings tab is open (v0.3.0). */
   settings: boolean;
+  /** Pinned tabs in pin order (run folder names, or SETTINGS_TAB); they stay left and survive the bulk closes (v0.3.2). */
+  pinned: string[];
+  /** "In Läufe zeigen": the list view opens this run's issue and marks its card (`n` makes the same run count again). */
+  reveal: { run: string; n: number } | null;
 }
 
 export type FrameAction =
@@ -32,6 +36,13 @@ export type FrameAction =
   | { type: "open-settings" }
   | { type: "close-settings" }
   | { type: "close-run"; run: string }
+  /** Tab menu: closes tabs (run folder names, SETTINGS_TAB); pinned ones are skipped unless `force`. */
+  | { type: "close-tabs"; items: string[]; force?: boolean }
+  | { type: "pin-tab"; item: string }
+  | { type: "unpin-tab"; item: string }
+  | { type: "show-in-runs"; run: string }
+  /** Undo of "close-tabs": the tabs, pins and the active tab as they were. */
+  | { type: "restore-tabs"; before: Pick<FrameState, "tabs" | "pinned" | "settings" | "active"> }
   | { type: "set-runs-view"; view: RunsView }
   | { type: "open-compare"; runs: string[] }
   | { type: "open-analysis"; run: string; combo: Record<string, string> }
@@ -40,7 +51,19 @@ export type FrameAction =
   /** Undo and redo of the agent: back to an earlier state of the frame. */
   | { type: "restore"; state: FrameState };
 
-export const initialFrame: FrameState = { area: "runs", tabs: [], active: null, runsView: "list", compare: [], analysis: null, analysisView: null, settings: false };
+export const initialFrame: FrameState = { area: "runs", tabs: [], active: null, runsView: "list", compare: [], analysis: null, analysisView: null, settings: false, pinned: [], reveal: null };
+
+/** Run tabs with the pinned ones first (in pin order), the others keep their order. */
+function arrange(tabs: string[], pinned: string[]): string[] {
+  const front = pinned.filter((t) => tabs.includes(t));
+  return [...front, ...tabs.filter((t) => !front.includes(t))];
+}
+
+/** The tabs as they stand in the strip behind the fixed one: pinned (pin order), then settings, then the other runs. */
+export function tabOrder(s: Pick<FrameState, "tabs" | "pinned" | "settings">): string[] {
+  const pinned = s.pinned.filter((t) => (t === SETTINGS_TAB ? s.settings : s.tabs.includes(t)));
+  return [...pinned, ...(s.settings && !pinned.includes(SETTINGS_TAB) ? [SETTINGS_TAB] : []), ...s.tabs.filter((t) => !pinned.includes(t))];
+}
 
 export function frameReducer(s: FrameState, a: FrameAction): FrameState {
   switch (a.type) {
@@ -56,14 +79,37 @@ export function frameReducer(s: FrameState, a: FrameAction): FrameState {
     case "open-settings":
       return { ...s, settings: true, active: SETTINGS_TAB };
     case "close-settings":
-      return { ...s, settings: false, active: s.active === SETTINGS_TAB ? null : s.active };
+      return { ...s, settings: false, pinned: s.pinned.filter((t) => t !== SETTINGS_TAB), active: s.active === SETTINGS_TAB ? null : s.active };
     case "close-run": {
       const i = s.tabs.indexOf(a.run);
       if (i < 0) return s;
       const tabs = s.tabs.filter((t) => t !== a.run);
-      if (s.active !== a.run) return { ...s, tabs };
-      return { ...s, tabs, active: i > 0 ? s.tabs[i - 1] : null };
+      const pinned = s.pinned.filter((t) => t !== a.run);
+      if (s.active !== a.run) return { ...s, tabs, pinned };
+      return { ...s, tabs, pinned, active: i > 0 ? s.tabs[i - 1] : null };
     }
+    case "close-tabs": {
+      const items = a.items.filter((t) => (a.force || !s.pinned.includes(t)) && (t === SETTINGS_TAB ? s.settings : s.tabs.includes(t)));
+      if (!items.length) return s;
+      const tabs = s.tabs.filter((t) => !items.includes(t));
+      const settings = s.settings && !items.includes(SETTINGS_TAB);
+      const pinned = s.pinned.filter((t) => !items.includes(t));
+      return { ...s, tabs, settings, pinned, active: s.active !== null && items.includes(s.active) ? null : s.active };
+    }
+    case "pin-tab": {
+      if (s.pinned.includes(a.item) || !(a.item === SETTINGS_TAB ? s.settings : s.tabs.includes(a.item))) return s;
+      return { ...s, pinned: [...s.pinned, a.item], tabs: arrange(s.tabs, [...s.pinned, a.item]) };
+    }
+    case "unpin-tab": {
+      if (!s.pinned.includes(a.item)) return s;
+      const pinned = s.pinned.filter((t) => t !== a.item);
+      // right of the pinned ones: first of the normal tabs
+      return { ...s, pinned, tabs: arrange(s.tabs, pinned) };
+    }
+    case "show-in-runs":
+      return { ...s, area: "runs", active: null, runsView: "list", reveal: { run: a.run, n: (s.reveal?.n ?? 0) + 1 } };
+    case "restore-tabs":
+      return { ...s, ...a.before };
     case "set-runs-view":
       return { ...s, runsView: a.view };
     case "open-compare":
@@ -95,7 +141,8 @@ function validate(v: unknown): FrameState | null {
     an && typeof an.run === "string" && an.combo && typeof an.combo === "object"
       ? { run: an.run, combo: an.combo as Record<string, string> }
       : null;
-  return { area, tabs: [...new Set(tabs)], active, runsView, compare, analysis, analysisView: null, settings };
+  const pinned = Array.isArray(o.pinned) ? [...new Set(o.pinned.filter((t): t is string => typeof t === "string" && (tabs.includes(t) || (settings && t === SETTINGS_TAB))))] : [];
+  return { area, tabs: arrange([...new Set(tabs)], pinned), active, runsView, compare, analysis, analysisView: null, settings, pinned, reveal: null };
 }
 
 export const loadFrame = (project: string): FrameState =>

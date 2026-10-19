@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "preact/hooks";
 import { getProject, getRuns, getTemplates, type ProjectInfo, type RunRow } from "./api";
 import { IconBar } from "./frame/IconBar";
+import { TabMenu } from "./frame/TabMenu";
 import { TabStrip } from "./frame/TabStrip";
 import { AgentLayer } from "./agent/AgentLayer";
 import { useFrameTools } from "./agent/frameTools";
 import { contextLabel } from "./agent/model";
 import { loadAgent, saveAgent, toggleFromIcon } from "./agent/state";
-import { SETTINGS_TAB, frameReducer, initialFrame, loadFrame, saveFrame } from "./state/frame";
+import { SETTINGS_TAB, frameReducer, type FrameState, initialFrame, loadFrame, saveFrame } from "./state/frame";
 import { SettingsView } from "./settings/SettingsView";
 import { load as loadSettings, nudgeScale, requestFocus } from "./settings/store";
 import { handlerFor } from "./agent/bus";
@@ -38,6 +39,15 @@ function Frame({ project }: { project: ProjectInfo }) {
   useEffect(() => {
     getTemplates("one").then((t) => setTemplates(t.map((x) => x.name))).catch(() => undefined);
   }, [frame.settings]);
+  // tab menu (right-click) and the undo toast after closing tabs (v0.3.2, N)
+  const [menu, setMenu] = useState<{ item: string | null; x: number; y: number } | null>(null);
+  const [closed, setClosed] = useState<{ n: number; before: FrameState } | null>(null);
+  const closeMenu = useCallback(() => setMenu(null), []);
+  useEffect(() => {
+    if (!closed) return;
+    const t = setTimeout(() => setClosed(null), 6000);
+    return () => clearTimeout(t);
+  }, [closed]);
   const [agent, setAgent] = useState(() => loadAgent(project.name));
   const agentLatest = useRef(agent);
   agentLatest.current = agent;
@@ -141,6 +151,9 @@ function Frame({ project }: { project: ProjectInfo }) {
           onPalette={() => openPalette("")}
           onFocusSettings={() => dispatch({ type: "open-settings" })}
           onCloseSettings={() => dispatch({ type: "close-settings" })}
+          pinned={frame.pinned}
+          onMenu={(item, x, y) => { setClosed(null); setMenu({ item, x, y }); }}
+          onUnpin={(item) => dispatch({ type: "unpin-tab", item })}
         />
         <div class="content">
           {/* Both areas stay mounted, so a search or filter in Läufe survives an area switch. */}
@@ -151,6 +164,7 @@ function Frame({ project }: { project: ProjectInfo }) {
               onView={(view) => dispatch({ type: "set-runs-view", view })}
               onOpen={(run) => dispatch({ type: "open-run", run })}
               onCompare={(runs) => dispatch({ type: "open-compare", runs })}
+              reveal={frame.reveal}
             />
           </div>
           <div class="pane" hidden={frame.active !== null || frame.area !== "analysis"}>
@@ -182,6 +196,23 @@ function Frame({ project }: { project: ProjectInfo }) {
         onOpenRun={(run) => dispatch({ type: "open-run", run })}
         onAnalyse={(run) => dispatch({ type: "open-analysis", run, combo: {} })}
       />
+      {menu && <TabMenu item={menu.item} x={menu.x} y={menu.y} frame={frame} dispatch={dispatch} onClose={closeMenu} onClosed={(n, before) => setClosed({ n, before })} />}
+      {closed && (
+        <div class="tab-toast" role="status" data-testid="tabs-toast">
+          <span>{closed.n === 1 ? "1 Tab geschlossen" : `${closed.n} Tabs geschlossen`}</span>
+          <button
+            class="tab-toast-undo"
+            data-testid="tabs-undo"
+            onClick={() => {
+              const b = closed.before;
+              dispatch({ type: "restore-tabs", before: { tabs: b.tabs, pinned: b.pinned, settings: b.settings, active: b.active } });
+              setClosed(null);
+            }}
+          >
+            Rückgängig
+          </button>
+        </div>
+      )}
       {palette && <Palette ctx={paletteCtx} request={palette} onClose={() => setPalette(null)} />}
       <AgentLayer agent={agent} onChange={changeAgent} context={contextLabel(frame)} appRef={appRef} />
     </div>

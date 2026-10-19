@@ -23,9 +23,9 @@ def test_icon_bar_has_the_two_areas_and_marks_the_active_one(page):
 
 
 def test_frame_dimensions_follow_the_tokens(page):
-    assert page.get_by_test_id("tab-strip").bounding_box()["height"] == 36
-    assert page.locator(".icon-bar").bounding_box()["width"] == 52
-    assert page.locator("body").evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(13, 16, 22)"
+    assert page.get_by_test_id("tab-strip").bounding_box()["height"] == 38
+    assert page.locator(".icon-bar").bounding_box()["width"] == 56
+    assert page.locator("body").evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(19, 19, 21)"
 
 
 def test_pinned_tab_shows_the_area_and_has_no_close_button(page):  # also: area label follows the icon
@@ -149,7 +149,7 @@ def test_many_tabs_wrap_below_the_search_box_instead_of_running_under_it(page):
     page.set_viewport_size({"width": 1000, "height": 700})
     strip = page.get_by_test_id("tab-strip")
     assert "wrapped" not in strip.get_attribute("class")
-    assert strip.bounding_box()["height"] == 36
+    assert strip.bounding_box()["height"] == 38
     for run in RUNS_FOR_TABS:
         open_run(page, run)
     expect(strip).to_have_class(re.compile("wrapped"))
@@ -157,7 +157,81 @@ def test_many_tabs_wrap_below_the_search_box_instead_of_running_under_it(page):
     tabs = [t.bounding_box() for t in page.get_by_test_id("tab-run").all()] + [page.get_by_test_id("tab-pinned").bounding_box()]
     assert all(t["y"] >= box["y"] + box["height"] for t in tabs)  # every tab is below the search box
     assert max(t["y"] + t["height"] for t in tabs) <= strip.bounding_box()["y"] + strip.bounding_box()["height"]
-    assert strip.bounding_box()["height"] > 36
+    assert strip.bounding_box()["height"] > 38
     while page.get_by_test_id("tab-run").count():
         page.get_by_test_id("tab-run").first.get_by_test_id("tab-close").click()
     expect(strip).not_to_have_class(re.compile("wrapped"))
+
+
+# --- tab menu (v0.3.2, N) ---------------------------------------------------------------------
+def tab(page, run):
+    return page.locator(f'[data-testid="tab-run"][data-run="{run}"]')
+
+
+def open_three(page):
+    for r in (A, B, folder("TIM-71_example")):
+        open_run(page, r)
+
+
+def test_right_click_opens_the_tab_menu_and_esc_closes_it(page):
+    open_three(page)
+    tab(page, A).click(button="right")
+    menu = page.get_by_test_id("tab-menu")
+    expect(menu).to_be_visible()
+    expect(menu.get_by_role("menuitem")).to_have_text(
+        ["Schließen", "Andere schließen", "Rechts schließen", "Alle schließen", "Anheften", "Laufnamen kopieren", "In Läufe zeigen"]
+    )
+    page.keyboard.press("Escape")
+    expect(menu).to_have_count(0)
+
+
+def test_close_right_and_undo_with_the_toast(page):
+    open_three(page)
+    tab(page, A).click(button="right")
+    page.get_by_test_id("menu-close-right").click()
+    expect(page.get_by_test_id("tab-run")).to_have_count(1)
+    expect(page.get_by_test_id("tabs-toast")).to_contain_text("2 Tabs geschlossen")
+    page.get_by_test_id("tabs-undo").click()
+    expect(page.get_by_test_id("tab-run")).to_have_count(3)
+    expect(page.get_by_test_id("tabs-toast")).to_have_count(0)
+
+
+def test_menu_entries_that_do_nothing_are_greyed_out(page):
+    open_three(page)
+    tab(page, folder("TIM-71_example")).click(button="right")
+    expect(page.get_by_test_id("menu-close-right")).to_be_disabled()
+    expect(page.get_by_test_id("menu-close-others")).to_be_enabled()
+
+
+def test_pinned_tabs_move_left_stay_and_survive_close_all(page):
+    open_three(page)
+    last = folder("TIM-71_example")
+    tab(page, last).click(button="right")
+    page.get_by_test_id("menu-pin").click()
+    expect(page.get_by_test_id("tab-run").first).to_have_attribute("data-run", last)
+    expect(tab(page, last).get_by_test_id("tab-unpin")).to_be_visible()
+    expect(tab(page, last).get_by_test_id("tab-close")).to_have_count(0)
+    tab(page, A).click(button="right")
+    page.get_by_test_id("menu-close-all").click()
+    expect(page.get_by_test_id("tab-run")).to_have_count(1)
+    expect(tab(page, last)).to_be_visible()
+    page.reload()
+    expect(tab(page, last).get_by_test_id("tab-unpin")).to_be_visible()  # pins are remembered
+    tab(page, last).get_by_test_id("tab-unpin").click()
+    expect(tab(page, last).get_by_test_id("tab-close")).to_be_visible()
+
+
+def test_fixed_tab_menu_has_only_close_all_others(page):
+    open_three(page)
+    page.get_by_test_id("tab-pinned").click(button="right")
+    expect(page.get_by_test_id("tab-menu").get_by_role("menuitem")).to_have_text(["Alle anderen schließen"])
+    page.get_by_test_id("menu-close-all").click()
+    expect(page.get_by_test_id("tab-run")).to_have_count(0)
+
+
+def test_show_in_runs_opens_the_list_with_the_run_marked(page):
+    open_run(page, A)
+    tab(page, A).click(button="right")
+    page.get_by_test_id("menu-reveal").click()
+    expect(page.get_by_test_id("runs-view")).to_be_visible()
+    expect(page.get_by_test_id("view-list")).to_have_attribute("aria-pressed", "true")

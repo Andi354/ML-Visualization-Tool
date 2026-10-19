@@ -73,3 +73,9 @@ export const BellIcon = () => (
     <path d="M6.6 14a1.5 1.5 0 0 0 2.8 0" />
   </svg>
 );
+
+export const PinIcon = () => (
+  <svg width={11} height={11} viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width={1.5} stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M9.5 1.8l4.7 4.7-1.6.6-2.3 2.3.3 3-1 1-3-3-3.6 3.6M6.2 4.7l1.6-.6" />
+  </svg>
+);

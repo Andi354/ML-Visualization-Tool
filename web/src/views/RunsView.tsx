@@ -23,6 +23,8 @@ interface Props {
   onView: (v: ViewName) => void;
   onOpen: (run: string) => void;
   onCompare: (runs: string[]) => void;
+  /** "In Läufe zeigen" of the tab menu: open this run's issue and mark its row. */
+  reveal?: { run: string; n: number } | null;
 }
 
 const STATUS: [StatusFilter, string][] = [
@@ -44,7 +46,7 @@ function Seg<T extends string>({ items, value, onChange, label }: { items: [T, s
 }
 
 /** Start page of the tool (feature C): all runs, by issue and experiment, newest first. */
-export function RunsView({ project, view, onView, onOpen, onCompare }: Props) {
+export function RunsView({ project, view, onView, onOpen, onCompare, reveal }: Props) {
   const [runs, setRuns] = useState<RunRow[] | null>(null);
   const [issues, setIssues] = useState<Record<string, IssueInfo>>({});
   const [filters, setFilters] = useState<Filters>(noFilters);
@@ -79,6 +81,12 @@ export function RunsView({ project, view, onView, onOpen, onCompare }: Props) {
       window.removeEventListener("mlviz:notes-changed", load);
     };
   }, []);
+
+  useEffect(() => {
+    if (!reveal || !runs) return;
+    const r = runs.find((x) => x.id === reveal.run);
+    setState((s) => ({ ...s, focus: reveal.run, open: r?.issue ? { ...s.open, [r.issue]: true } : s.open }));
+  }, [reveal?.n, runs !== null]);
 
   useEffect(() => {
     if (!toast) return;
