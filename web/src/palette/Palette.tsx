@@ -39,7 +39,7 @@ const STEP_TITLE: Record<StepKind, string> = {
 
 const MODE_LIST: [string, string][] = [["direct", "Direkt"], ["mixed", "Gemischt"], ["confirm", "Bestätigen"]];
 const runLabel = (r: RunRow) => `${shortName(r)}${r.issue ? ` · ${r.issue}` : ""}`;
-const RUN_ICON: [string, string] = ["▤", "#6E9BF5"];
+const RUN_ICON: [string, string] = ["▤", "#8AA4FF"];
 const ISSUE_ICON: [string, string] = ["◆", "#A78BFA"];
 const runDesc = (r: RunRow) => `${r.issue ?? "ohne Issue"} · ${String(r.started ?? "").slice(0, 10)}${r.running ? " · ● läuft" : ""}`;
 const newest = (runs: RunRow[]) => [...runs].sort((a, b) => String(b.started ?? "").localeCompare(String(a.started ?? "")));
@@ -98,7 +98,7 @@ export function Palette({ ctx, request, onClose }: { ctx: Ctx; request: Request;
     if (mode === "prefixes") return PREFIXES.map((p) => ({ key: `p:${p.mode}`, label: p.label, at: [], desc: p.desc, run: () => setInput(p.prefix) }));
     if (mode === "settings") {
       const cat = (id: string) => CATS.find((c) => c.id === id)?.title ?? id;
-      return fromRank(ROWS, (r) => [r.label, r.desc], (r) => ({ key: `s:${r.key}`, label: r.label, at: [], icon: ["⚙", "#8590A3"], desc: r.desc, right: cat(r.cat), run: () => choose(() => ctx.openSetting(r.key)) }));
+      return fromRank(ROWS, (r) => [r.label, r.desc], (r) => ({ key: `s:${r.key}`, label: r.label, at: [], icon: ["⚙", "#7C7C87"], desc: r.desc, right: cat(r.cat), run: () => choose(() => ctx.openSetting(r.key)) }));
     }
     let out: Item[];
     if (mode === "commands") {
@@ -128,7 +128,7 @@ export function Palette({ ctx, request, onClose }: { ctx: Ctx; request: Request;
       out = [...newest(ctx.runs).slice(0, 5).map((r, i) => ({ ...run(r), group: i === 0 ? "zuletzt geöffnet" : undefined })), ...issueTitles.slice(0, 3).map((i, k) => ({ ...issue(i), group: k === 0 ? "Issues" : undefined }))];
     }
     const text = query.trim();
-    if (text) out.push({ key: "ask", label: `Agent fragen: „${text}“`, at: [], icon: ["✦", "#6E9BF5"], desc: out.length === 0 ? "kein Befehl passt" : undefined, run: () => choose(() => ctx.ask(text)) });
+    if (text) out.push({ key: "ask", label: `Agent fragen: „${text}“`, at: [], icon: ["✦", "#8AA4FF"], desc: out.length === 0 ? "kein Befehl passt" : undefined, run: () => choose(() => ctx.ask(text)) });
     return out;
   })();
 

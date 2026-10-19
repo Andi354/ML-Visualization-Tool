@@ -2,12 +2,12 @@
    Greys the prototype uses between the tokens are local to the agent, so the look stays as designed. */
 .agent-window,
 .agent-capsule {
-  --agent-header: #161b26;
-  --agent-line: #2c3547;
-  --agent-line-soft: #1e2533;
-  --agent-grip: #3a4458;
-  --agent-off: #4a5265;
-  --agent-mute: #6b7385;
+  --agent-header: var(--chrome);
+  --agent-line: var(--line-strong);
+  --agent-line-soft: var(--line);
+  --agent-grip: var(--line-stronger);
+  --agent-off: var(--line-stronger);
+  --agent-mute: var(--text-3);
   z-index: 20;
 }
 
@@ -18,7 +18,7 @@
   background: color-mix(in srgb, var(--surface) 97%, transparent);
   border: 1px solid var(--agent-line);
   border-radius: 10px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(110, 155, 245, 0.08);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(138, 164, 255, 0.08);
   backdrop-filter: blur(6px);
   font-size: var(--size-base);
 }
@@ -83,7 +83,7 @@
   width: 34px;
   height: 5px;
   overflow: hidden;
-  border-radius: 3px;
+  border-radius: 7px;
   background: var(--line);
 }
 .agent-ctx-fill {
@@ -140,7 +140,7 @@
   text-align: left;
   font-size: var(--size-small);
   color: var(--text);
-  border-radius: 5px;
+  border-radius: 9px;
 }
 .agent-chat-row.current {
   background: var(--accent-bg);
@@ -269,7 +269,7 @@
   color: var(--text-2);
   background: var(--surface);
   border: 1px solid var(--agent-line);
-  border-radius: 6px;
+  border-radius: 12px;
   cursor: default;
 }
 .agent-mic:disabled {
@@ -287,11 +287,11 @@
   font-size: 13px;
   font-weight: 600;
   color: #fff;
-  background: #2f5bd3;
-  border-radius: 6px;
+  background: var(--accent-fill);
+  border-radius: 12px;
 }
 .agent-send:hover:not(:disabled) {
-  background: color-mix(in srgb, #2f5bd3 88%, white);
+  background: color-mix(in srgb, var(--accent-fill) 88%, white);
 }
 
 .agent-mode-row {
@@ -330,7 +330,7 @@
   padding: 8px 9px;
   text-align: left;
   color: var(--text);
-  border-radius: 5px;
+  border-radius: 9px;
 }
 .agent-mode-option.current {
   background: var(--accent-bg);
@@ -435,7 +435,7 @@
   font-size: var(--size-tiny);
   color: var(--text);
   border: 1px solid var(--agent-line);
-  border-radius: 5px;
+  border-radius: 9px;
 }
 .agent-btn.primary {
   color: var(--bg);
@@ -517,7 +517,7 @@
   font-size: var(--size-tiny);
   color: var(--text-2);
   background: var(--agent-header);
-  border-radius: 4px;
+  border-radius: 8px;
 }
 .agent-card-key {
   align-self: center;
@@ -544,7 +544,7 @@
   text-align: left;
   border: 1px solid var(--agent-line);
   background: var(--agent-header);
-  border-radius: 6px;
+  border-radius: 12px;
 }
 .agent-run-card:hover {
   border-color: var(--accent-line);
@@ -645,7 +645,7 @@
   font-family: var(--font-mono);
   font-size: 0.92em;
   background: var(--raised);
-  border-radius: 3px;
+  border-radius: 7px;
 }
 .md-pre {
   margin: 0 0 8px;
@@ -710,7 +710,7 @@
   color: var(--text-2);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 12px;
 }
 .agent-attach:hover:not(:disabled) {
   color: var(--text);
@@ -737,7 +737,7 @@
   padding: 0;
   overflow: visible;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 12px;
   background: var(--raised);
   font-size: var(--size-tiny);
   color: var(--text-3);
@@ -746,7 +746,7 @@
   height: 44px;
   max-width: 88px;
   object-fit: cover;
-  border-radius: 5px;
+  border-radius: 9px;
   display: block;
 }
 .agent-image-chip.loading {
@@ -784,5 +784,5 @@
   max-height: 120px;
   max-width: 100%;
   border: 1px solid var(--accent-line);
-  border-radius: 6px;
+  border-radius: 12px;
 }
