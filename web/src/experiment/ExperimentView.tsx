@@ -220,7 +220,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
               highlight={sectionHl}
             />
           )}
-          <OverviewLine open={overview} onToggle={() => setOverview(!overview)} />
+          <OverviewLine open={overview} onToggle={() => setOverview(!overview)} metric={sortDef ? { label: sortDef.label, primary: sortDef.key === primary } : undefined} />
           {overview && result?.overview && result.overview.cards.length + 1 > 0 && (
             <Overview
               cards={result.overview.cards}

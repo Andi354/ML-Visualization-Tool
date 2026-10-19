@@ -69,6 +69,7 @@ export function Toolbar(p: Props) {
                 <label key={m.key} class="pop-item mono">
                   <input type="checkbox" data-testid="col-metric" data-metric={m.key} checked={visible.includes(m.key)} onChange={() => toggleMetric(m.key)} />
                   <span class="grow">{m.label}</span>
+                  {m.key === p.primary && <span class="primary-tag sans" data-testid="col-primary">★ primär</span>}
                   <span class="muted tiny sans">{m.family}</span>
                 </label>
               ))}

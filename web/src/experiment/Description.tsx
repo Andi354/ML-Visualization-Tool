@@ -91,10 +91,17 @@ export function DescriptionBlock({ description: d, open, onToggle, onOpenRun, no
 }
 
 /** The own line above the overview graphs; a click folds or unfolds them (same state as the toolbar button). */
-export function OverviewLine({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+export function OverviewLine({ open, onToggle, metric }: { open: boolean; onToggle: () => void; metric?: { label: string; primary: boolean } }) {
   return (
     <button class="ov-line" data-testid="overview-line" aria-expanded={open} onClick={onToggle}>
       <span class="desc-label">Überblick</span>
+      {metric && (
+        <span class="ov-metric" data-testid="overview-metric" title="Die Werte der Grafiken sind die Mittelwerte dieser Metrik">
+          {metric.primary && <span class="primary-star" aria-hidden="true">★ </span>}
+          {metric.label}
+          {metric.primary && " (primär)"}
+        </span>
+      )}
       <span class="ov-hint">{open ? "" : "Verteilung je Achse, Klick auf einen Wert filtert"}</span>
       <span class="desc-fold">{foldLabel(open)}</span>
     </button>

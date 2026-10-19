@@ -335,3 +335,27 @@ def test_sidebar_stays_270px_and_the_table_scrolls_instead_of_wrapping(page):
     page.set_viewport_size({"width": 900, "height": 800})
     assert view(page).get_by_test_id("sidebar").bounding_box()["width"] == 270
     assert view(page).locator(".exp-table-wrap").evaluate("e => e.scrollWidth > e.clientWidth")
+
+
+def test_the_primary_metric_is_marked_in_the_overview_line_and_the_column_picker(page):
+    start(page, TIM45)
+    line = view(page).get_by_test_id("overview-metric")
+    expect(line).to_contain_text("★")
+    expect(line).to_contain_text("(primär)")
+    view(page).get_by_test_id("columns-button").click()
+    mark = view(page).get_by_test_id("col-primary")
+    expect(mark).to_have_count(1)
+    expect(mark).to_have_text("★ primär")
+    # it sits in the row of the primary metric
+    row = view(page).locator("label.pop-item", has=page.get_by_test_id("col-primary"))
+    expect(row.get_by_test_id("col-metric")).to_have_attribute("data-metric", "test_mse_missing")
+
+
+def test_sorting_by_another_metric_changes_the_overview_label_and_drops_the_primary_mark(page):
+    start(page, TIM45)
+    view(page).get_by_test_id("columns-button").click()
+    view(page).locator('[data-testid="col-metric"][data-metric="test_mae"]').check()
+    view(page).get_by_test_id("columns-button").click()
+    view(page).locator('[data-testid="metric-head"][data-metric="test_mae"]').click()
+    line = view(page).get_by_test_id("overview-metric")
+    expect(line).not_to_contain_text("(primär)")
