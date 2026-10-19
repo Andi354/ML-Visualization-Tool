@@ -20,6 +20,7 @@ export interface OwnDefinition {
   width?: Width;
   title?: string;
   subtitle?: string;
+  header?: import("../api").WidgetHeader;
   params?: { name: string; label?: string; options: string[]; default: string }[];
   data: { source: string; filter?: Record<string, unknown> };
   spec: Record<string, unknown>;

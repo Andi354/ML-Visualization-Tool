@@ -56,8 +56,11 @@ def test_compare_table_values_are_replicate_means_and_the_best_per_column_is_mar
 def test_compare_table_title_counts_the_columns_the_winner_leads(project):
     r = compute(project, "compare-table")
     assert r["title"] == "rep-net ist in allen 6 Spalten am besten"
-    assert r["note"] == "niedriger = besser · grün = bester Wert je Spalte"
+    assert "note" not in r  # no hint lines (v0.3.2, Q.K)
     assert "forecaster × MAPE" in r["subtitle"] and "Replikate gemittelt" in r["subtitle"]
+    assert r["header"]["agg"] == "Replikate gemittelt"
+    mono = [w["text"] for w in r["header"]["what"] if w.get("mono")]
+    assert mono[0] == "forecaster" and mono[1].startswith("MAPE")
 
 
 def test_other_dimensions_are_fixed_to_their_best_value_and_named_in_the_subtitle(project):
@@ -135,7 +138,10 @@ def test_config_in_the_run_scope_is_the_best_combination(project):
     run = get_run(project, R52)
     best = best_combo(run, combo_cells(run, {}), ["forecaster"], real_metrics(project, run)[0])
     assert r["data"]["combo"] == best
-    assert r["title"] == "Beste Config: forecaster = rep-net"
+    assert r["title"] == "Beste Kombination"
+    assert r["header"]["values"] == {"label": "", "style": "list", "items": [["forecaster", "rep-net"]]}
+    assert r["title_meta"]["run"] == get_run(project, R52).name and r["title_meta"]["metric"] == real_metrics(project, run)[0].key
+    assert r["title_meta"]["value"].endswith("%")
 
 
 def test_config_filter_wins_over_the_best_value(project):
@@ -182,7 +188,7 @@ def test_stability_shows_every_replicate_with_mean_and_sd(project):
     vals = [p["value"] for p in row["points"]]
     assert row["mean"] == pytest.approx(np.mean(vals)) and row["sd"] == pytest.approx(np.std(vals, ddof=1))
     assert "shuffle_seed" in row["points"][0]["label"]
-    assert "deterministische Modelle variieren nur über Folds" in r["note"]
+    assert "note" not in r and r["header"]["what"][-1] == {"text": d["row_key"], "mono": True}
 
 
 def test_stability_title_names_the_calmest_row(project):

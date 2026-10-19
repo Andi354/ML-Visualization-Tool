@@ -10,6 +10,17 @@ from ..runs import Run
 THIN = " "
 
 
+def make_header(what: list[tuple[str, bool]], agg: str | None = None, fixed: dict | None = None, label: str = "FEST") -> dict:
+    """The `header` of a widget result (v0.3.2, Q): the "what" line as parts (text, in mono), the aggregation note and the values
+    line with the axes held at a value. `subtitle` stays for the plain-text readers (the agent)."""
+    head: dict = {"what": [{"text": t, **({"mono": True} if m else {})} for t, m in what]}
+    if agg:
+        head["agg"] = agg
+    if fixed:
+        head["values"] = {"label": label, "style": "chips", "items": [[str(k), str(v)] for k, v in fixed.items()]}
+    return head
+
+
 def de(v: float | None, digits: int = 1) -> str:
     """German number format: decimal comma, narrow space as thousands separator."""
     if v is None or v != v:

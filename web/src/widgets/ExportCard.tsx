@@ -49,6 +49,7 @@ export function ExportCard({ parts, title, layout = "stack", theme, footer, run,
               title={p.title}
               hideTitle={p.hideTitle}
               hints={p.hints}
+              exporting
               ctx={{ project, run, combo, settings: {}, onSettings: () => {}, configData: p.configData, scope }}
             />
           </div>

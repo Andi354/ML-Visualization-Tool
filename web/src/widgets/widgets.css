@@ -1113,3 +1113,88 @@
 .agent-glow {
   animation: agent-glow 1.5s ease-out;
 }
+
+/* Widget header (v0.3.2, Q.I) and config title (Q.J) */
+.w-title-meta {
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-3);
+}
+.w-best {
+  color: var(--best);
+}
+.w-what {
+  font-size: 13px;
+  color: var(--text-2);
+}
+.w-what-mono {
+  color: #c9d3e3;
+}
+.w-agg {
+  color: var(--text-3);
+}
+.w-values {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+.w-values-label {
+  margin-right: 2px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+.w-chip {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 8px;
+  font-size: 12px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.w-chip-name {
+  color: var(--text-2);
+}
+.w-more {
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #a9bbff;
+}
+.w-more:hover {
+  background: none;
+  text-decoration: underline;
+}
+.w-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 28px;
+  margin: 6px 0 8px;
+}
+.w-list-row {
+  display: flex;
+  gap: 12px;
+  padding: 5px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.w-list-name {
+  flex: none;
+  width: 170px;
+  color: var(--text-3);
+}
+.w-list-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.null-value {
+  font-style: italic;
+  color: #6a6a74;
+}

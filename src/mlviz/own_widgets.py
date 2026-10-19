@@ -4,7 +4,7 @@ The agent writes the description, the tool validates and renders it (feature E).
 file in `<project>/.mlviz/widgets/<slug>.json`:
 
     { name, question, scope: "one" | "two" | "project", width: "half" | "full",
-      title?, subtitle?,
+      title?, subtitle?, header?,
       params: [{ name, label, options, default }],
       data: { source, filter },
       spec: <Vega-Lite without data> }
@@ -92,6 +92,28 @@ def spec_errors(spec: Any) -> list[str]:
     return errors
 
 
+def header_errors(header: Any) -> list[str]:
+    """Reasons why a `header` is not valid: `{what: [{text, mono?}], agg?, values?: {label?, style: chips|list, items: [[name, value]]}}`."""
+    if header is None:
+        return []
+    if not isinstance(header, dict):
+        return ["header ist kein Objekt"]
+    errors: list[str] = []
+    what = header.get("what", [])
+    if not isinstance(what, list) or not all(isinstance(w, dict) and isinstance(w.get("text"), str) for w in what):
+        errors.append("header.what braucht eine Liste von {text, mono?}")
+    if "agg" in header and not isinstance(header["agg"], str):
+        errors.append("header.agg ist kein Text")
+    values = header.get("values")
+    if values is not None:
+        items = values.get("items") if isinstance(values, dict) else None
+        if not isinstance(values, dict) or values.get("style", "chips") not in ("chips", "list"):
+            errors.append("header.values braucht style chips oder list")
+        elif not isinstance(items, list) or not all(isinstance(i, list) and len(i) == 2 and all(isinstance(x, str) or x is None for x in i) for i in items):
+            errors.append("header.values.items braucht eine Liste von [Name, Wert]")
+    return errors
+
+
 def validate(defn: Any) -> list[str]:
     """All reasons why a description is not valid; empty when it is."""
     if not isinstance(defn, dict):
@@ -130,6 +152,7 @@ def validate(defn: Any) -> list[str]:
         errors.append(f"data.source muss {', '.join(SOURCES)} sein")
     elif not isinstance(data.get("filter", {}), dict):
         errors.append("data.filter ist keine Zuordnung (Spalte: Wert)")
+    errors.extend(header_errors(defn.get("header")))
     errors.extend(spec_errors(defn.get("spec")))
     used = {m for _, node in _walk(defn.get("spec")) if isinstance(node, str) for m in _PARAM.findall(node)}
     used |= {m for v in (data or {}).get("filter", {}).values() if isinstance(v, str) for m in _PARAM.findall(v)} if isinstance(data, dict) and isinstance(data.get("filter", {}), dict) else set()
@@ -254,7 +277,7 @@ def compute(project: Project, defn: dict, request: dict) -> dict:
     return {
         "title": defn.get("title") or defn["name"],
         "subtitle": defn.get("subtitle"),
-        "note": None,
+        "header": defn.get("header"),
         "options": {p["name"]: p["options"] for p in defn.get("params", [])},
         "data": {"rows": rows, "spec": spec, "name": defn["name"], "values": values},
     }

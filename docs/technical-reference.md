@@ -75,7 +75,7 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `POST /api/runs/{id}/table` | group table. Body: `dims` (`{dim: {mode: split\|agg, sel: [values]}}`), `sort` (`metric`, `stat` mean/min/max/n, `dir`), `limit` (default 200, max 1000; the run tab asks 100, 200 or 500) with `offset` (the page; the answer has `groups` = all combinations, `shown`, `offset`), `overview` |
 | `GET /api/runs/{id}/config?combo=` | resolved config for the config view: grid axes and replicates, blocks with entries, YAML lines with markers. `combo` is JSON `{axis: value}` and applies one combination to the resolved config |
 | `GET /api/widgets/catalog?scope=` | the widget catalog: key, label, question, scopes, settings, `requires` |
-| `POST /api/widgets/{key}` | data of one widget: `{run, combo, settings}` -> `{title, subtitle, note, unavailable, options, data}` |
+| `POST /api/widgets/{key}` | data of one widget: `{run, combo, settings}` -> `{title, title_meta?, subtitle, header?, unavailable, options, data}` (`header`, v0.3.2: `{what: [{text, mono?}], agg?, values?: {label?, style: chips\|list, items}}`, built by `widgets/common.make_header`; no `note` any more) |
 | `GET /api/folders?path=` | sub-folders of a project folder (no `runs/`, no hidden folders), for the target picker |
 | `POST /api/deliverables` | writes base64 PNGs below a project folder: `{target, files: [{name, data, title}], title, issue, runs, configs, overwrite}`; 409 with the clashing names unless `overwrite` |
 | `GET /api/agent` | chats of the project (newest first, without messages), the mode of the agent (`direct`, `mixed`, `confirm`) `limits` (subscription usage in percent, if Claude Code reported it) and `now`, the clock of the tool (the cache display counts from it) |
@@ -132,7 +132,7 @@ the same data as "Blöcke" or "YAML"; the choice is stored per project.
 A *widget* answers one question for a scope (`combination`, `run`, `two-runs`, `project`). The catalog
 (`widgets/registry.py`) lists key, label, question, scopes, settings (defaults) and what the run must
 provide (`curves`, `predictions`). Each widget function returns the data, a key-statement title
-generated from it, a subtitle (what is compared) and a note; a widget that cannot be drawn returns
+generated from it, a subtitle (what is compared) and, since v0.3.2, a `header` in parts (the web renders it in `widgets/header.tsx`: what line, aggregation note, fixed values as chips with "+n weitere" or as a list; a subtitle without header is the what line); a widget that cannot be drawn returns
 `unavailable` with the reason instead of data and cannot be saved. Dynamic setting options (channels,
 combinations to compare with) come back in `options`. Numbers in titles use the German format.
 
@@ -179,7 +179,7 @@ In the save dialog an *image* is one file and holds one widget or, after "Zu ein
 (`web/src/analysis/images.ts`, pure functions): `combine` merges the selected images in list order into
 a group at the place of the first, `split` ("Trennen") and `detach` ("lösen") undo it, `reorder` moves a
 member, the layout is `stack` or `side`. A group has one title (default "A und B"), its parts show no title
-of their own but their subtitle and note when "Hinweise einblenden" is on (default off for a group, on for
+of their own but their what line and values chips when "Hinweise einblenden" is on (default off for a group, on for
 a single image), and one footer. Group file names are `NN_<type>+<type>.png`.
 
 ## Running the tool

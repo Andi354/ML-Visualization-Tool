@@ -335,3 +335,34 @@ def test_own_widgets_are_not_part_of_the_builtin_catalog(client):
     client.post("/api/own-widgets", json={"definition": DEFN})
     assert all(not w["key"].startswith("own") for w in client.get("/api/widgets/catalog").json())
     assert not any(k.startswith("own") for k in widgets.REGISTRY)
+
+
+# --- header (v0.3.2, Q) -----------------------------------------------------------------------------
+HEADER = {
+    "what": [{"text": "test_mape", "mono": True}, {"text": " je Region"}],
+    "agg": "Replikate gemittelt",
+    "values": {"label": "FEST", "style": "chips", "items": [["forecaster", "rep-net"], ["time_embedding", None]]},
+}
+
+
+def test_a_header_is_valid_in_both_styles_and_reaches_the_result(project):
+    d = defn(header=HEADER)
+    assert validate(d) == []
+    assert validate(defn(header={"what": [], "values": {"style": "list", "items": [["a", "b"]]}})) == []
+    out = own_widgets.compute(project, d, {"run": R52, "scope": "run", "settings": {}})
+    assert out["header"] == HEADER and "note" not in out
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        "text",
+        {"what": "x"},
+        {"what": [{"mono": True}]},
+        {"what": [], "agg": 3},
+        {"what": [], "values": {"style": "grid", "items": []}},
+        {"what": [], "values": {"style": "chips", "items": [["only one"]]}},
+    ],
+)
+def test_a_broken_header_is_refused(header):
+    assert any("header" in e for e in validate(defn(header=header)))

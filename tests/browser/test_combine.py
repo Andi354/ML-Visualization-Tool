@@ -69,7 +69,7 @@ def test_the_group_takes_the_place_of_the_first_image_stays_selected_and_focused
     expect(group).to_have_class(re.compile("focused"))
     expect(d.get_by_test_id("mark-text")).to_have_text("1 Bild gewählt")
     expect(d.get_by_test_id("save-images")).to_have_text("1 Bild speichern")
-    assert group.evaluate("e => getComputedStyle(e).borderLeftColor") == "rgb(110, 155, 245)"  # accent bar
+    assert group.evaluate("e => getComputedStyle(e).borderLeftColor") == "rgb(138, 164, 255)"  # accent bar
     assert group.get_by_test_id("image-name").input_value() == "01_per-region+axis-effect.png"
 
 
@@ -153,10 +153,8 @@ def test_hints_are_off_for_combined_images_and_on_for_single_ones_one_footer(pag
     card = d.get_by_test_id("export-card")
     expect(d.get_by_test_id("hints-check")).not_to_be_checked()
     expect(card.locator(".w-sub")).to_have_count(0)
-    expect(card.locator(".w-note")).to_have_count(0)
     d.get_by_test_id("hints-check").check()
     expect(card.locator(".w-sub")).to_have_count(2)  # each part with its own subtitle
-    expect(card.locator(".w-note")).to_have_count(2)
     expect(card.get_by_test_id("export-footer")).to_have_count(1)  # one footer
     d.get_by_test_id("footer-check").uncheck()
     expect(card.get_by_test_id("export-footer")).to_have_count(0)

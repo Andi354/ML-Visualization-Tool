@@ -134,7 +134,6 @@ def config_diff(project: Project, req: dict) -> dict:
     return {
         "title": title,
         "subtitle": f"{a.name} (A) und {b.name} (B)",
-        "note": None,
         "data": {**_meta(pair), "chips": chips, "warnings": warnings, "n_both": [len(pair.common), pair.n_union()]},
     }
 
@@ -196,8 +195,6 @@ def who_wins(project: Project, req: dict) -> dict:
     return {
         "title": verdict,
         "subtitle": f"{'Bester Wert' if mode == 'best' else 'Median'} über alle Kombinationen · A = {a.name}, B = {b.name}",
-        "note": "niedriger = besser · Balken zeigt zum besseren Lauf, Länge = relativer Abstand"
-        + (" · skalierte Metriken sind markiert" if any(r["family"] != "real" for r in rows) else ""),
         "data": {**_meta(pair), "rows": rows, "mode": mode, "scaled_hidden": hidden, "winners": {"a": wa, "b": wb}},
     }
 
@@ -241,7 +238,6 @@ def best_config(project: Project, req: dict) -> dict:
     return {
         "title": title,
         "subtitle": f"Beste Kombination je Lauf (Mittel über Replikate) · {pair.metric.label}",
-        "note": "Rang ≤ 3 grün · Rang > 10 gelb",
         "data": {**_meta(pair), **out},
     }
 
@@ -263,7 +259,6 @@ def all_combos(project: Project, req: dict) -> dict:
     return {
         "title": f"{lower} liegt in der Mitte besser (Median {metric_text(pair.metric, runs['a']['median'] if lower == 'A' else runs['b']['median'])} gegenüber {metric_text(pair.metric, runs['b']['median'] if lower == 'A' else runs['a']['median'])})",
         "subtitle": f"{pair.metric.label} je Kombination, gemeinsame Achse für A und B",
-        "note": "Punkt = Kombination · großer Punkt mit Ring = beste · Strich = Median",
         "data": {**_meta(pair), **runs},
     }
 
@@ -303,7 +298,6 @@ def regions_ab(project: Project, req: dict) -> dict:
     return {
         "title": f"B ist in {wins_b} von {len(rows)} Regionen besser" if wins_b * 2 >= len(rows) else f"A ist in {len(rows) - wins_b} von {len(rows)} Regionen besser",
         "subtitle": f"{pair.metric.label} je Region für die beste Kombination jedes Laufs",
-        "note": "Differenz = B gegenüber A in Prozent",
         "data": {**_meta(pair), "rows": rows},
     }
 
@@ -334,7 +328,6 @@ def scope_errors(project: Project, req: dict) -> dict:
     return {
         "title": f"A: {out['a']['cells']} Zellen ({out['a']['errors']} Fehler), B: {out['b']['cells']} Zellen ({out['b']['errors']} Fehler)",
         "subtitle": "Umfang, Fehler, Dauer, Lauf-Merkmale und Epoche je Lauf",
-        "note": "Fehlerzahlen über 50 sind rot",
         "data": {**_meta(pair), **out, "error_limit": 50},
     }
 
@@ -382,7 +375,6 @@ def param_effect(project: Project, req: dict) -> dict:
     return {
         "title": title,
         "subtitle": f"Wirkung = Mittel der Kombinationen mit dem Wert gegenüber dem Lauf-Mittel, {pair.metric.label}, in Prozent",
-        "note": "kippt = Vorzeichen wechselt und beide Wirkungen über 1,5 % · niedriger = besser",
         "data": {**_meta(pair), "rows": rows, "sort": req["settings"]["sort"], "scale": 8},
     }
 
@@ -419,7 +411,6 @@ def rank_stability(project: Project, req: dict) -> dict:
     return {
         "title": f"Rangfolge {'hält' if rho >= 0.7 else 'hält nur teilweise' if rho >= 0.3 else 'hält nicht'}: Spearman {de(rho, 2)}, {len(top_a & top_b)} von {k} der Top {k} bleiben",
         "subtitle": f"Rang in A gegen Rang in B über {len(df)} gemeinsame Kombinationen · {pair.metric.label}",
-        "note": "Diagonale = gleicher Rang",
         "data": {
             **_meta(pair),
             "points": [{"combo": combo_dict(pair.shared, k_), "a": int(r["a"]), "b": int(r["b"])} for k_, r in df.iterrows()],
@@ -447,6 +438,5 @@ def rank_jumps(project: Project, req: dict) -> dict:
     return {
         "title": f"Größter Rangsprung: {desc} von Rang {top['a']} auf {top['b']}" if top["jump"] else "Keine Rangänderung: Die Rangfolge ist in beiden Läufen gleich",
         "subtitle": f"Die {len(rows)} Kombinationen mit der größten Rangänderung · {pair.metric.label}",
-        "note": "Rang 1 = bester Wert",
         "data": {**_meta(pair), "rows": rows},
     }

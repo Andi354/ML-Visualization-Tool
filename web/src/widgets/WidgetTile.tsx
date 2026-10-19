@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from "preact/hooks";
 import { getCatalog, NotFound, postWidget, type CatalogEntry, type ProjectInfo, type RunInfo, type SettingDef, type WidgetRequest, type WidgetResult } from "../api";
 import { isOwn, type BoardWidget, type Width } from "./board";
+import { WidgetHead } from "./header";
 import { renderWidget, type Ctx } from "./renderers";
 import { clearStatus, setStatus } from "./status";
 
@@ -94,24 +95,32 @@ export interface FigureProps {
   /** Key statement; the data's own title when not overridden. */
   title?: string;
   hideTitle?: boolean;
-  /** Show the grey texts: subtitle and note line. */
+  /** Show the what line and the values line under the title. */
   hints?: boolean;
   /** Footer text (run folder, epoch, commit), or null for none. */
   footer?: string | null;
+  /** The exported image: every fixed value is shown. */
+  exporting?: boolean;
 }
 
-/** Title, subtitle, graphic, note and footer of a widget: the tile body and the exported image. */
-export function WidgetFigure({ type, result, ctx, title, hideTitle = false, hints = true, footer = null }: FigureProps) {
+/** Title, header, graphic and footer of a widget: the tile body and the exported image. */
+export function WidgetFigure({ type, result, ctx, title, hideTitle = false, hints = true, footer = null, exporting = false }: FigureProps) {
   return (
     <figure class="w-figure" data-testid="widget-figure">
       {!hideTitle && (
         <figcaption class="w-title" data-testid="widget-title">
           {title ?? result.title}
+          {result.title_meta && (
+            <span class="w-title-meta" data-testid="widget-title-meta">
+              {result.title_meta.metric && <span class="mono">{result.title_meta.metric}</span>}
+              {result.title_meta.value && <span class="mono w-best"> {result.title_meta.value}</span>}
+              {result.title_meta.run && <span> · {result.title_meta.run}</span>}
+            </span>
+          )}
         </figcaption>
       )}
-      {hints && result.subtitle && <div class="w-sub small muted">{result.subtitle}</div>}
+      <WidgetHead header={result.header} subtitle={result.subtitle} hints={hints} exporting={exporting} />
       {renderWidget(type, result, ctx)}
-      {hints && result.note && <div class="w-note small muted">{result.note}</div>}
       {footer && <div class="w-foot tiny mono muted" data-testid="widget-footer">{footer}</div>}
     </figure>
   );

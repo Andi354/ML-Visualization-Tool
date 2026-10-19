@@ -64,10 +64,10 @@ def test_curves_title_names_the_epoch_with_the_lowest_mean_val_loss(project):
     assert r["title"] == f"val_loss am niedrigsten in Epoche {best} von 40"
 
 
-def test_curves_mean_only_mode_and_note(project):
+def test_curves_mean_only_mode_and_no_hint_lines(project):
     r = compute(project, "curves", mode="mean")
-    assert r["data"]["mode"] == "mean" and "dünn" not in r["note"]
-    assert "dünn" in compute(project, "curves")["note"]
+    assert r["data"]["mode"] == "mean" and "note" not in r
+    assert "note" not in compute(project, "curves")
 
 
 def test_curves_for_a_combination_without_cells(project):
@@ -132,7 +132,7 @@ def test_forecast_compare_draws_the_other_combination_and_names_its_mape_in_the_
     assert d["compare"]["label"] == "ets" and len(d["compare"]["mean"]) == 30
     assert d["compare_mape"] == pytest.approx(np.mean([abs(e) for e in d["compare"]["error"]]))
     assert r["title"].endswith(f"gegenüber {de(d['compare_mape'])} % bei ets")
-    assert "gestrichelt = ets" in r["note"]
+    assert "note" not in r
     assert compute(project, "forecast")["data"]["compare"] is None
 
 

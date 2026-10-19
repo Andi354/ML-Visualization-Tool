@@ -7,7 +7,7 @@ import pandas as pd
 from ..aggregate import CHANNEL, _ordered_values, dimension_axes, has_channels
 from ..configview import run_config
 from ..runs import Run, get_run
-from .common import combo_cells, de, first_value, metric_text, seed_label
+from .common import combo_cells, de, first_value, make_header, metric_text, seed_label
 from .registry import Widget, seg, select, widget
 
 NO_CURVES = "Dieser Lauf hat keine Lernkurven gespeichert"
@@ -83,8 +83,6 @@ def curves(project, req: dict) -> dict:
         "subtitle": "train_loss und val_loss je Epoche"
         + (f" · Fold {fold}" if fold is not None else "")
         + f" · {len(seeds)} {'Seed' if len(seeds) == 1 else 'Seeds'}",
-        "note": "gestrichelt = Epoche mit niedrigstem val_loss"
-        + (" · dünn = einzelne Seeds" if req["settings"]["mode"] == "single" else ""),
         "data": {
             "epochs": epochs,
             "mean": mean,
@@ -228,8 +226,6 @@ def forecast(project, req: dict) -> dict:
         "subtitle": f"Kanal {channel} · Fenster {win['start']} bis {win['end']}"
         + (f" · Fold {fold}" if fold is not None else "")
         + " · Mittel über Seeds mit Min-Max-Band",
-        "note": "durchgezogen = echt · Linie = Vorhersage"
-        + (f" · gestrichelt = {other_label}" if compare is not None else ""),
         "options": {
             "channel": channels,
             "compare": [{"value": "none", "label": "keine"}] + options,
@@ -299,7 +295,11 @@ def replicates(project, req: dict) -> dict:
     return {
         "title": f"Beste Wiederholung: {where} ({metric_text(metric, best[0])})",
         "subtitle": f"{metric.label} je {row_key}" + (f" und {col_key}" if col_key else "") + f" · Spanne {metric_text(metric, hi - lo)}",
-        "note": "heller = besser · leer = fehlgeschlagen",
+        "header": make_header(
+            [(metric.label, True), (" je ", False), (row_key, True)]
+            + ([(" und ", False), (col_key, True)] if col_key else [])
+            + [(f" · Spanne {metric_text(metric, hi - lo)}", False)]
+        ),
         "options": {"metric": [{"value": m.key, "label": m.label} for m in metrics]},
         "data": {
             "metric": {"key": metric.key, "label": metric.label, "unit": metric.unit, "scale": metric.scale, "direction": metric.direction},
@@ -338,17 +338,28 @@ def config(project, req: dict) -> dict:
         metrics = real_metrics(project, run)
         if metrics and not frame.empty:
             combo = {**best_combo(run, frame, axes, metrics[0]), **combo}
+    deciding = None
+    if req.get("scope") == "run" and combo:
+        from .runscope import real_metrics as _real
+
+        ms = _real(project, run)
+        if ms:
+            part = combo_cells(run, combo)
+            if not part.empty and ms[0].key in part.columns and part[ms[0].key].notna().any():
+                deciding = {"metric": ms[0].key, "value": metric_text(ms[0], float(part[ms[0].key].mean()))}
     cfg = run_config(project, run, combo)
     diff = sum(b["differs"] for b in cfg["blocks"])
     n_axes = len(cfg["grid"]["axes"])
     title = f"Config: {n_axes} {'Achse' if n_axes == 1 else 'Achsen'} im Grid" + (
         f", {diff} {'Abweichung' if diff == 1 else 'Abweichungen'} von base" if cfg["base_known"] else ""
     )
+    out: dict = {"subtitle": run.name, "data": {"view": req["settings"]["view"], "combo": combo}}
     if req.get("scope") == "run" and combo:
-        title = "Beste Config: " + ", ".join(f"{k} = {v}" for k, v in combo.items())
-    return {
-        "title": title,
-        "subtitle": run.name,
-        "note": None,
-        "data": {"view": req["settings"]["view"], "combo": combo},
-    }
+        # v0.3.2, Q.J: a short title, the deciding metric with its value beside it, the combination as a list
+        out["title"] = "Beste Kombination"
+        out["title_meta"] = {**(deciding or {}), "run": run.name}
+        out["header"] = {"what": [], "values": {"label": "", "style": "list", "items": [[str(k), str(v)] for k, v in combo.items()]}}
+        out["subtitle"] = None
+    else:
+        out["title"] = title
+    return out

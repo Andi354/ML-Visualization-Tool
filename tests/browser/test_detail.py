@@ -42,7 +42,7 @@ def test_click_on_a_row_marks_it_and_opens_a_640px_panel(page):
     assert row.evaluate("e => getComputedStyle(e.cells[0]).boxShadow").endswith("3px 0px 0px 0px inset") or "3px" in row.evaluate(
         "e => getComputedStyle(e.cells[0]).boxShadow"
     )
-    assert row.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(23, 34, 56)"
+    assert row.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(34, 35, 48)"
 
 
 def test_clicking_another_row_switches_the_panel_and_the_cross_closes_it(page):

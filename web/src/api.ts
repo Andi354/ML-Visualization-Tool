@@ -253,12 +253,20 @@ export interface WidgetRequest {
   params?: Record<string, string>;
   settings?: Record<string, string | null>;
 }
+/** The header of a widget under its title (v0.3.2, Q): the "what" line, the aggregation note and a line of fixed values. */
+export interface WidgetHeader {
+  what: { text: string; mono?: boolean }[];
+  agg?: string;
+  values?: { label?: string; style: "chips" | "list"; items: [string, string | null][] };
+}
 export interface WidgetResult {
   key: string;
   exportable: boolean;
   title?: string;
+  /** A short line next to the title: the deciding metric with its value and the run (the config widget). */
+  title_meta?: { metric?: string; value?: string; run?: string } | null;
   subtitle?: string | null;
-  note?: string | null;
+  header?: WidgetHeader | null;
   unavailable?: string;
   options?: Record<string, unknown>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
