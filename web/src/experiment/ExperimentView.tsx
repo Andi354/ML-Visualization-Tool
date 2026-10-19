@@ -1,7 +1,7 @@
 import { countBy, groupKey } from "../notes/model";
 import { NotesColumn } from "../notes/NotesColumn";
 import { propose, useNotes } from "../notes/store";
-import { setting } from "../settings/store";
+import { setting, useSettings } from "../settings/store";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getDescription, getDims, getRuns, NotFound, type Description, postTable, type DimsInfo, type ProjectInfo, type RunInfo, type RunRow, type TableResult, type TableRow } from "../api";
 import { provide, provideView } from "../agent/bus";
@@ -180,7 +180,8 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
     };
   }, [run.id]);
   const shownChips = useMemo(() => chips(dims, state), [dims, state]);
-  const visible = visibleMetrics(columns, project.metrics, info?.primary_metric ?? project.primary_metric);
+  useSettings();
+  const visible = visibleMetrics(columns, project.metrics, info?.primary_metric ?? project.primary_metric, setting<string>("runs.columns"));
   const sortMetric = result?.sort.metric ?? null;
   const tableKeys = (result?.rows ?? []).map((r) => groupKey(r.params));
   const sectionCounts = countBy(nt.notes, (n) => (n.anchor.kind === "section" ? n.anchor.key : null));

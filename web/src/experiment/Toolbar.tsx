@@ -1,3 +1,4 @@
+import { setting, useSettings } from "../settings/store";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Metric } from "../api";
 import { columnCount, type Chip, type Columns, type SdMode, visibleMetrics } from "./model";
@@ -35,8 +36,10 @@ export function Toolbar(p: Props) {
     };
   }, [open]);
 
-  const visible = visibleMetrics(p.columns, p.metrics, p.primary);
-  const count = columnCount(p.columns, p.metrics, p.primary);
+  useSettings();
+  const preset = setting<string>("runs.columns");
+  const visible = visibleMetrics(p.columns, p.metrics, p.primary, preset);
+  const count = columnCount(p.columns, p.metrics, p.primary, preset);
   const toggleMetric = (key: string) => {
     const next = visible.includes(key) ? visible.filter((k) => k !== key) : [...visible, key];
     p.onColumns({ ...p.columns, metrics: next });
@@ -64,7 +67,14 @@ export function Toolbar(p: Props) {
         {open && (
           <div class="popover" data-testid="columns-menu">
             <div class="pop-group">
-              <div class="small muted">Metriken</div>
+              <div class="small muted pop-title">
+                Metriken
+                {p.columns.metrics !== null && (
+                  <button class="link" data-testid="columns-reset" title="Auf die Vorgabe der Einstellungen zurück" onClick={() => p.onColumns({ ...p.columns, metrics: null })}>
+                    Vorgabe
+                  </button>
+                )}
+              </div>
               {p.metrics.map((m) => (
                 <label key={m.key} class="pop-item mono">
                   <input type="checkbox" data-testid="col-metric" data-metric={m.key} checked={visible.includes(m.key)} onChange={() => toggleMetric(m.key)} />

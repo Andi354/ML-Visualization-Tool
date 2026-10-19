@@ -73,6 +73,7 @@ SPECS: tuple[Spec, ...] = (
     Spec("runs.metric", "choice", "yaml"),
     _enum("runs.descOpen", "open", "open", "closed"),
     Spec("runs.overview", "bool", True),
+    Spec("runs.columns", "text", ""),
     Spec("runs.notifyMac", "bool", True),
     Spec("runs.errWarn", "num", 5, min=1, max=50, step=1),
     Spec("runs.stallMin", "num", 30, min=10, max=240, step=10),

@@ -26,5 +26,6 @@
   "runs.metric": "yaml",
   "runs.notifyMac": true,
   "runs.overview": true,
-  "runs.stallMin": 30
+  "runs.stallMin": 30,
+  "runs.columns": ""
 }

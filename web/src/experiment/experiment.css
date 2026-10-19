@@ -594,3 +594,7 @@
   font-size: var(--size-tiny);
   white-space: nowrap;
 }
+.pop-title {
+  display: flex;
+  justify-content: space-between;
+}

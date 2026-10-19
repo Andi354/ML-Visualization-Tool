@@ -97,8 +97,16 @@ export interface Columns {
 
 export const defaultColumns: Columns = { metrics: null, n: true, min: false, max: false, status: true, sd: "under" };
 
-/** The primary metric plus the first real metric (only the primary if it is real itself). */
-export function defaultMetrics(metrics: Metric[], primary: string | null): string[] {
+/** The metrics named in the setting `runs.columns` ("mape, mae"): by key or label, unknown names are ignored. */
+export function presetMetrics(metrics: Metric[], preset: string): string[] {
+  const names = preset.split(/[,;]/).map((s) => s.trim().toLowerCase()).filter(Boolean);
+  return metrics.filter((m) => names.includes(m.key.toLowerCase()) || names.includes(m.label.toLowerCase())).map((m) => m.key);
+}
+
+/** The metrics of the setting if it names any, else the primary metric plus the first real metric (only the primary if it is real itself). */
+export function defaultMetrics(metrics: Metric[], primary: string | null, preset = ""): string[] {
+  const named = presetMetrics(metrics, preset);
+  if (named.length) return named;
   const keys = metrics.map((m) => m.key);
   const first = (primary && keys.includes(primary) ? primary : keys[0]) ?? null;
   if (!first) return [];
@@ -107,13 +115,13 @@ export function defaultMetrics(metrics: Metric[], primary: string | null): strin
   return p.family === "real" || !real ? [first] : [first, real.key];
 }
 
-export function visibleMetrics(c: Columns, metrics: Metric[], primary: string | null): string[] {
-  const chosen = c.metrics ?? defaultMetrics(metrics, primary);
+export function visibleMetrics(c: Columns, metrics: Metric[], primary: string | null, preset = ""): string[] {
+  const chosen = c.metrics ?? defaultMetrics(metrics, primary, preset);
   return metrics.map((m) => m.key).filter((k) => chosen.includes(k)); // catalogue order
 }
 
-export function columnCount(c: Columns, metrics: Metric[], primary: string | null) {
-  const visible = visibleMetrics(c, metrics, primary).length + [c.n, c.min, c.max, c.status].filter(Boolean).length;
+export function columnCount(c: Columns, metrics: Metric[], primary: string | null, preset = "") {
+  const visible = visibleMetrics(c, metrics, primary, preset).length + [c.n, c.min, c.max, c.status].filter(Boolean).length;
   return { visible, total: metrics.length + 4 };
 }
 

@@ -359,3 +359,21 @@ def test_sorting_by_another_metric_changes_the_overview_label_and_drops_the_prim
     view(page).locator('[data-testid="metric-head"][data-metric="test_mae"]').click()
     line = view(page).get_by_test_id("overview-metric")
     expect(line).not_to_contain_text("(primär)")
+
+
+def test_the_default_columns_come_from_the_setting_and_an_own_choice_can_return_to_it(writable_page):
+    import json
+
+    page = writable_page
+    (page.writable_root / ".mlviz").mkdir(exist_ok=True)
+    (page.writable_root / ".mlviz" / "settings.json").write_text(json.dumps({"runs.columns": "test_mae"}))
+    page.reload()
+    start(page, TIM45)
+    assert [h.strip(" ↑↓") for h in heads(page) if h.startswith("MAE") or h.startswith("MSE") or h.startswith("MAPE")] == ["MAE"]
+    view(page).get_by_test_id("columns-button").click()
+    expect(view(page).get_by_test_id("columns-reset")).to_have_count(0)  # still the default
+    view(page).locator('[data-testid="col-metric"][data-metric="test_mape"]').check()
+    expect(view(page).get_by_test_id("columns-reset")).to_have_count(1)
+    view(page).get_by_test_id("columns-reset").click()
+    expect(view(page).locator('[data-testid="col-metric"][data-metric="test_mape"]')).not_to_be_checked()
+    expect(view(page).locator('[data-testid="col-metric"][data-metric="test_mae"]')).to_be_checked()

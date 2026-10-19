@@ -6,6 +6,7 @@ import {
   columnCount,
   constantCount,
   defaultMetrics,
+  presetMetrics,
   dimMatches,
   filterConstants,
   formatMetric,
@@ -85,6 +86,16 @@ describe("columns", () => {
     expect(defaultMetrics(metrics, "mae")).toEqual(["mae"]);
     expect(defaultMetrics(metrics.filter((m) => m.family === "scaled"), "mse_s")).toEqual(["mse_s"]);
     expect(defaultMetrics([], null)).toEqual([]);
+  });
+  it("the setting names the default metrics by key or label; unknown names are ignored, nothing valid falls back", () => {
+    expect(presetMetrics(metrics, "mae")).toEqual(["mae"]);
+    expect(presetMetrics(metrics, " MAPE ; mae, nope")).toEqual(expect.arrayContaining(["mae", "mape"]));
+    expect(presetMetrics(metrics, "")).toEqual([]);
+    expect(defaultMetrics(metrics, "mse_s", "mae")).toEqual(["mae"]);
+    expect(defaultMetrics(metrics, "mse_s", "nope")).toEqual(["mse_s", "mape"]);
+    expect(visibleMetrics(defaultColumns, metrics, "mse_s", "mae")).toEqual(["mae"]);
+    expect(visibleMetrics({ ...defaultColumns, metrics: ["mape"] }, metrics, "mse_s", "mae")).toEqual(["mape"]); // an own choice wins
+    expect(columnCount(defaultColumns, metrics, "mse_s", "mae")).toEqual({ visible: 3, total: 7 });
   });
   it("visible metrics keep the catalogue order; n and Status on, min and max off by default", () => {
     expect(visibleMetrics({ ...defaultColumns, metrics: ["mae", "mse_s"] }, metrics, "mse_s")).toEqual(["mse_s", "mae"]);
