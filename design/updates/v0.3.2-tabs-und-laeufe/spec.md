@@ -17,7 +17,7 @@ Running block P: P1–P4 on the canvas; additions P5 · Liste (P2 cards + the th
 P4) and P6 · Issues (P3 layout: issue list on the left, P2 cards on the right). Tim's last word: P2
 look for the list view; from P4 only the three overview tiles; P3 layout as the new Issues view with
 the same cards as the list view; card style is decided once for both views; no per-issue colours for
-now. Open: whether running runs stay amber (amber means `warn` today).
+now. P6 fits; P5 got collapsible issue groups (open by default when active in the last 7 days). Open: whether running runs stay amber (amber means `warn` today).
 
 ## Goal
 To be written.
