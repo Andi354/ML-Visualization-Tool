@@ -13,12 +13,11 @@ Prototype: follows · Builds on: v0.3.1
 | O · Projektkopf in den Einstellungen | open |
 | Q · Widget-Kopf und Config-Titel (design from v0.2.4) | open |
 
-Running block P: alternatives on the canvas, P1 · Feinschliff (today's look, styled scrollbar, own
-selection control, issue groups as boxes), P2 · Karten je Experiment (graphite + periwinkle),
-P3 · Issues links, Experimente rechts (graphite + lavender), P4 · Überblick mit Issue-Kacheln
-(slate + issue colours). Tim's last word: wants a calmer, more inviting first screen and a new
-consistent style that is not only shades of blue; whether the style goes to the whole tool is
-decided after P.
+Running block P: P1–P4 on the canvas; additions P5 · Liste (P2 cards + the three overview tiles from
+P4) and P6 · Issues (P3 layout: issue list on the left, P2 cards on the right). Tim's last word: P2
+look for the list view; from P4 only the three overview tiles; P3 layout as the new Issues view with
+the same cards as the list view; card style is decided once for both views; no per-issue colours for
+now. Open: whether running runs stay amber (amber means `warn` today).
 
 ## Goal
 To be written.
