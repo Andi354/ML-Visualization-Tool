@@ -8,6 +8,7 @@ from .helpers import folder, open_run
 
 A = folder("TIM-52_best_30", 0)
 B = folder("TIM-52_best_90")
+RUNS_FOR_TABS = [folder("TIM-52_best_30", 0), folder("TIM-52_best_90"), folder("TIM-71_example"), folder("TIM-83_running_sweep")]
 
 
 def test_icon_bar_shows_project_badge_with_tooltip(page):
@@ -85,7 +86,7 @@ def test_open_tabs_and_active_tab_survive_a_reload(page):
     expect(page.locator(f'[data-testid="tab-run"][data-run="{B}"]')).to_have_class(re.compile("active"))
 
 
-def test_many_tabs_shrink_to_120px_and_the_strip_scrolls(page):
+def test_many_tabs_keep_their_width_and_the_strip_wraps_instead_of_scrolling(page):
     page.set_viewport_size({"width": 700, "height": 900})
     ids = [r["id"] for r in page.evaluate("fetch('/api/runs').then(r => r.json())")]
     for rid in ids:
@@ -93,9 +94,10 @@ def test_many_tabs_shrink_to_120px_and_the_strip_scrolls(page):
     tabs = page.get_by_test_id("tab-run")
     assert tabs.count() == len(ids)
     widths = [tabs.nth(i).bounding_box()["width"] for i in range(tabs.count())]
-    assert min(widths) >= 119.5
-    scrolls = page.get_by_test_id("tab-strip").evaluate("e => e.scrollWidth > e.clientWidth")
-    assert scrolls
+    assert min(widths) >= 80
+    strip = page.get_by_test_id("tab-strip")
+    assert not strip.evaluate("e => e.scrollWidth > e.clientWidth")
+    assert strip.bounding_box()["height"] > 36 * 2 - 10  # several rows
 
 
 def test_deleted_run_keeps_its_tab_and_says_so(page):
@@ -141,3 +143,21 @@ def test_project_files_in_no_known_form_are_shown_not_dropped(page, tmp_path_fac
 def test_no_warning_for_a_project_in_the_known_form(page):
     expect(page.get_by_test_id("project-badge")).to_be_visible()
     expect(page.get_by_test_id("project-warnings")).to_have_count(0)
+
+
+def test_many_tabs_wrap_below_the_search_box_instead_of_running_under_it(page):
+    page.set_viewport_size({"width": 1000, "height": 700})
+    strip = page.get_by_test_id("tab-strip")
+    assert "wrapped" not in strip.get_attribute("class")
+    assert strip.bounding_box()["height"] == 36
+    for run in RUNS_FOR_TABS:
+        open_run(page, run)
+    expect(strip).to_have_class(re.compile("wrapped"))
+    box = page.get_by_test_id("palette-box").bounding_box()
+    tabs = [t.bounding_box() for t in page.get_by_test_id("tab-run").all()] + [page.get_by_test_id("tab-pinned").bounding_box()]
+    assert all(t["y"] >= box["y"] + box["height"] for t in tabs)  # every tab is below the search box
+    assert max(t["y"] + t["height"] for t in tabs) <= strip.bounding_box()["y"] + strip.bounding_box()["height"]
+    assert strip.bounding_box()["height"] > 36
+    while page.get_by_test_id("tab-run").count():
+        page.get_by_test_id("tab-run").first.get_by_test_id("tab-close").click()
+    expect(strip).not_to_have_class(re.compile("wrapped"))
