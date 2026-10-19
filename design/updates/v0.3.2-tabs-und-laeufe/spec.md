@@ -18,6 +18,20 @@ Style: the P5/P6 style (graphite, periwinkle accent, rounded shapes) is tried in
 It is the style of the whole tool (feature R); the overall prototype `Prototyp-03` uses it everywhere. In the overall prototype only the
 two Läufe views use it so far (`L-Liste`, `L-Issues`).
 
+## How to read this spec
+
+- **What the prototype binds:** only what this update changes. That is the features M, N, O, P and Q
+  in their own components (`M-Lauf`, `N-Tabs`, `O-Projekt`, `L-Liste`, `L-Issues`, `Q1-Widgets`),
+  and for R the colours, radii and scrollbar of every screen.
+- **Everything else in the prototype is older than the tool.** Where the overall prototype shows a
+  layout, control or behaviour that differs from the real tool on `main`, the real tool stays as it
+  is and only gets the new colours, radii and scrollbar. Nothing built since v0.3.1 is undone to
+  match the prototype. Known cases: the tab row wrapping below its own search row and the slimmer
+  tabs and search box (v0.3.1.1), the primary metric in the run tab's column picker and overview
+  (v0.3.1.1), the default columns setting (v0.3.1.1), and the status bar with its running runs as
+  it is in the tool.
+- When comparing with the prototype at 1440 × 860, compare only the parts named in the first point.
+
 ## Goal
 To be written.
 
