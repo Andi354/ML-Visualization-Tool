@@ -96,7 +96,8 @@ def test_undo_and_redo_by_button_and_keys(sp):
 
 def test_a_preset_is_one_undo_step(sp):
     open_settings(sp)
-    sp.get_by_test_id("presets").select_option(label="Große Grids – Kompakt, 90 %, Überblick aus.")
+    sp.get_by_test_id("presets").click()  # the pill menu "★ Voreinstellungen"
+    sp.get_by_test_id("presets-menu").get_by_text("Große Grids").click()
     expect(sp.get_by_test_id("cat-count-look")).to_have_text("2")
     expect_file(sp, {"look.density": "compact", "look.scale": 90, "runs.overview": False})
     sp.get_by_test_id("settings-undo").click()
@@ -161,3 +162,13 @@ def test_settings_reach_the_tool(sp):
     runs = sp.get_by_test_id("runs-view")
     expect(runs).to_contain_text(re.compile(r"\d\.\d\d"))  # 2.83 %, not 2,83 %
     expect(runs).not_to_contain_text(re.compile(r"\d,\d\d"))
+
+
+def test_the_size_slider_sets_the_size_and_keeps_steppers(sp):
+    open_settings(sp)
+    row = sp.get_by_test_id("setting-row").filter(has_text="Größe der Oberfläche")
+    row.locator("input[type=range]").fill("110")
+    expect_file(sp, {"look.scale": 110})
+    expect(row.get_by_test_id("num-value")).to_have_text("110 %")
+    row.get_by_role("button", name="weniger").click()
+    expect_file(sp, {"look.scale": 105})

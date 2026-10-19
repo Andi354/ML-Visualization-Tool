@@ -25,9 +25,9 @@ def block(page, issue):
     return page.locator(f'[data-testid="issue-block"][data-issue="{issue}"]')
 
 
-def test_start_page_is_the_list_view_with_breadcrumb(page):
+def test_start_page_is_the_list_view_titled_laeufe(page):
     expect(page.get_by_test_id("view-list")).to_have_attribute("aria-pressed", "true")
-    expect(page.locator('[data-testid="runs-view"] .crumb')).to_have_text("Demo Bench / Läufe")
+    expect(page.locator('[data-testid="runs-view"] .view-head > span').first).to_have_text("Läufe")
 
 
 def test_issues_with_a_run_in_the_last_7_days_are_expanded_others_collapsed(page):

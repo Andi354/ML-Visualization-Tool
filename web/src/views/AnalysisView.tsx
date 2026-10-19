@@ -52,21 +52,24 @@ export function AnalysisView({ project, compare, request, viewRequest }: Props) 
       </div>
     );
   const switcher = (
-    <>
-      <span class="crumb">
-        <span class="muted">Analyse /</span>
-      </span>
-      <div class="seg" role="group" aria-label="Ansicht">
-        {VIEWS.map(([v, label]) => (
-          <button key={v} class={view === v ? "on" : ""} aria-pressed={view === v} data-testid={`analysis-view-${v}`} onClick={() => setView(v)}>
-            {label}
-          </button>
-        ))}
-      </div>
-    </>
+    <span class="crumb">
+      <span>Analyse</span>
+      <span class="muted">/</span>
+      <span class="crumb-view">{VIEWS.find(([v]) => v === view)![1]}</span>
+    </span>
   );
   return (
     <div class="analysis-root" data-testid="analysis-view" data-view={view}>
+      <div class="scope-strip">
+        <span>Umfang</span>
+        <div class="seg" role="group" aria-label="Ansicht">
+          {VIEWS.map(([v, label]) => (
+            <button key={v} class={view === v ? "on" : ""} aria-pressed={view === v} data-testid={`analysis-view-${v}`} onClick={() => setView(v)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
       {view === "run" && <RunBoard project={project} runs={runs} catalog={catalogs.run} request={request} switcher={switcher} />}
       {view === "two" && <TwoRunsBoard project={project} runs={runs} catalog={catalogs.two} compare={compare} switcher={switcher} />}
       {view === "project" && <ProjectBoard project={project} runs={runs} catalog={catalogs.project} switcher={switcher} />}

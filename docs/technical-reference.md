@@ -460,6 +460,16 @@ Browser (`web/src/voice/`): `recorder.ts` (MediaRecorder, level meter, optional 
 `VoicePanel.tsx` (microphone button, red recording row, review box with chips and alternatives), `model.ts`. Ctrl+M
 (also on macOS) and the palette command go through the bus handler `ui:voice` of the agent window.
 
+## Look (v0.3.1)
+
+The overall prototype (`design/updates/v0.3.1-design-treue/prototype/Prototyp-03.dc.html`, how to run it: its
+`README.md`) is binding for the look; what differs on purpose is in `design/updates/v0.3.1-design-treue/decided.md`.
+`tests/browser/test_look.py` pins the values per area (sizes, colours, kind of control) so a later change cannot
+drift away unseen. Side space is a custom property per area: `--gutter` is 24 px by default, 32 px in the run
+list (`.runs-view.is-list`) and 28 px in the analysis (`.analysis-root`). Values that equal no token are written
+as they stand in the prototype. The agent window's bounds end at the top of the status bar (`measure` in
+`AgentLayer.tsx`).
+
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.

@@ -40,7 +40,7 @@ def test_opening_a_run_creates_a_focused_tab_labelled_without_timestamp(page):
     open_run(page, A)
     tab = page.get_by_test_id("tab-run")
     expect(tab).to_have_count(1)
-    expect(tab).to_have_text("TIM-52_best_30")
+    expect(tab.locator(".tab-label")).to_have_text("TIM-52_best_30")
     expect(tab).to_have_attribute("title", A)
     expect(tab).to_have_class(re.compile("active"))
     expect(page.get_by_test_id("run-body")).to_be_visible()

@@ -4,7 +4,21 @@ import { getInstructions, putInstructions } from "../agent/api";
 import { CATS, DEFAULTS, PRESETS, ROWS, type Row, type Value } from "./catalog";
 import { changedCount, isChanged, search, valueOf } from "./model";
 import { canRedo, canUndo, change, current, load, redoLast, resetAll, takeFocus, undoLast, useSettings } from "./store";
+import { SearchIcon } from "../frame/icons";
 import { clearViewState } from "./viewState";
+
+const CAT_ICONS: Record<string, string> = {
+  look: "M9 2.5a6.5 6.5 0 1 0 0 13c1 0 1.3-.8.9-1.5-.5-.8.1-1.8 1-1.8h1.6a3 3 0 0 0 3-3A6.5 6.5 0 0 0 9 2.5zM5.5 8.5h.01M7.5 5.5h.01M11 5.5h.01",
+  runs: "M3 4.5h12M3 9h12M3 13.5h8",
+  analysis: "M2.5 3h5.5v5.5H2.5zM10 3h5.5v5.5H10zM2.5 10.5h13V15H2.5z",
+  export: "M2.5 3.5h13v11h-13zM2.5 12l4-4 3 3 2-2 4 4M11.5 6.5h.01",
+  agent: "M9 2.5l1.4 3.6 3.6 1.4-3.6 1.4L9 12.5 7.6 8.9 4 7.5l3.6-1.4z",
+  data: "M3 4.5c0-1.1 2.7-2 6-2s6 .9 6 2-2.7 2-6 2-6-.9-6-2zM3 4.5v9c0 1.1 2.7 2 6 2s6-.9 6-2v-9M3 9c0 1.1 2.7 2 6 2s6-.9 6-2",
+  about: "M9 2.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM9 8v4.5M9 5.5v.5",
+};
+const CatIcon = ({ id }: { id: string }) => (
+  <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d={CAT_ICONS[id]} /></svg>
+);
 
 const catTitle = (id: string) => CATS.find((c) => c.id === id)?.title ?? id;
 
@@ -22,6 +36,7 @@ export function SettingsView({ project, templates }: { project: ProjectInfo; tem
   const [query, setQuery] = useState("");
   const [onlyChanged, setOnlyChanged] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [presets, setPresets] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const root = useRef<HTMLDivElement>(null);
   const [features, setFeatures] = useState<string[]>([]);
@@ -30,6 +45,12 @@ export function SettingsView({ project, templates }: { project: ProjectInfo; tem
     load().catch((e) => setError(String(e)));
   }, []);
 
+  useEffect(() => {
+    if (!presets) return;
+    const close = (e: MouseEvent) => !(e.target as HTMLElement).closest?.("[data-presets]") && setPresets(false);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [presets]);
   const run = (p: Promise<unknown>) => p.then(() => setError(null), (e) => setError(String(e.message ?? e)));
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -75,13 +96,48 @@ export function SettingsView({ project, templates }: { project: ProjectInfo; tem
 
   return (
     <div class="settings" ref={root} data-testid="settings">
+      <header class="settings-top">
+        <div class="settings-title">
+          <span class="settings-title-main">Einstellungen</span>
+          <span class="settings-title-sub" data-testid="settings-sub">{project.name} · v{data?.version ?? ""}</span>
+        </div>
+        <label class="settings-search-box">
+          <SearchIcon />
+          <input ref={searchRef} class="settings-search" type="search" placeholder="Einstellungen durchsuchen …" aria-label="Einstellungen durchsuchen" data-testid="settings-search" value={query} onInput={(e) => setQuery((e.target as HTMLInputElement).value)} />
+          <kbd>/</kbd>
+        </label>
+        <span class="grow" />
+        <button class={"chip" + (onlyChanged ? " on" : "")} data-testid="only-changed" aria-pressed={onlyChanged} title="Nur geänderte Einstellungen zeigen" onClick={() => setOnlyChanged(!onlyChanged)}>
+          Geändert <span class="chip-count" data-testid="only-changed-count">{total}</span>
+        </button>
+        <div class="relative" data-presets>
+          <button class="chip" aria-expanded={presets} data-testid="presets" title="Mehrere Einstellungen auf einmal übernehmen" onClick={() => setPresets(!presets)}>★ Voreinstellungen ▾</button>
+          {presets && (
+            <div class="preset-menu" data-testid="presets-menu">
+              {PRESETS.map((p) => (
+                <button key={p.id} data-testid={`preset-${p.id}`} onClick={() => { setPresets(false); void run(change(p.set)); }}>
+                  <span class="preset-title">{p.title}</span>
+                  <span class="preset-desc">{p.desc}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button class="icon-text" title="Rückgängig (Ctrl+Z)" aria-label="Rückgängig" data-testid="settings-undo" disabled={!canUndo()} onClick={() => run(undoLast())}>↶</button>
+        <button class="icon-text" title="Wiederholen (Ctrl+Shift+Z)" aria-label="Wiederholen" data-testid="settings-redo" disabled={!canRedo()} onClick={() => run(redoLast())}>↷</button>
+      </header>
+      {data?.warning && <div class="settings-warning" role="alert" data-testid="settings-warning">⚠ {data.warning}</div>}
+      {error && <div class="settings-warning" role="alert" data-testid="settings-error">⚠ {error}</div>}
+      <div class="settings-body">
       <aside class="settings-rail" aria-label="Kategorien">
+        <div class="rail-label">Kategorien</div>
         {CATS.map((c) => {
           const n = changedCount(values, c.id);
           return (
             <div key={c.id}>
               <button class={"rail-cat" + (!filtering && cat === c.id ? " active" : "")} data-testid={`cat-${c.id}`} onClick={() => { setCat(c.id); setQuery(""); setOnlyChanged(false); }}>
-                <span>{c.title}</span>
+                <CatIcon id={c.id} />
+                <span class="rail-title">{c.title}</span>
                 {n > 0 && <span class="rail-count" data-testid={`cat-count-${c.id}`}>{n}</span>}
               </button>
               {!filtering && cat === c.id && c.subs.map((s) => (
@@ -92,33 +148,20 @@ export function SettingsView({ project, templates }: { project: ProjectInfo; tem
             </div>
           );
         })}
+        <div class="rail-label more">Mehr</div>
         <button class={"rail-cat" + (!filtering && cat === "about" ? " active" : "")} data-testid="cat-about" onClick={() => { setCat("about"); setQuery(""); setOnlyChanged(false); }}>
-          <span>Über</span>
+          <CatIcon id="about" />
+          <span class="rail-title">Über</span>
         </button>
       </aside>
       <section class="settings-main">
-        <header class="settings-top">
-          <input ref={searchRef} class="settings-search" type="search" placeholder="Einstellungen durchsuchen (/)" aria-label="Einstellungen durchsuchen" data-testid="settings-search" value={query} onInput={(e) => setQuery((e.target as HTMLInputElement).value)} />
-          <button class={"chip" + (onlyChanged ? " on" : "")} data-testid="only-changed" aria-pressed={onlyChanged} onClick={() => setOnlyChanged(!onlyChanged)}>Geändert {total}</button>
-          <select class="settings-preset" aria-label="Vorgaben" data-testid="presets" value="" onChange={(e) => {
-            const p = PRESETS.find((x) => x.id === (e.target as HTMLSelectElement).value);
-            if (p) void run(change(p.set));
-          }}>
-            <option value="">Vorgabe …</option>
-            {PRESETS.map((p) => <option key={p.id} value={p.id}>{p.title} – {p.desc}</option>)}
-          </select>
-          <button class="icon-text" title="Rückgängig (Ctrl+Z)" aria-label="Rückgängig" data-testid="settings-undo" disabled={!canUndo()} onClick={() => run(undoLast())}>↶</button>
-          <button class="icon-text" title="Wiederholen (Ctrl+Shift+Z)" aria-label="Wiederholen" data-testid="settings-redo" disabled={!canRedo()} onClick={() => run(redoLast())}>↷</button>
-        </header>
-        {data?.warning && <div class="settings-warning" role="alert" data-testid="settings-warning">⚠ {data.warning}</div>}
-        {error && <div class="settings-warning" role="alert" data-testid="settings-error">⚠ {error}</div>}
         <div class="settings-scroll">
           {!filtering && cat === "about" && <About data={data} />}
           {!filtering && active && (
             <>
               <h2>{active.title}</h2>
               <p class="blurb">{active.blurb}</p>
-              {active.tips.length > 0 && <div class="tip">{active.tips.map((t) => <div key={t}>{t}</div>)}</div>}
+              {active.tips.length > 0 && <div class="tip"><span class="tip-icon" aria-hidden="true">💡</span><div>{active.tips.map((t) => <div key={t}>{t}</div>)}</div></div>}
               {active.subs.map((s) => (
                 <div key={s.id} data-sub={`${active.id}.${s.id}`}>
                   <h3>{s.title}</h3>
@@ -141,6 +184,7 @@ export function SettingsView({ project, templates }: { project: ProjectInfo; tem
           )}
         </div>
       </section>
+      </div>
     </div>
   );
 }
@@ -186,10 +230,11 @@ function RowView({ row, values, run, flash }: { row: Row; values: Record<string,
 function Control({ row, value, run }: { row: Exclude<Row, { type: "action" }>; value: Value; run: (p: Promise<unknown>) => void }) {
   const set = (v: Value) => run(change({ [row.key]: v }));
   const [text, setText] = useState(String(value));
+  const [drag, setDrag] = useState<number | null>(null);
   useEffect(() => setText(String(value)), [value]);
   if (row.type === "enum" || row.type === "choice") {
     return (
-      <div class="seg" role="radiogroup" aria-label={row.label}>
+      <div class="s-seg" role="radiogroup" aria-label={row.label}>
         {row.opts.length > 4 ? (
           <select aria-label={row.label} value={String(value)} onChange={(e) => set((e.target as HTMLSelectElement).value)}>
             {row.opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -209,8 +254,9 @@ function Control({ row, value, run }: { row: Exclude<Row, { type: "action" }>; v
     return (
       <div class="stepper">
         <button aria-label="weniger" disabled={v <= row.min} onClick={() => step(-1)}>−</button>
-        <span class="mono" data-testid="num-value">{v} {row.unit}</span>
+        <input type="range" class="s-slider" aria-label={row.label} min={row.min} max={row.max} step={row.step} value={drag ?? v} onInput={(e) => setDrag(Number((e.target as HTMLInputElement).value))} onChange={(e) => { setDrag(null); set(Number((e.target as HTMLInputElement).value)); }} />
         <button aria-label="mehr" disabled={v >= row.max} onClick={() => step(1)}>+</button>
+        <span class="mono" data-testid="num-value">{drag ?? v} {row.unit}</span>
       </div>
     );
   }

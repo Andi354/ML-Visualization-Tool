@@ -2,7 +2,7 @@ import { useMemo } from "preact/hooks";
 import type { IssueInfo, ProjectInfo, RunRow } from "../api";
 import { formatInt, formatNumber } from "../format";
 import { Best, CellBar, Flags, StatusDot } from "./components";
-import { buildBlocks, countLabel, relTime, stamp, time, type Block } from "./model";
+import { buildBlocks, countLabel, relTime, stamp, statusColor, time, type Block } from "./model";
 
 export const NO_ISSUE = "—";
 
@@ -39,6 +39,7 @@ interface Props {
   runs: RunRow[];
   issues: Record<string, IssueInfo>;
   q: string;
+  onQ: (q: string) => void;
   selected: string | null;
   current: string | null;
   onSelect: (key: string) => void;
@@ -81,6 +82,16 @@ export function IssuesView(p: Props) {
   return (
     <div class="issues-view">
       <aside class="issue-list" data-testid="issue-list">
+        <input
+          type="search"
+          class="search"
+          placeholder="Issue, Lauf, Achse …"
+          aria-label="Issues durchsuchen"
+          data-testid="search"
+          value={p.q}
+          onInput={(e) => p.onQ((e.target as HTMLInputElement).value)}
+        />
+        <div class="issue-list-gap" />
         {shown.map((e) => {
           const i = e.key === NO_ISSUE ? undefined : p.issues[e.key];
           const running = e.runs.some((r) => r.running);
@@ -115,10 +126,10 @@ export function IssuesView(p: Props) {
         <main class="issue-detail" data-testid="issue-detail" data-issue={sel.key}>
           <div class="issue-detail-head">
             <div class="issue-detail-line">
-              <span class="mono muted">{sel.key === NO_ISSUE ? "Ohne Issue" : sel.key}</span>
+              <span class="mono issue-detail-key">{sel.key === NO_ISSUE ? "Ohne Issue" : sel.key}</span>
               {info?.status && (
-                <span class="status-pill" style={{ color: `var(--text-2)` }}>
-                  <StatusDot info={info} /> {info.status}
+                <span class="status-pill" style={{ color: statusColor(info) }}>
+                  {info.status}
                 </span>
               )}
               <span class="grow" />

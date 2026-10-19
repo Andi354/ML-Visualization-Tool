@@ -91,7 +91,7 @@ def test_table_head_has_a_group_row_and_default_columns(page):
     start(page, TIM45)
     groups = view(page).locator(".group-row th").all_inner_texts()
     assert [g.upper() for g in groups] == ["PARAMETER (3)", "METRIKEN (2/10)", "STATISTIK"]
-    assert [h.strip(" ▲▼") for h in heads(page)] == [
+    assert [h.strip(" ↑↓") for h in heads(page)] == [
         "lr_epochs", "lstm_layer", "time_embedding", "MSE skaliert", "MAPE", "n", "Status",
     ]
 
@@ -163,10 +163,10 @@ def test_clicking_a_metric_head_sorts_ascending_then_descending(page):
     start(page, TIM45)
     head = view(page).locator('[data-testid="metric-head"][data-metric="test_mape"]')
     head.click()
-    expect(head).to_contain_text("▲")
+    expect(head).to_contain_text("↑")
     asc = view(page).locator('td[data-metric="test_mape"]').evaluate_all("els => els.map(e => e.textContent)")
     head.click()
-    expect(head).to_contain_text("▼")
+    expect(head).to_contain_text("↓")
     desc = view(page).locator('td[data-metric="test_mape"]').evaluate_all("els => els.map(e => e.textContent)")
     assert asc == list(reversed(desc)) or asc[0] != desc[0]
 
@@ -176,7 +176,7 @@ def test_sorting_is_global_not_only_over_the_rendered_rows(page):
     head = view(page).locator('[data-testid="metric-head"][data-metric="test_mape"]')
     head.click()
     head.click()  # descending by MAPE
-    expect(head).to_contain_text("▼")
+    expect(head).to_contain_text("↓")
     first = view(page).locator('td[data-metric="test_mape"]').first.inner_text()
     value = float(first.replace("Bestwert", "").split(" ")[0].replace(",", ".").strip())
     ranked = page.evaluate(
@@ -266,7 +266,7 @@ def test_columns_choices_change_the_table_and_are_remembered(page):
     menu.locator('[data-metric="test_mae"]').check()
     menu.locator('[data-stat="min"]').check()
     menu.locator('[data-stat="n"]').uncheck()
-    labels = [h.strip(" ▲▼") for h in heads(page)]
+    labels = [h.strip(" ↑↓") for h in heads(page)]
     assert "MAE" in labels and "n" not in labels and any(h.startswith("min") for h in labels)
     expect(view(page).get_by_test_id("columns-button")).to_contain_text("5/14")
     page.get_by_test_id("area-analysis").click()  # leave and come back: same page, state kept

@@ -152,3 +152,24 @@ def test_the_model_still_loading_is_said_and_nothing_records(vp):
     vp.get_by_test_id("agent-mic").click()
     expect(vp.get_by_test_id("voice-toast")).to_have_text("Erkennung wird geladen …")
     expect(vp.get_by_test_id("voice-row")).to_have_count(0)
+
+
+def test_the_recording_row_and_the_review_box_have_the_prototype_look(vp):
+    vp.get_by_test_id("agent-mic").click()
+    row = vp.get_by_test_id("voice-row")
+    expect(row).to_contain_text("Hört zu")
+    mic = vp.get_by_test_id("agent-mic")
+    assert mic.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(229, 72, 77)"
+    assert vp.locator(".voice-row strong").evaluate("e => getComputedStyle(e).whiteSpace") == "nowrap"
+    vp.get_by_test_id("voice-cancel").click()  # "Abbrechen" drops the recording like Esc
+    expect(vp.get_by_test_id("agent-input")).to_be_visible()
+    record(vp)
+    box = vp.get_by_test_id("voice-review")
+    assert box.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(21, 28, 43)"
+    expect(box).to_contain_text("zum Ändern anklicken")
+    assert box.locator(".voice-review-head svg").count() == 1
+    send = vp.get_by_test_id("voice-send")
+    expect(send.locator(".vkbd")).to_have_text("Enter")
+    assert send.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(47, 91, 211)"
+    chip = vp.get_by_test_id("voice-chip").first
+    assert chip.evaluate("e => getComputedStyle(e).borderBottomStyle") == "dotted"

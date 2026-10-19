@@ -39,7 +39,7 @@ def test_the_area_opens_with_all_one_run_widgets_in_catalog_order(page):
     order = board(page).get_by_test_id("widget-tile").evaluate_all("els => els.map(e => e.dataset.widget)")
     assert order == KEYS
     expect(page.get_by_test_id("widgets-menu")).to_have_text("Widgets · 5 von 5")
-    expect(page.locator('[data-testid="analysis-view"] .crumb')).to_have_text("Analyse /")
+    expect(page.locator('[data-testid="analysis-view"] .crumb')).to_have_text("Analyse/Ein Lauf")
     expect(page.get_by_test_id("analysis-view-run")).to_have_attribute("aria-pressed", "true")
     expect(page.get_by_test_id("analysis-view-run")).to_have_text("Ein Lauf")
 
@@ -80,7 +80,7 @@ def test_compare_table_best_per_column_first_row_bold_and_texts(page):
     expect(t.locator(".w-note")).to_have_text("niedriger = besser · grün = bester Wert je Spalte")
     rows = t.get_by_test_id("ct-row")
     expect(rows).to_have_count(5)
-    assert rows.first.evaluate("e => getComputedStyle(e.cells[0]).fontWeight") == "700"  # own model
+    assert rows.first.evaluate("e => getComputedStyle(e.cells[0]).fontWeight") == "600"  # own model
     best = t.locator('[data-testid="ct-cell"][data-best="true"]')
     expect(best).to_have_count(6)  # one per column
     assert best.first.evaluate("e => getComputedStyle(e).color") == "rgb(95, 212, 160)"

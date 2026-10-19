@@ -266,9 +266,9 @@
   flex: none;
   display: grid;
   place-items: center;
-  color: var(--agent-off);
+  color: var(--text-2);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--agent-line);
   border-radius: 6px;
   cursor: default;
 }
@@ -286,12 +286,12 @@
   flex: none;
   font-size: 13px;
   font-weight: 600;
-  color: var(--bg);
-  background: var(--accent);
+  color: #fff;
+  background: #2f5bd3;
   border-radius: 6px;
 }
 .agent-send:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 88%, white);
+  background: color-mix(in srgb, #2f5bd3 88%, white);
 }
 
 .agent-mode-row {
