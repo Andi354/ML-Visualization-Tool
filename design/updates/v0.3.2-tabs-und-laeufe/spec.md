@@ -65,13 +65,22 @@ title. The title is short, the combination is a two-column list.
 **In the prototype:** `Q1-Widgets.dc.html` right card (`combo`).
 **Rejected:** J1 (combination as chips): Tim prefers the list for the config, where the combination is the content, not a side condition.
 
+#### Q.K · No hint lines in widgets
+- Built-in widgets no longer show a `note` line under the content (today e.g. "niedriger = besser ·
+  grün = bester Wert je Region", "gestrichelt = Epoche mit niedrigstem val_loss", "heller = besser ·
+  leer = fehlgeschlagen"); the `note` field is dropped from `src/mlviz/widgets/*.py`.
+- Saved images follow the screen: no note line; "Hinweise einblenden" still switches the what line and
+  the values line.
+- The agent adds no explanatory or legend lines to own widgets or answers unless the user asks for
+  them; `src/mlviz/agent_guide.md` says so in its rules for own widgets.
+- The best value keeps its tooltip "Bestwert" (meaning not by colour alone).
+
 ### O · Projektkopf
 **What:** The project's display name, its two letters and the colour of the project symbol (rail, top
 left) can be changed: as rows in the settings and in a small popover that opens from the project
 symbol. Only the display changes; `project.yaml` stays as it is.
 **Behaviour:**
-- Einstellungen › Läufe & Experiment › Projekt → preview card (symbol 48 px, name, "So erscheint das
-  Projekt …", button "Aus project.yaml"), then rows Anzeigename (text), Kürzel (2 characters, shown
+- Einstellungen › Läufe & Experiment › Projekt → preview card (symbol 48 px, name, button "Aus project.yaml"), then rows Anzeigename (text), Kürzel (2 characters, shown
   upper case), Farbe (8 swatches: `#8AA4FF` default, `#5FD4A0`, `#F4A259`, `#E58BD0`, `#B39DFF`,
   `#6CC6E8`, `#D9C36A`, `#B0B0BA`), then the existing rows Lauf-Merkmal and Primäre Metrik.
 - Anzeigename empty → name from `project.yaml` (else folder name), shown as placeholder; Kürzel empty →
@@ -80,7 +89,7 @@ symbol. Only the display changes; `project.yaml` stays as it is.
   update at once; a changed row shows the blue "geändert" dot like other settings.
 - "Aus project.yaml" → all three back to their defaults (greyed out when nothing differs).
 - Click the project symbol in the rail → popover beside it: symbol, name, project path, Anzeigename,
-  Kürzel, Farbe, footer "Gespeichert im Projekt (.mlviz)" and "Alle Einstellungen" (opens the
+  Kürzel, Farbe, footer button "Alle Einstellungen" (opens the
   settings at Projekt). Click outside or Esc → closes; values are saved as typed.
 - Stored as settings `project.name`, `project.short`, `project.color` in `.mlviz/settings.json`
   (empty / default values are not written, as for every setting); they are part of the settings
