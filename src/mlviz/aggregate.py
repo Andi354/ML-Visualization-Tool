@@ -120,7 +120,7 @@ def has_channels(run: Run) -> bool:
     return ch is not None and CHANNEL in ch.columns and ch[CHANNEL].nunique() > 1
 
 
-def run_dims(run: Run) -> dict:
+def run_dims(run: Run, project: Project | None = None) -> dict:
     """Everything the sidebar of the experiment view needs."""
     cells = _cells(run)
     dims: list[dict] = []
@@ -164,7 +164,7 @@ def run_dims(run: Run) -> dict:
         "constants": constants(run),
         "cells": int(len(cells)),
         "errors": run.error_count(),
-        "primary_metric": run.meta.get("primary_metric"),
+        "primary_metric": project.primary_for(run.meta) if project else run.meta.get("primary_metric"),
     }
 
 
@@ -251,7 +251,7 @@ def run_table(run: Run, project: Project, query: dict) -> dict:
 
     metrics = _metric_keys(run, project)
     sort = query.get("sort") or {}
-    sort_metric = sort.get("metric") or run.meta.get("primary_metric") or project.primary_metric
+    sort_metric = sort.get("metric") or project.primary_for(run.meta)
     if sort_metric not in metrics and metrics:
         sort_metric = metrics[0]
     sort_stat = sort.get("stat", "mean")
