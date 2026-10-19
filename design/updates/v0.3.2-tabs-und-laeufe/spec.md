@@ -8,10 +8,15 @@ Prototype: follows · Builds on: v0.3.1.1
 | Block | Status |
 |---|---|
 | P · Läufe-Bildschirm | decided (P5 list, P6 issues) |
-| M · Große Läufe im Lauf-Tab: "x von y", mehr laden | open |
+| M · Große Läufe im Lauf-Tab: "x von y", mehr laden | running |
 | N · Tab-Menü | open |
 | O · Projektkopf in den Einstellungen | open |
 | Q · Widget-Kopf und Config-Titel (design from v0.2.4) | open |
+
+Running block M: M1 · Knopf am Tabellenende ("Weitere 200 laden", "Bis 1 000 laden"), M2 · automatisch
+beim Scrollen, M3 · Seiten (200 pro Seite); all three in the run tab drawn in the new style
+(`M-Lauf`, a component with prop `mode`). Counter "x von y Kombinationen geladen" in the toolbar in all
+three. Default proposed: the server limit stays 1 000 rows; beyond that the tab asks to filter or group.
 
 Style: the P5/P6 style (graphite, periwinkle accent, rounded shapes) is tried in the remaining blocks;
 whether it becomes the style of the whole tool is decided after them. In the overall prototype only the
