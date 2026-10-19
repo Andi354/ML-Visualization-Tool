@@ -128,6 +128,7 @@ export interface TableQuery {
   dims: Record<string, DimQuery>;
   sort: { metric: string | null; stat: "mean" | "min" | "max" | "n"; dir: "asc" | "desc" | null };
   limit?: number;
+  offset?: number;
   overview?: boolean;
 }
 export interface MetricStats {
@@ -157,6 +158,7 @@ export interface TableResult {
   groups: number;
   cells: number;
   shown: number;
+  offset: number;
   best: { key: string | null; value: number | null; metric: string | null };
   rows: TableRow[];
   histogram: { counts: number[]; lo: number | null; hi: number | null; best_bin: number | null };

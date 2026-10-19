@@ -258,6 +258,7 @@ def run_table(run: Run, project: Project, query: dict) -> dict:
     direction_default = project.metric(sort_metric).direction if project.metric(sort_metric) else "min"
     sort_dir = sort.get("dir") or ("desc" if direction_default == "max" else "asc")
     limit = max(1, min(int(query.get("limit") or DEFAULT_ROWS), MAX_ROWS))
+    offset = max(0, int(query.get("offset") or 0))
 
     if cells.empty:
         return _empty(keys, metrics, sort_metric)
@@ -352,7 +353,7 @@ def run_table(run: Run, project: Project, query: dict) -> dict:
         best_key = _key_of({k: str(table.loc[idx, k]) for k in keys})
 
     rows = []
-    for _, r in table.head(limit).iterrows():
+    for _, r in table.iloc[offset : offset + limit].iterrows():
         params = {k: str(r[k]) for k in keys}
         rows.append(
             {
@@ -379,6 +380,7 @@ def run_table(run: Run, project: Project, query: dict) -> dict:
         "groups": int(len(table)),
         "cells": int(len(cells_f)),
         "shown": len(rows),
+        "offset": offset,
         "best": {"key": best_key, "value": best_value, "metric": sort_metric},
         "rows": rows,
         "histogram": _histogram(table[mean_col].dropna().to_numpy() if mean_col in table.columns else np.array([]), best_value),
@@ -396,6 +398,7 @@ def _empty(keys: list[str], metrics: list[str], sort_metric: str | None) -> dict
         "groups": 0,
         "cells": 0,
         "shown": 0,
+        "offset": 0,
         "best": {"key": None, "value": None, "metric": sort_metric},
         "rows": [],
         "histogram": {"counts": [], "lo": None, "hi": None, "best_bin": None},

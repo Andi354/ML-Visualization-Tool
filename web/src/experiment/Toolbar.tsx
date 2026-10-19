@@ -13,6 +13,8 @@ interface Props {
   chips: Chip[];
   onChip: (c: Chip) => void;
   summary: string;
+  /** Not all rows fit on one page: the pill gets the accent tint. */
+  paged?: boolean;
 }
 
 const SD: [SdMode, string][] = [
@@ -112,7 +114,7 @@ export function Toolbar(p: Props) {
         </button>
       ))}
       <span class="grow" />
-      <span class="muted-2" data-testid="summary">
+      <span class={"count-pill" + (p.paged ? " paged" : "")} data-testid="summary">
         {p.summary}
       </span>
     </div>

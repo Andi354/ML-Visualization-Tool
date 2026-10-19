@@ -9,6 +9,7 @@ import { DescriptionBlock, OverviewLine } from "./Description";
 import { loadFolds, saveFolds, type Folds } from "./description";
 import { DetailPanel } from "./DetailPanel";
 import { Overview } from "./Overview";
+import { Pager } from "./Pager";
 import { Sidebar } from "./Sidebar";
 import { Table } from "./Table";
 import { Toolbar } from "./Toolbar";
@@ -17,7 +18,9 @@ import {
   loadColumns,
   resetDim,
   setDim,
+  DEFAULT_PAGE_SIZE,
   saveColumns,
+  sizeLine,
   summary,
   toggleValue,
   visibleMetrics,
@@ -46,6 +49,11 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
   const [result, setResult] = useState<TableResult | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  /** The page belongs to the filter, sort and size it was chosen under: a change of those is page 1 again. */
+  const [pageAt, setPageAt] = useState<{ key: string; n: number }>({ key: "", n: 0 });
+  const pageKey = JSON.stringify([state, sort, pageSize]);
+  const page = pageAt.key === pageKey ? pageAt.n : 0;
   const [selected, setSelected] = useState<TableRow | null>(null);
   const seq = useRef(0);
   const [description, setDescription] = useState<Description | null>(null);
@@ -54,6 +62,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
   const folded = run.id in folds ? folds[run.id] : setting<string>("runs.descOpen") === "closed";
   const [toolbarHeight, setToolbarHeight] = useState(49);
   const toolbarBox = useRef<HTMLDivElement>(null);
+  const mainBox = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let alive = true;
@@ -115,7 +124,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
     const ctl = new AbortController();
     const mine = ++seq.current;
     setLoading(true);
-    postTable(run.id, { dims: state, sort, overview }, ctl.signal)
+    postTable(run.id, { dims: state, sort, overview, limit: pageSize, offset: page * pageSize }, ctl.signal)
       .then((r) => {
         if (mine === seq.current) {
           setResult(r);
@@ -130,7 +139,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
         setLoading(false);
       });
     return () => ctl.abort();
-  }, [run.id, state, sort, overview]);
+  }, [run.id, state, sort, overview, pageSize, page]);
 
   const dims = info?.dims ?? [];
 
@@ -199,6 +208,11 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
         <span class="mono" data-testid="run-title" title={run.id}>
           {run.name}
         </span>
+        {info && result && (
+          <span class="muted small" data-testid="run-size">
+            {sizeLine(result.groups, result.cells, info.errors)}
+          </span>
+        )}
         <span class="grow" />
         <CompareWith runId={run.id} onPick={onCompareWith} />
         <button class="btn" data-testid="analyse-run" onClick={() => onAnalyse({})}>
@@ -208,7 +222,7 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
       </div>
       <div class="exp-body">
         {info ? <Sidebar info={info} state={state} onState={setState} /> : <aside class="exp-sidebar" />}
-        <main class="exp-main" data-testid="exp-main" style={{ "--toolbar-h": `${toolbarHeight}px` }}>
+        <main class="exp-main" data-testid="exp-main" ref={mainBox} style={{ "--toolbar-h": `${toolbarHeight}px` }}>
           {description && (
             <DescriptionBlock
               description={description}
@@ -243,7 +257,8 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
             primary={primary}
             chips={shownChips}
             onChip={(c) => setState((s) => resetDim(s, c.dim))}
-            summary={result ? summary(result.groups, result.cells, result.shown) : ""}
+            summary={result ? summary(result.groups, result.offset, result.shown, pageSize) : ""}
+            paged={!!result && result.groups > pageSize}
           />
           </div>
           <div class="exp-table-wrap">
@@ -272,6 +287,16 @@ export function ExperimentView({ run, project, onBack, onMissing, onAnalyse, onC
                   selectedKey={selected?.key ?? null}
                   onRow={setSelected}
                   noteCounts={groupCounts}
+                />
+                <Pager
+                  groups={result.groups}
+                  page={page}
+                  pageSize={pageSize}
+                  onPage={(n) => {
+                    setPageAt({ key: pageKey, n });
+                    mainBox.current?.scrollTo({ top: 0 });
+                  }}
+                  onPageSize={setPageSize}
                 />
                 {result.rows.length === 0 && (
                   <div class="empty" data-testid="exp-empty">

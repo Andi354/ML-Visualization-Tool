@@ -176,8 +176,32 @@ export function filterConstants(
 
 export const constantCount = (blocks: { rows: unknown[] }[]) => blocks.reduce((a, b) => a + b.rows.length, 0);
 
-// --- summary ------------------------------------------------------------------------------------
-export function summary(groups: number, cells: number, shown: number): string {
-  const base = `${formatInt(groups)} Gruppen · ${formatInt(cells)} Zellen`;
-  return groups > shown ? `${base} · sortiert über alle` : base;
+// --- paging (v0.3.2, M) -------------------------------------------------------------------------
+export const PAGE_SIZES = [100, 200, 500];
+export const DEFAULT_PAGE_SIZE = 200;
+
+/** Pill text of the toolbar: the rows on this page of all combinations, or just their number. */
+export function summary(groups: number, offset: number, shown: number, pageSize: number): string {
+  if (groups <= pageSize) return `${formatInt(groups)} Kombinationen`;
+  return `Zeilen ${formatInt(offset + 1)}–${formatInt(offset + shown)} von ${formatInt(groups)}`;
+}
+
+/** Header line of the run tab: size of the run. */
+export function sizeLine(groups: number, cells: number, errors: number): string {
+  return `${formatInt(groups)} Kombinationen · ${formatInt(cells)} Zellen` + (errors ? ` · ${formatInt(errors)} Fehler` : "");
+}
+
+export const pageCount = (groups: number, pageSize: number) => Math.max(1, Math.ceil(groups / pageSize));
+
+/** Page numbers of the pager (0-based pages): first, last, current and its neighbours; null = gap "…". */
+export function pageList(page: number, pages: number): (number | null)[] {
+  const keep = new Set([0, pages - 1, page - 1, page, page + 1].filter((p) => p >= 0 && p < pages));
+  const out: (number | null)[] = [];
+  let last = -1;
+  for (const p of [...keep].sort((a, b) => a - b)) {
+    if (last >= 0 && p > last + 1) out.push(p === last + 2 ? last + 1 : null);
+    out.push(p);
+    last = p;
+  }
+  return out;
 }

@@ -84,7 +84,7 @@ def test_defaults_axes_split_replicates_averaged_sorted_by_primary_metric(page):
         "els => els.map(e => parseFloat(e.childNodes[e.childNodes.length - 2].textContent.replace(',', '.')))"
     )
     assert means == sorted(means)
-    expect(view(page).get_by_test_id("summary")).to_have_text("12 Gruppen · 36 Zellen")
+    expect(view(page).get_by_test_id("summary")).to_have_text("12 Kombinationen")
 
 
 def test_table_head_has_a_group_row_and_default_columns(page):
@@ -122,7 +122,7 @@ def test_value_selection_filters_and_shows_a_chip_and_a_tag(page):
     expect(tag(page, "lstm_layer")).to_have_text("= 1")
     expect(rows(page)).to_have_count(6)
     expect(view(page).get_by_test_id("chip")).to_have_text(re.compile("lstm_layer ∈ 1"))
-    expect(view(page).get_by_test_id("summary")).to_have_text("6 Gruppen · 18 Zellen")
+    expect(view(page).get_by_test_id("summary")).to_have_text("6 Kombinationen")
     dim(page, "lstm_layer").locator('[data-value="0"]').check()
     expect(tag(page, "lstm_layer")).to_have_text("geteilt".replace("geteilt", "2 von 2"))
 
@@ -190,10 +190,25 @@ def test_sorting_is_global_not_only_over_the_rendered_rows(page):
     assert abs(value - ranked) < 0.01
 
 
-def test_more_than_200_groups_render_200_and_say_sorted_over_all(page):
+def test_more_than_200_groups_are_paged_with_a_pill_and_a_pager(page):
     start(page, TIM39)
     expect(rows(page)).to_have_count(200)
-    expect(view(page).get_by_test_id("summary")).to_have_text("294 Gruppen · 294 Zellen · sortiert über alle")
+    expect(view(page).get_by_test_id("summary")).to_have_text("Zeilen 1–200 von 294")
+    expect(view(page).get_by_test_id("run-size")).to_contain_text("294 Kombinationen · 294 Zellen")
+    expect(view(page).get_by_test_id("pager-text")).to_have_text("Seite 1 von 2")
+    first = rows(page).first.inner_text()
+    view(page).get_by_test_id("pager-next").click()
+    expect(view(page).get_by_test_id("summary")).to_have_text("Zeilen 201–294 von 294")
+    expect(rows(page)).to_have_count(94)
+    assert rows(page).first.inner_text() != first
+    expect(view(page).get_by_test_id("pager-page").nth(1)).to_have_attribute("aria-current", "page")
+    # a change of sort goes back to page 1, a bigger page shows everything
+    view(page).locator('[data-testid=metric-head][data-metric=test_mape]').click()
+    expect(view(page).get_by_test_id("summary")).to_have_text("Zeilen 1–200 von 294")
+    view(page).get_by_test_id("pager-size").select_option("500")
+    expect(view(page).get_by_test_id("summary")).to_have_text("294 Kombinationen")
+    expect(view(page).get_by_test_id("pager")).to_have_count(0)
+    expect(rows(page)).to_have_count(294)
 
 
 def test_failed_cells_show_an_error_count_and_n_counts_only_successes(page, demo_project):

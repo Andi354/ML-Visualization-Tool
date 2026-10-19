@@ -17,6 +17,9 @@ import {
   saveColumns,
   setDim,
   stateTag,
+  pageCount,
+  pageList,
+  sizeLine,
   summary,
   toggleValue,
   visibleMetrics,
@@ -159,9 +162,23 @@ describe("search and summary", () => {
     expect(constantCount(filterConstants(blocks, "model"))).toBe(1);
     expect(filterConstants(blocks, "")).toBe(blocks);
   });
-  it("more than the rendered rows: sorted over all", () => {
-    expect(summary(294, 294, 200)).toBe("294 Gruppen · 294 Zellen · sortiert über alle");
-    expect(summary(5, 30, 5)).toBe("5 Gruppen · 30 Zellen");
+  it("pill: the rows of this page, or just the number when they fit one page", () => {
+    expect(summary(294, 0, 200, 200)).toBe("Zeilen 1–200 von 294");
+    expect(summary(294, 200, 94, 200)).toBe("Zeilen 201–294 von 294");
+    expect(summary(5, 0, 5, 200)).toBe("5 Kombinationen");
+    expect(summary(200, 0, 200, 200)).toBe("200 Kombinationen");
+  });
+  it("size line names combinations, cells and errors", () => {
+    expect(sizeLine(12, 36, 0)).toBe("12 Kombinationen · 36 Zellen");
+    expect(sizeLine(294, 294, 3)).toBe("294 Kombinationen · 294 Zellen · 3 Fehler");
+  });
+  it("pager shows first, last, current and neighbours with gaps", () => {
+    expect(pageCount(2592, 200)).toBe(13);
+    expect(pageCount(0, 200)).toBe(1);
+    expect(pageList(0, 13)).toEqual([0, 1, null, 12]);
+    expect(pageList(6, 13)).toEqual([0, null, 5, 6, 7, null, 12]);
+    expect(pageList(12, 13)).toEqual([0, null, 11, 12]);
+    expect(pageList(2, 5)).toEqual([0, 1, 2, 3, 4]);
   });
   it("query carries dims, sort and overview flag", () => {
     expect(buildQuery({}, { metric: "m", stat: "mean", dir: "asc" }, true)).toEqual({

@@ -598,3 +598,61 @@
   display: flex;
   justify-content: space-between;
 }
+
+/* Count pill and pager (v0.3.2, M) */
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+.count-pill.paged {
+  color: #c9d3ff;
+  background: #20243a;
+  border-color: #343b60;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 24px 40px;
+  border-top: 1px solid var(--line);
+}
+.pager-text {
+  color: var(--text-2);
+  margin-right: 10px;
+}
+.pg {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-2);
+  border-radius: 8px;
+}
+.pg:hover:not(:disabled) {
+  background: var(--raised);
+}
+.pg.on,
+.pg.on:hover {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 500;
+}
+.pg-gap {
+  min-width: 20px;
+  text-align: center;
+}
+.pager-size select {
+  font: inherit;
+  color: var(--text-3);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
