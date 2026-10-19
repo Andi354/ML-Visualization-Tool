@@ -3,7 +3,7 @@ import { setting } from "../settings/store";
 import type { IssueInfo, ProjectInfo, RunRow } from "../api";
 import { formatInt, formatNumber } from "../format";
 
-export type StatusFilter = "all" | "running" | "errors";
+export type StatusFilter = "all" | "running" | "errors" | "week";
 export interface Filters {
   q: string;
   status: StatusFilter;
@@ -19,8 +19,9 @@ export const time = (iso: string | null): number => (iso ? new Date(iso).getTime
 export const currentEpoch = (p: ProjectInfo): string | null =>
   p.epochs.length ? p.epochs[p.epochs.length - 1].name : null;
 
-export function matchRun(run: RunRow, issues: Record<string, IssueInfo>, f: Filters): boolean {
+export function matchRun(run: RunRow, issues: Record<string, IssueInfo>, f: Filters, now?: number): boolean {
   if (f.status === "running" && !run.running) return false;
+  if (f.status === "week" && now !== undefined && time(run.started) < now - 7 * DAY) return false;
   if (f.status === "errors" && run.errors === 0) return false;
   if (f.epoch !== "all" && run.epoch !== f.epoch) return false;
   const q = f.q.trim().toLowerCase();
@@ -61,6 +62,56 @@ export function buildBlocks(runs: RunRow[]): Block[] {
     e.runs.push(r);
   }
   return blocks;
+}
+
+const numericFirst = (a: string, b: string) => {
+  const na = Number(a);
+  const nb = Number(b);
+  return Number.isNaN(na) || Number.isNaN(nb) ? a.localeCompare(b) : na - nb;
+};
+
+/** Key of the section that holds the runs without an issue. */
+export const NO_ISSUE = "—";
+export type Section = Block & { kind: "issue" };
+
+/** Runs of one config as experiments, in the order of the input (newest first). */
+export function experimentsOf(runs: RunRow[]): Experiment[] {
+  const out: Experiment[] = [];
+  for (const r of runs) {
+    let e = out.find((x) => x.name === r.name);
+    if (!e) out.push((e = { name: r.name, runs: [] }));
+    e.runs.push(r);
+  }
+  return out;
+}
+
+/** The sections of Läufe: issues by their newest run, then one section for all runs without an issue. */
+export function buildSections(runs: RunRow[]): Section[] {
+  const blocks = buildBlocks(runs);
+  const out: Section[] = blocks.filter((b): b is Section => b.kind === "issue");
+  const alone = blocks.flatMap((b) => (b.kind === "standalone" ? [b.run] : []));
+  if (alone.length) out.push({ kind: "issue", key: NO_ISSUE, last: time(alone[0].started), runs: alone, experiments: experimentsOf(alone) });
+  return out;
+}
+
+/** The overview tiles: the run that is running (else the newest) and the best value for each Lauf-Merkmal value (at most two). */
+export function overviewTiles(runs: RunRow[], metrics: ProjectInfo["metrics"]) {
+  const sorted = [...runs].sort((a, b) => time(b.started) - time(a.started));
+  const first = sorted.find((r) => r.running) ?? sorted[0];
+  const groups = new Map<string, { run: RunRow; value: number }>();
+  for (const r of runs) {
+    if (!r.best) continue;
+    const key = r.merkmal?.value ?? "";
+    const dir = metrics.find((m) => m.key === r.best!.metric)?.direction ?? "min";
+    const v = r.best.value * r.best.scale;
+    const g = groups.get(key);
+    if (!g || (dir === "max" ? v > g.value : v < g.value)) groups.set(key, { run: r, value: v });
+  }
+  const bests = [...groups.entries()]
+    .sort((a, b) => numericFirst(a[0], b[0]))
+    .slice(0, 2)
+    .map(([, g]) => g);
+  return { first, bests };
 }
 
 /** Issue blocks expanded by default: a run in the last 7 days, or a search / status filter is active. */
@@ -129,19 +180,6 @@ export function flags(r: RunRow, current: string | null): { text: string; kind: 
   return out;
 }
 
-export function extras(r: RunRow): string[] {
-  const out: string[] = [];
-  if (r.has_curves) out.push("Kurven");
-  if (r.has_predictions) out.push("Vorhersagen");
-  if (r.migrated) out.push("migriert");
-  return out;
-}
-
-export function secondLine(r: RunRow, standalone: boolean): string {
-  const ex = extras(r);
-  return (standalone ? "ohne Issue · " : "") + r.axes.join(" · ") + (ex.length ? "   —   " + ex.join(" · ") : "");
-}
-
 export function statusColor(i: IssueInfo | undefined): string {
   if (!i?.status) return "var(--text-3)";
   const named: Record<string, string> = { "In Review": "var(--warn)" };
@@ -180,11 +218,6 @@ export interface Timeline {
   label: string;
 }
 
-const numericFirst = (a: string, b: string) => {
-  const na = Number(a);
-  const nb = Number(b);
-  return Number.isNaN(na) || Number.isNaN(nb) ? a.localeCompare(b) : na - nb;
-};
 
 export function buildTimeline(runs: RunRow[], p: ProjectInfo): Timeline | null {
   const pts = runs.filter((r) => r.best && r.started);

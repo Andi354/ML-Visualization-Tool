@@ -8,13 +8,16 @@ def folder(experiment: str, nth: int = 0) -> str:
 
 
 def open_run(page, run_id: str) -> None:
-    """Open a run in its own tab the way a user does: Läufe, view Issues, issue, "Öffnen"."""
+    """Open a run in its own tab the way a user does: Läufe, view Issues, issue, the name of its card (older runs unfold first)."""
     page.get_by_test_id("area-runs").click()
     page.get_by_test_id("tab-pinned").click()
     page.get_by_test_id("view-issues").click()
     issue = next((r["issue"] for r in RUNS if run_folder(r) == run_id), None) or "—"
     page.locator(f'[data-testid="issue-item"][data-issue="{issue}"]').click()
-    page.locator(f'[data-testid="exp-run"][data-run="{run_id}"] [data-testid="open"]').click()
+    if not page.locator(f'[data-testid="run-row"][data-run="{run_id}"]').count():
+        for toggle in page.locator('[data-testid="older-toggle"][aria-expanded="false"]').all():  # an older run of its experiment: unfold them
+            toggle.click()
+    page.locator(f'[data-run="{run_id}"] [data-testid="open"]').first.click()
 
 
 def png_bytes(color=(200, 40, 40), size=16) -> bytes:

@@ -12,7 +12,7 @@ def css(locator, prop):
 # --- F · Frame ------------------------------------------------------------------------------------
 def test_icon_rail_uses_the_svg_icons_and_the_small_badge(page):
     badge = page.get_by_test_id("project-badge")
-    assert badge.bounding_box()["width"] == 32 and css(badge, "borderRadius") == "12px"
+    assert badge.bounding_box()["width"] == 32 and css(badge, "borderRadius") == "9px"
     for area in ("runs", "analysis"):
         icon = page.get_by_test_id(f"area-{area}").locator("svg")
         assert icon.get_attribute("viewBox") == "0 0 18 18"
@@ -67,13 +67,16 @@ def test_popovers_are_the_raised_panels_of_the_prototype(page):
 
 
 # --- G · Läufe ------------------------------------------------------------------------------------
-def test_runs_header_shows_only_the_area_name_and_the_list_has_the_wide_gutter(page):
+def test_runs_header_has_the_title_the_view_switch_and_pills_and_the_list_has_the_wide_gutter(page):
     head = page.locator("[data-testid=runs-view] .view-head")
-    expect(head).to_have_text("LäufeListeIssues")
+    expect(head.locator(".view-name")).to_have_text("Läufe")
     assert css(head, "paddingLeft") == "32px"
-    assert css(page.locator("[data-testid=runs-view] .view-head .seg"), "borderRadius") == "9px"
-    assert page.get_by_test_id("search").bounding_box()["x"] == 56 + 32
-    assert page.locator(".run-row").first.evaluate("e => getComputedStyle(e).gridTemplateColumns").endswith("120px")
+    assert css(head.locator(".switch-pill"), "borderRadius") == "18px"
+    assert css(head.locator(".pill").first, "borderRadius") == "16px"
+    assert page.get_by_test_id("search").bounding_box()["x"] > 56 + 32  # in its own pill
+    card = page.locator(".rcard").first
+    assert css(card, "borderRadius") == "12px" and css(card, "backgroundColor") == "rgb(28, 28, 32)"
+    assert css(page.locator(".tile").first, "borderRadius") == "14px"
 
 
 def test_issue_view_has_its_search_in_the_list_column_and_fills_the_height(page):
@@ -84,11 +87,11 @@ def test_issue_view_has_its_search_in_the_list_column_and_fills_the_height(page)
     box = aside.bounding_box()
     assert box["y"] + box["height"] >= page.get_by_test_id("status-bar").bounding_box()["y"] - 1
     assert 295 <= box["width"] <= 360
-    assert css(page.locator(".issue-item").first, "borderRadius") == "12px"
+    assert css(page.locator(".issue-item").first, "borderRadius") == "10px"
     page.locator('[data-testid="issue-item"][data-issue="TIM-83"]').click()
-    tag = page.locator(".exp-run .tags .flag").first
-    assert css(tag, "borderTopWidth") == "1px" and "Mono" in css(tag, "fontFamily")
-    assert page.locator(".exp-run .bar").first.bounding_box()["height"] == 5
+    chip = page.locator(".rcard .axis-chips .chip").first
+    assert "Mono" in css(chip, "fontFamily") and css(chip, "borderRadius") == "7px"
+    assert page.locator(".rcard .bar").first.bounding_box()["height"] == 5
 
 
 # --- H · Run tab ----------------------------------------------------------------------------------

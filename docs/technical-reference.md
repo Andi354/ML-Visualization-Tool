@@ -355,9 +355,12 @@ fields `short`, `purpose`, `shows`, `notes`, `expectation`, `compare_to` and a l
 
 - **`short` (Läufe):** `Run.short` is the `short` of the run list, one line, cut to `store.SHORT_MAX` (100)
   characters plus "…" (`store.cut_short`); empty counts as none. `/api/runs` carries `short` and
-  `has_description`. The run list shows it as its own line (`.short-line`) between name and axes, the view
-  Issues above the tags; the search of Läufe and the Issues view also matches it. The agent's `find_runs`
+  `has_description`. A run card (`web/src/runs/RunCard.tsx`, the same in the list and the Issues view) shows it
+  in two lines (`.short-line`) between name and axis chips, or the italic note "Keine Kurzbeschreibung"; the search of Läufe and the Issues view also matches it. The agent's `find_runs`
   (`text`) matches the run id, `short`, `purpose` and `shows`.
+- **Läufe (v0.3.2):** one section per issue and a last one "ohne Issue" (`model.buildSections`), each experiment is a card
+  with its newest run and the older ones folded (`older-toggle`); three overview tiles on top (`model.overviewTiles`);
+  ticking cards fills the floating compare bar (Vergleichen from two).
 - **Description (run tab):** `GET /api/runs/{id}/description` answers `{description}`: `null` without
   `description.yaml`, else `descriptions.describe`: `short`, `purpose` and `expectation` (text), `shows` and
   `notes` (lists), `compare_to` (`{name, run}`, `run` = the folder the name resolves to, by folder name first,

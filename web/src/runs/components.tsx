@@ -1,5 +1,5 @@
 import type { IssueInfo, RunRow } from "../api";
-import { bestText, cellBar, cellText, flags, secondLine, statusColor } from "./model";
+import { bestText, cellBar, cellText, flags, statusColor } from "./model";
 
 export const seriesVar = (index: number) => (index >= 0 ? `var(--series-${index + 1})` : "var(--text-3)");
 
@@ -48,4 +48,4 @@ export function StatusDot({ info }: { info: IssueInfo | undefined }) {
   return <span class="status-dot" style={{ background: statusColor(info) }} />;
 }
 
-export { secondLine };
+

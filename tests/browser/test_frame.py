@@ -235,3 +235,5 @@ def test_show_in_runs_opens_the_list_with_the_run_marked(page):
     page.get_by_test_id("menu-reveal").click()
     expect(page.get_by_test_id("runs-view")).to_be_visible()
     expect(page.get_by_test_id("view-list")).to_have_attribute("aria-pressed", "true")
+    # A is an older run of its experiment: the section is open, the older runs are unfolded and its row is marked
+    expect(page.locator(f'[data-testid="older-row"][data-run="{A}"]')).to_have_class(re.compile("focused"))

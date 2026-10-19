@@ -1,33 +1,14 @@
 import { useMemo } from "preact/hooks";
 import type { IssueInfo, ProjectInfo, RunRow } from "../api";
-import { formatInt, formatNumber } from "../format";
-import { Best, CellBar, Flags, StatusDot } from "./components";
-import { buildBlocks, countLabel, relTime, stamp, statusColor, time, type Block } from "./model";
+import { StatusDot } from "./components";
+import type { ListState } from "./ListView";
+import { RunCard } from "./RunCard";
+import { buildSections, countLabel, NO_ISSUE, relTime, statusColor, type Section } from "./model";
 
-export const NO_ISSUE = "—";
-
-interface Entry {
-  key: string; // issue ID or NO_ISSUE
-  runs: RunRow[];
-  last: number;
-}
-
-/** Entries of the left list: issues by their newest run, the standalone runs as one entry "Ohne Issue". */
-export function issueEntries(blocks: Block[]): Entry[] {
-  const entries: Entry[] = [];
-  const none: RunRow[] = [];
-  for (const b of blocks) {
-    if (b.kind === "issue") entries.push({ key: b.key, runs: b.runs, last: b.last });
-    else {
-      if (!none.length) entries.push({ key: NO_ISSUE, runs: none, last: b.last });
-      none.push(b.run);
-    }
-  }
-  return entries;
-}
+export { NO_ISSUE };
 
 /** Search in the Issues view: issue ID, issue title, run names, axis names and the short description. */
-export function entryMatches(e: Entry, issues: Record<string, IssueInfo>, q: string): boolean {
+export function entryMatches(e: Pick<Section, "key" | "runs">, issues: Record<string, IssueInfo>, q: string): boolean {
   const s = q.trim().toLowerCase();
   if (!s) return true;
   const hay = [e.key, issues[e.key]?.title ?? "", ...e.runs.map((r) => `${r.id} ${r.axes.join(" ")} ${r.short ?? ""}`)];
@@ -42,42 +23,22 @@ interface Props {
   onQ: (q: string) => void;
   selected: string | null;
   current: string | null;
+  state: ListState;
   onSelect: (key: string) => void;
+  onToggleSel: (id: string) => void;
+  onToggleOlder: (exp: string) => void;
   onOpen: (id: string) => void;
   onPath: (path: string) => void;
 }
 
-function bestByMerkmal(runs: RunRow[], project: ProjectInfo) {
-  const groups = new Map<string, { best: RunRow["best"]; label: string; value: number }>();
-  for (const r of runs) {
-    if (!r.best) continue;
-    const key = r.merkmal?.value ?? "";
-    const dir = project.metrics.find((m) => m.key === r.best!.metric)?.direction ?? "min";
-    const v = r.best.value * r.best.scale;
-    const g = groups.get(key);
-    if (!g || (dir === "max" ? v > g.value : v < g.value))
-      groups.set(key, { best: r.best, label: r.merkmal ? `${r.merkmal.label} ${r.merkmal.value}` : "", value: v });
-  }
-  return [...groups.entries()]
-    .sort((a, b) => Number(a[0]) - Number(b[0]) || a[0].localeCompare(b[0]))
-    .map(([, g]) => g);
-}
-
+/** Issues view (v0.3.2, P): the issue list on the left, the chosen issue with its experiment cards on the right. */
 export function IssuesView(p: Props) {
-  const blocks = useMemo(() => buildBlocks(p.runs), [p.runs]);
-  const entries = useMemo(() => issueEntries(blocks), [blocks]);
+  const entries = useMemo(() => buildSections(p.runs), [p.runs]);
   const shown = entries.filter((e) => entryMatches(e, p.issues, p.q));
   // Initial selection: the issue of the newest run.
   const sel = entries.find((e) => e.key === p.selected) ?? entries[0];
-  const info = sel && sel.key !== NO_ISSUE ? p.issues[sel.key] : undefined;
-  const exps = useMemo(() => {
-    if (!sel) return [];
-    const m = new Map<string, RunRow[]>();
-    for (const r of [...sel.runs].sort((a, b) => time(b.started) - time(a.started))) {
-      m.set(r.name, [...(m.get(r.name) ?? []), r]);
-    }
-    return [...m.entries()];
-  }, [sel]);
+  const none = sel?.key === NO_ISSUE;
+  const info = sel && !none ? p.issues[sel.key] : undefined;
 
   return (
     <div class="issues-view">
@@ -85,7 +46,7 @@ export function IssuesView(p: Props) {
         <input
           type="search"
           class="search"
-          placeholder="Issue, Lauf, Achse …"
+          placeholder="Issue oder Lauf suchen"
           aria-label="Issues durchsuchen"
           data-testid="search"
           value={p.q}
@@ -106,17 +67,13 @@ export function IssuesView(p: Props) {
               <span class="issue-item-top">
                 <StatusDot info={i} />
                 <span class="mono issue-key">{e.key === NO_ISSUE ? "Ohne Issue" : e.key}</span>
-                <span class="grow" />
                 <span class="muted tiny">{relTime(p.project.now, e.last)}</span>
+                {running && <span class="running-flag">● läuft</span>}
+                <span class="grow" />
+                <span class="muted tiny mono">{e.runs.length}</span>
               </span>
               <span class="issue-item-title">{e.key === NO_ISSUE ? "Läufe ohne zugeordnetes Issue" : (i?.title ?? "")}</span>
-              <span class="muted tiny issue-item-meta">
-                <span>
-                  {countLabel(e.runs.length, "Lauf", "Läufe")}
-                  {i?.status ? ` · ${i.status}` : ""}
-                </span>
-                {running && <span class="running-flag">● läuft</span>}
-              </span>
+              {i?.status && <span class="muted tiny issue-item-meta">{i.status}</span>}
             </button>
           );
         })}
@@ -126,7 +83,7 @@ export function IssuesView(p: Props) {
         <main class="issue-detail" data-testid="issue-detail" data-issue={sel.key}>
           <div class="issue-detail-head">
             <div class="issue-detail-line">
-              <span class="mono issue-detail-key">{sel.key === NO_ISSUE ? "Ohne Issue" : sel.key}</span>
+              <span class="mono issue-detail-key">{none ? "Ohne Issue" : sel.key}</span>
               {info?.status && (
                 <span class="status-pill" style={{ color: statusColor(info) }}>
                   {info.status}
@@ -134,82 +91,43 @@ export function IssuesView(p: Props) {
               )}
               <span class="grow" />
               {info?.url && (
-                <a class="btn-link" href={info.url} target="_blank" rel="noreferrer">
+                <a class="pill-link" href={info.url} target="_blank" rel="noreferrer">
                   In Linear ↗
                 </a>
               )}
               {info?.analysis && (
-                <button class="btn-link" title={info.analysis} onClick={() => p.onPath(info.analysis!)}>
+                <button class="pill-link" title={info.analysis} data-testid="link-report" onClick={() => p.onPath(info.analysis!)}>
                   Bericht
                 </button>
               )}
               {info?.deliverable && (
-                <button class="btn-link" title={info.deliverable} onClick={() => p.onPath(info.deliverable!)}>
+                <button class="pill-link" title={info.deliverable} data-testid="link-deliverables" onClick={() => p.onPath(info.deliverable!)}>
                   Deliverables
                 </button>
               )}
             </div>
-            <h1>{sel.key === NO_ISSUE ? "Läufe ohne zugeordnetes Issue" : (info?.title ?? sel.key)}</h1>
+            <h1>{none ? "Läufe ohne zugeordnetes Issue" : (info?.title ?? sel.key)}</h1>
+            <div class="muted" data-testid="issue-meta">
+              {countLabel(sel.experiments.length, "Experiment", "Experimente")} · {countLabel(sel.runs.length, "Lauf", "Läufe")} · zuletzt {relTime(p.project.now, sel.last)}
+            </div>
           </div>
-          <div class="stats">
-            <div class="stat">
-              <span class="muted tiny">Läufe</span>
-              <span class="mono stat-value">{formatInt(sel.runs.length)}</span>
-            </div>
-            <div class="stat">
-              <span class="muted tiny">Zellen</span>
-              <span class="mono stat-value">{formatInt(sel.runs.reduce((a, r) => a + r.cells, 0))}</span>
-              <span class="muted tiny">{formatInt(sel.runs.reduce((a, r) => a + r.errors, 0))} Fehler</span>
-            </div>
-            {bestByMerkmal(sel.runs, p.project).map((g) => (
-              <div class="stat" key={g.label}>
-                <span class="muted tiny">bester {g.best!.label}</span>
-                <span class="mono stat-value">
-                  {formatNumber(g.value, 2)}
-                  {g.best!.unit ? " " + g.best!.unit : ""}
-                </span>
-                <span class="muted tiny">{g.label}</span>
-              </div>
+          <div class="cards cols-2">
+            {sel.experiments.map((e) => (
+              <RunCard
+                key={e.name}
+                run={e.runs[0]}
+                older={e.runs.slice(1)}
+                project={p.project}
+                current={p.current}
+                selected={p.state.sel}
+                focus={p.state.focus}
+                olderOpen={!!p.state.olderOpen[e.name]}
+                onToggleSel={p.onToggleSel}
+                onToggleOlder={() => p.onToggleOlder(e.name)}
+                onOpen={p.onOpen}
+              />
             ))}
           </div>
-          {exps.map(([name, runs]) => (
-            <div class="exp-card" key={name} data-testid="exp-card">
-              <div class="exp-head">
-                <span class="mono exp-name">{name}</span>
-                <span class="muted tiny">{countLabel(runs.length, "Lauf", "Läufe")}</span>
-                <span class="grow" />
-                {runs[0].axes.map((a) => (
-                  <span class="chip mono" key={a}>
-                    {a}
-                  </span>
-                ))}
-              </div>
-              {runs.map((r) => (
-                <div class="exp-run" key={r.id} data-testid="exp-run" data-run={r.id}>
-                  <span class="when-col">
-                    <span class="mono">{relTime(p.project.now, r.started)}</span>
-                    <span class="mono muted tiny">{stamp(r.started)}</span>
-                  </span>
-                  <span class="tags-col">
-                    {r.short && (
-                      <span class="short-line" data-testid="short" title={r.short}>
-                        {r.short}
-                      </span>
-                    )}
-                    <span class="tags">
-                      <Flags run={r} current={p.current} />
-                      {r.migrated && <span class="flag">migriert</span>}
-                    </span>
-                  </span>
-                  <CellBar run={r} />
-                  <Best run={r} />
-                  <button class="btn" data-testid="open" onClick={() => p.onOpen(r.id)}>
-                    Öffnen
-                  </button>
-                </div>
-              ))}
-            </div>
-          ))}
         </main>
       )}
     </div>
