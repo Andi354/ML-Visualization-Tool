@@ -24,7 +24,9 @@ export type Row =
   | (Base & { type: "choice"; def: string; opts: [string, string][] })
   | (Base & { type: "bool"; def: boolean })
   | (Base & { type: "num"; def: number; min: number; max: number; step: number; unit: string })
-  | (Base & { type: "text"; def: string })
+  | (Base & { type: "text"; def: string; max?: number; ph?: string })
+  /** A colour (`#RRGGBB`) chosen from swatches. */
+  | (Base & { type: "color"; def: string; swatches: string[] })
   | (Base & { type: "action"; button: string; danger: boolean });
 
 export const CATS: Cat[] = [
@@ -53,7 +55,11 @@ const choice = (key: string, cat: string, sub: string, label: string, desc: stri
 const bool = (key: string, cat: string, sub: string, label: string, desc: string, def: boolean): Row => ({ key, cat, sub, label, desc, type: "bool", def });
 const num = (key: string, cat: string, sub: string, label: string, desc: string, def: number, min: number, max: number, step: number, unit: string): Row => ({ key, cat, sub, label, desc, type: "num", def, min, max, step, unit });
 const txt = (key: string, cat: string, sub: string, label: string, desc: string, def: string): Row => ({ key, cat, sub, label, desc, type: "text", def });
+const color = (key: string, cat: string, sub: string, label: string, desc: string, def: string, swatches: string[]): Row => ({ key, cat, sub, label, desc, type: "color", def, swatches });
 const act = (key: string, cat: string, sub: string, label: string, desc: string, button: string, danger = false): Row => ({ key, cat, sub, label, desc, type: "action", button, danger });
+
+/** Swatches of the project symbol; the first is the default. */
+export const PROJECT_COLORS = ["#8AA4FF", "#5FD4A0", "#F4A259", "#E58BD0", "#B39DFF", "#6CC6E8", "#D9C36A", "#B0B0BA"];
 
 export const ROWS: Row[] = [
   seg("look.density", "look", "layout", "Dichte", "Wie eng Tabellen, Kacheln und Leisten gepackt sind.", "comfortable", [["comfortable", "Bequem"], ["compact", "Kompakt"]]),
@@ -62,6 +68,9 @@ export const ROWS: Row[] = [
   seg("look.time", "look", "format", "Zeit in Läufe", "Wie die Zeit eines Laufs in der Liste steht.", "rel", [["rel", "vor 2 h"], ["abs", "14:32"]]),
   bool("look.motion", "look", "motion", "Animationen", "Aufleuchten nach Agent-Aktionen, Ein- und Ausklappen.", true),
 
+  { ...txt("project.name", "runs", "project", "Anzeigename", "Name des Projekts in der Leiste, im Suchfeld und in der Statusleiste. Leer = Name aus project.yaml. Die Datei bleibt unverändert.", ""), max: 60 } as Row,
+  { ...txt("project.short", "runs", "project", "Kürzel", "Zwei Zeichen im Symbol links oben. Leer = aus project.yaml oder die ersten beiden Zeichen des Namens.", ""), max: 2 } as Row,
+  color("project.color", "runs", "project", "Farbe", "Farbe des Projektsymbols.", PROJECT_COLORS[0], PROJECT_COLORS),
   choice("runs.feature", "runs", "project", "Lauf-Merkmal", "Merkmal, das zwischen Läufen wechselt und nach dem der Projektverlauf gefärbt wird.", "auto", [["auto", "automatisch"], ["none", "keins"]]),
   choice("runs.metric", "runs", "project", "Primäre Metrik", "Nach dieser Metrik sortieren Tabelle und „bester Wert“.", "yaml", [["yaml", "aus project.yaml"]]),
   seg("runs.descOpen", "runs", "open", "Beschreibung", "Ob die Beschreibung eines Laufs beim ersten Öffnen aufgeklappt ist.", "open", [["open", "aufgeklappt"], ["closed", "zugeklappt"]]),

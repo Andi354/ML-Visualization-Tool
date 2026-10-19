@@ -172,3 +172,56 @@ def test_the_size_slider_sets_the_size_and_keeps_steppers(sp):
     expect(row.get_by_test_id("num-value")).to_have_text("110 %")
     row.get_by_role("button", name="weniger").click()
     expect_file(sp, {"look.scale": 105})
+
+
+# --- project display (v0.3.2, O) --------------------------------------------------------------
+def test_project_name_letters_and_colour_change_the_symbol_search_box_and_status_bar(sp):
+    open_settings(sp)
+    sp.get_by_test_id("cat-runs").click()
+    card = sp.get_by_test_id("project-card")
+    expect(card).to_be_visible()
+    expect(sp.get_by_test_id("project-card-reset")).to_be_disabled()
+    name = row(sp, "project.name").locator("input")
+    expect(name).to_have_attribute("placeholder", re.compile(r".+"))
+    name.fill("Mein Projekt")
+    name.press("Enter")
+    row(sp, "project.short").locator("input").fill("mp")
+    row(sp, "project.short").locator("input").press("Enter")
+    row(sp, "project.color").locator('[data-color="#5FD4A0"]').click()
+    expect(sp.get_by_test_id("project-badge")).to_have_text("MP")
+    expect(sp.get_by_test_id("project-badge")).to_have_css("background-color", "rgb(95, 212, 160)")
+    expect(sp.get_by_test_id("palette-box")).to_contain_text("Mein Projekt")
+    expect(sp.get_by_test_id("sb-project")).to_contain_text("Mein Projekt")
+    expect(sp.get_by_test_id("settings-sub")).to_contain_text("Mein Projekt")
+    expect(row(sp, "project.name").get_by_test_id("changed-dot")).to_be_visible()
+    expect_file(sp, {"project.color": "#5FD4A0", "project.name": "Mein Projekt", "project.short": "mp"})
+    sp.get_by_test_id("project-card-reset").click()
+    expect_file(sp, None)
+    expect(sp.get_by_test_id("sb-project")).not_to_contain_text("Mein Projekt")
+
+
+def test_the_project_popover_edits_the_same_values_and_opens_the_settings(sp):
+    sp.get_by_test_id("project-badge").click()
+    pop = sp.get_by_test_id("project-popover")
+    expect(pop).to_be_visible()
+    sp.get_by_test_id("pp-input-name").fill("Popover Name")
+    pop.locator('[data-color="#F4A259"]').click()
+    expect(sp.get_by_test_id("palette-box")).to_contain_text("Popover Name")
+    expect_file(sp, {"project.color": "#F4A259", "project.name": "Popover Name"})
+    sp.keyboard.press("Escape")
+    expect(pop).to_have_count(0)
+    sp.get_by_test_id("project-badge").click()
+    sp.get_by_test_id("pp-all").click()
+    expect(sp.get_by_test_id("settings")).to_be_visible()
+    expect(row(sp, "project.name")).to_be_visible()
+    expect(sp.get_by_test_id("project-popover")).to_have_count(0)
+
+
+def test_a_colour_edited_by_hand_is_used_and_marks_no_swatch(sp):
+    path = sp.writable_root / ".mlviz" / "settings.json"
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps({"project.color": "#123456"}))
+    sp.reload()
+    expect(sp.get_by_test_id("project-badge")).to_have_css("background-color", "rgb(18, 52, 86)")
+    sp.get_by_test_id("project-badge").click()
+    expect(sp.get_by_test_id("project-popover").locator('[aria-checked="true"]')).to_have_count(0)

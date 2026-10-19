@@ -1595,3 +1595,107 @@ button.note-mark:hover {
   color: var(--accent);
   border-radius: 12px;
 }
+
+/* Project symbol, popover and settings card (v0.3.2, O) */
+button.project-badge {
+  cursor: pointer;
+  color: var(--bg);
+  border: 0;
+  border-radius: 9px;
+}
+button.project-badge:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.project-badge.big {
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  font-size: 16px;
+  color: var(--bg);
+  border: 0;
+  border-radius: 12px;
+  flex: none;
+}
+.project-pop {
+  position: fixed;
+  z-index: 55;
+  left: calc(var(--icon-bar) + 8px);
+  top: 12px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  background: var(--raised);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+}
+.pp-head,
+.project-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.project-card {
+  margin: 6px 0 10px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.pp-id {
+  min-width: 0;
+}
+.pp-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+.pp-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.pp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.pp-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-strong);
+}
+.ghost {
+  padding: 6px 14px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+.ghost:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--line-stronger);
+  background: transparent;
+}
+.swatches {
+  display: flex;
+  gap: 6px;
+}
+.sw {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background-clip: padding-box;
+}
+.sw[aria-checked="true"] {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
