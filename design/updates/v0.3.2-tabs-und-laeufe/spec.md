@@ -11,7 +11,7 @@ Prototype: follows · Builds on: v0.3.1.1
 | M · Große Läufe im Lauf-Tab: "x von y", mehr laden | decided (M3 · Seiten) |
 | N · Tab-Menü | decided (N3: menu + pinning) |
 | O · Projektkopf in den Einstellungen | decided (O2: rows + popover) |
-| Q · Widget-Kopf und Config-Titel (design from v0.2.4) | open |
+| Q · Widget-Kopf und Config-Titel (design from v0.2.4) | decided (as v0.2.4, new style) |
 | R · Neuer Stil im ganzen Tool | open |
 
 Style: the P5/P6 style (graphite, periwinkle accent, rounded shapes) is tried in the remaining blocks;
@@ -23,6 +23,47 @@ two Läufe views use it so far (`L-Liste`, `L-Issues`).
 To be written.
 
 ## Features
+
+### Q · Widget-Kopf und Config-Titel
+**What:** The widget header and the config widget title as designed and chosen in v0.2.4 (TIM-97,
+never built), taken over unchanged in content and drawn in the new style. The two parts below are the
+v0.2.4 spec; where it names old colours, the new style values apply: card `#1C1C20` with border
+`#2A2A31`, radius 12; chips `#24242A` with border `#2E2E35`, radius 6; tables in a box with radius 10,
+header row `#18181B`; best value `#5FD4A0` on `#16261F`; `null` `#6A6A74` italic; "+n weitere" in
+`#A9BBFF`; header buttons as 30 px icon buttons, "Einstellen" as pill, save in accent.
+
+#### Q.I · Widget header (all widgets)
+**What:** Every widget header has the same three parts instead of one grey run-on sentence: the title
+(the key statement from the data, unchanged), a "what" line, and — only where the widget holds axes at
+a value — a line of fixed values. The pattern applies to every built-in widget and to own widgets.
+**Parts:**
+- *Title:* as today (e.g. "timeF ist in 3 von 4 Regionen am besten").
+- *What line* (13 px, `text-2`): the metric and the grouping, metric and axis names in mono `#C9D3E3`, e.g. `test_mse_missing` je Region × `time_embedding`; followed by " · " and the aggregation note with a small ≡ icon, e.g. "≡ Replikate gemittelt" (`text-3`).
+- *Values line:* a label (11 px caps `text-3`) and the values as chips `name value` (mono 12 px, name `text-2`, value `text`, chip `raised` with `line` border, radius 4). Label "FEST" for axes held at their best value.
+**Behaviour:**
+- Widget with fixed axes (Vergleichstabelle, Je Region, Stabilität, …) → values line with the first 4 fixed values as chips and a link "+n weitere"; click → all chips, link "weniger".
+- Widget without fixed axes → no values line.
+- Hover a chip → tooltip `name = value` (long values are cut with "…" inside the chip).
+- A value `null` (Python `None`) → shown as "null" in `text-3` italic, everywhere in widgets, tables and chips (today it renders as an empty cell).
+- Saved image (export) → the values line shows all fixed values (no "+n weitere"); "Hinweise einblenden" off → what line and values line are left out, as the grey hints today.
+**Data:** the backend returns the header in parts instead of one `subtitle` string:
+`header: { what: [{text, mono?}], agg?: string, values?: { label: string, style: "chips" | "list", items: [[name, value]] } }`.
+`subtitle` stays for own widgets that only give a string; the tool renders it as the what line.
+Own widgets (v0.2, E) may give `header` in their description; the agent help (`src/mlviz/agent_guide.md`) describes both styles.
+**In the prototype:** `Q1-Widgets.dc.html` left card (`shown`, `toggleMore`, `cols`); the v0.2.4 original is `I7-Gewaehlt` on page "v0.2 · Agent".
+**Rejected:** I2 ("n fest" button with a fold-out list): one click more for information that is often needed. I3 (conditions below the table): separates the condition from what it qualifies.
+
+#### Q.J · Config widget title
+**What:** The config widget (scope "Ein Lauf") no longer puts the combination into a four-line bold
+title. The title is short, the combination is a two-column list.
+**Behaviour:**
+- Title "Beste Kombination" (17 px, 600), on the same line in `text-3`: the metric that decided it with its value in `best` (e.g. `test_mape_real 3,863 %`) and " · <run name>".
+- Below: a two-column grid of rows `name | value` (mono 12 px, name `text-3` 170 px, value `text`), rows separated by `line`; long values cut with "…", full value in the tooltip; `null` as in I.
+- Below that the config view (Blöcke | YAML) as today.
+- Scope "Kombination" (detail panel) keeps its title "Config: n Achsen im Grid, …".
+- This is the `values` part with `style: "list"` (label left out); own widgets can use the same style (Tim: both styles available to the agent).
+**In the prototype:** `Q1-Widgets.dc.html` right card (`combo`).
+**Rejected:** J1 (combination as chips): Tim prefers the list for the config, where the combination is the content, not a side condition.
 
 ### O · Projektkopf
 **What:** The project's display name, its two letters and the colour of the project symbol (rail, top
