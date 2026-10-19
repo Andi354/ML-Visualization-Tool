@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ml-visualization-tool"
-version = "0.3.1"
+version = "0.3.1.1"
 description = "Local results tool for ds-init projects: runs, experiments, comparisons and deliverables."
 requires-python = ">=3.11"
 dependencies = [
