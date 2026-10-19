@@ -10,14 +10,9 @@ Prototype: follows · Builds on: v0.3.1.1
 | P · Läufe-Bildschirm | decided (P5 list, P6 issues) |
 | M · Große Läufe im Lauf-Tab: "x von y", mehr laden | decided (M3 · Seiten) |
 | N · Tab-Menü | decided (N3: menu + pinning) |
-| O · Projektkopf in den Einstellungen | running |
+| O · Projektkopf in den Einstellungen | decided (O2: rows + popover) |
 | Q · Widget-Kopf und Config-Titel (design from v0.2.4) | open |
 | R · Neuer Stil im ganzen Tool | open |
-
-Running block O: O1 · rows Anzeigename, Kürzel, Farbe under Einstellungen › Läufe & Experiment › Projekt
-with a preview card and "Aus project.yaml"; O2 · O1 plus a popover at the project symbol in the rail;
-O3 · O1 plus an own image instead of the letters. Component `O-Projekt` with prop `variant`. Values are
-display only, stored in `.mlviz/settings.json`, empty = from `project.yaml`.
 
 Style: the P5/P6 style (graphite, periwinkle accent, rounded shapes) is tried in the remaining blocks;
 Tim likes it in the run tab (M) and the tab row (N); it becomes the style of the whole tool (feature R).
@@ -28,6 +23,30 @@ two Läufe views use it so far (`L-Liste`, `L-Issues`).
 To be written.
 
 ## Features
+
+### O · Projektkopf
+**What:** The project's display name, its two letters and the colour of the project symbol (rail, top
+left) can be changed: as rows in the settings and in a small popover that opens from the project
+symbol. Only the display changes; `project.yaml` stays as it is.
+**Behaviour:**
+- Einstellungen › Läufe & Experiment › Projekt → preview card (symbol 48 px, name, "So erscheint das
+  Projekt …", button "Aus project.yaml"), then rows Anzeigename (text), Kürzel (2 characters, shown
+  upper case), Farbe (8 swatches: `#8AA4FF` default, `#5FD4A0`, `#F4A259`, `#E58BD0`, `#B39DFF`,
+  `#6CC6E8`, `#D9C36A`, `#B0B0BA`), then the existing rows Lauf-Merkmal and Primäre Metrik.
+- Anzeigename empty → name from `project.yaml` (else folder name), shown as placeholder; Kürzel empty →
+  `viz.short` or the first two letters/digits of the name, shown as placeholder.
+- Any change → symbol in the rail, search box, settings header ("<name> · v0.3.2") and status bar
+  update at once; a changed row shows the blue "geändert" dot like other settings.
+- "Aus project.yaml" → all three back to their defaults (greyed out when nothing differs).
+- Click the project symbol in the rail → popover beside it: symbol, name, project path, Anzeigename,
+  Kürzel, Farbe, footer "Gespeichert im Projekt (.mlviz)" and "Alle Einstellungen" (opens the
+  settings at Projekt). Click outside or Esc → closes; values are saved as typed.
+- Stored as settings `project.name`, `project.short`, `project.color` in `.mlviz/settings.json`
+  (empty / default values are not written, as for every setting); they are part of the settings
+  search and of undo / redo in the settings tab.
+**In the prototype:** `O-Projekt.dc.html` with `variant` = `popover` (`togglePop`, `onName`,
+`onShort`, `swatches`, `reset`); `O2-Popover` on the canvas.
+**Rejected:** O1 alone (only in the settings, one step further away); O3 own image (not needed now).
 
 ### N · Tab-Menü
 **What:** Right-click on a tab opens a small menu to tidy up many open tabs, as in VS Code. Tabs can be
