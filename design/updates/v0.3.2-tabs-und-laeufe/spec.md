@@ -1,14 +1,14 @@
 # v0.3.2 · Tabs und Läufe
 
 Issue: TIM-109 · Canvas: https://claude.ai/artifact/5XSVMrDJk2PpQS9sGqWd8f, page "v0.3 · Einstellungen", section "v0.3.2 · Tabs und Läufe"
-Prototype: follows · Builds on: v0.3.1
+Prototype: follows · Builds on: v0.3.1.1
 
 ## State
 
 | Block | Status |
 |---|---|
 | P · Läufe-Bildschirm | decided (P5 list, P6 issues) |
-| M · Tabs und Suche in zwei Zeilen | open |
+| M · Große Läufe im Lauf-Tab: "x von y", mehr laden | open |
 | N · Tab-Menü | open |
 | O · Projektkopf in den Einstellungen | open |
 | Q · Widget-Kopf und Config-Titel (design from v0.2.4) | open |
