@@ -61,3 +61,20 @@ def test_dims_and_table_endpoints(client):
 def test_table_of_a_deleted_run_is_404(client):
     assert client.post("/api/runs/2020-01-01_000000_gone/table", json={}).status_code == 404
     assert client.get("/api/runs/2020-01-01_000000_gone/dims").status_code == 404
+
+
+def test_the_primary_metric_setting_beats_the_run_and_the_project(client):
+    rid = run_folder(RUNS[3])
+    metric = "test_mape"
+    body = {"dims": {"forecaster": {"mode": "agg"}}}
+    before = client.get(f"/api/runs/{rid}/dims").json()["primary_metric"]
+    assert before != metric
+    client.put("/api/settings", json={"set": {"runs.metric": metric}})
+    try:
+        assert client.get(f"/api/runs/{rid}/dims").json()["primary_metric"] == metric
+        assert client.post(f"/api/runs/{rid}/table", json=body).json()["sort"]["metric"] == metric
+        widget = client.post("/api/widgets/replicates", json={"scope": "combination", "run": rid, "settings": {}}).json()
+        assert widget["data"]["metric"]["key"] == metric
+    finally:
+        client.put("/api/settings", json={"unset": ["runs.metric"]})
+    assert client.get(f"/api/runs/{rid}/dims").json()["primary_metric"] == before

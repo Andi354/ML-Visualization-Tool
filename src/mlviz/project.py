@@ -167,6 +167,8 @@ class Project:
     paths: dict = field(default_factory=dict)
     metrics: list[Metric] = field(default_factory=list)
     primary_metric: str | None = None
+    #: The setting `runs.metric` (a metric key): beats the run's own `primary_metric` and the project's. Set per request by the server.
+    primary_override: str | None = None
     own_model: dict | None = None
     epochs: list[dict] = field(default_factory=list)
     #: Content of the project files that is present but in no known form (shown, not dropped silently).
@@ -208,6 +210,12 @@ class Project:
 
     def metric(self, key: str) -> Metric | None:
         return next((m for m in self.metrics if m.key == key), None)
+
+    def primary_for(self, run_meta: dict) -> str | None:
+        """The primary metric of a run: the setting, else the run's own, else the project's."""
+        if self.primary_override and self.metric(self.primary_override):
+            return self.primary_override
+        return run_meta.get("primary_metric") or self.primary_metric
 
     def first_real_metric(self) -> Metric | None:
         return next((m for m in self.metrics if m.family == "real"), None)

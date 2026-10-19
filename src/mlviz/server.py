@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import replace
 from pathlib import Path
 
 from fastapi import Body, FastAPI, Header, HTTPException, Request, Response
@@ -38,6 +39,11 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     def store_error(_, e: StoreError) -> JSONResponse:
         """ds-store could not read a run (missing package, `store_version` too new): say it plainly."""
         return JSONResponse({"detail": str(e), "store_error": True}, status_code=409)
+
+    def _with_primary() -> Project:
+        """The project with the setting `runs.metric` as the primary metric ("yaml" = the project's own rule)."""
+        key = agent.settings.get("runs.metric")
+        return replace(project, primary_override=None if key == "yaml" else key)
 
     @app.get("/api/project")
     def api_project() -> dict:
@@ -80,12 +86,12 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     @app.get("/api/runs/{run_id}/dims")
     def api_dims(run_id: str) -> dict:
         """Dimensions (axes, replicates, channels) with value counts, and the constant parameters."""
-        return aggregate.run_dims(_run_or_404(run_id))
+        return aggregate.run_dims(_run_or_404(run_id), _with_primary())
 
     @app.post("/api/runs/{run_id}/table")
     def api_table(run_id: str, query: dict = Body(default_factory=dict)) -> dict:
         """Group table under the given averaging, filters and sorting."""
-        return aggregate.run_table(_run_or_404(run_id), project, query)
+        return aggregate.run_table(_run_or_404(run_id), _with_primary(), query)
 
     @app.get("/api/runs/{run_id}/config")
     def api_config(run_id: str, combo: str | None = None) -> dict:
@@ -109,7 +115,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
     def api_widget(key: str, request: dict = Body(default_factory=dict)) -> dict:
         """Data of one widget for a scope: `{run, combo, settings}` (more scopes follow)."""
         try:
-            return widgets.compute(project, key, request)
+            return widgets.compute(_with_primary(), key, request)
         except KeyError:
             raise HTTPException(404, "unknown widget")
         except LookupError:

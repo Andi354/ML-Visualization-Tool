@@ -263,7 +263,7 @@ def replicates(project, req: dict) -> dict:
     if not reps:
         return {"unavailable": "Dieser Lauf hat keine Wiederholungen"}
     metrics = [m for m in project.metrics if m.key in run.cells.columns]
-    chosen = req["settings"].get("metric") or run.meta.get("primary_metric") or project.primary_metric
+    chosen = req["settings"].get("metric") or project.primary_for(run.meta)
     metric = next((m for m in metrics if m.key == chosen), metrics[0] if metrics else None)
     if metric is None:
         return {"unavailable": "Der Lauf hat keine Metriken"}
