@@ -35,7 +35,7 @@ def note_text(page):
 def test_the_status_bar_sits_under_the_whole_window_and_shows_the_project(live):
     box = live.get_by_test_id("status-bar").bounding_box()
     assert box["height"] == 24 and box["y"] + box["height"] == 900 and box["width"] == 1440
-    expect(live.get_by_test_id("sb-project")).to_contain_text("Demo Bench · v0.3.1")
+    expect(live.get_by_test_id("sb-project")).to_contain_text("Demo Bench · v0.3.2")
     expect(live.get_by_test_id("sb-agent")).to_have_text("✦ Agent · bereit")
 
 

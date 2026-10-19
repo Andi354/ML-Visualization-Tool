@@ -167,7 +167,7 @@ def test_settings_header_rail_and_rows_follow_the_prototype(page):
     page.get_by_test_id("settings-icon").click()
     sp = page.get_by_test_id("settings")
     expect(sp.locator(".settings-title-main")).to_have_text("Einstellungen")
-    expect(page.get_by_test_id("settings-sub")).to_contain_text("Demo Bench · v0.3.1")
+    expect(page.get_by_test_id("settings-sub")).to_contain_text("Demo Bench · v0.3.2")
     box = sp.locator(".settings-search-box")
     assert box.locator("svg").count() == 1 and box.locator("kbd").inner_text() == "/"
     pill = page.get_by_test_id("only-changed")
