@@ -47,7 +47,7 @@ def test_the_first_opening_is_400_by_520_and_24px_from_the_corner_above_the_stat
     open_window(page)
     b = box(page, "agent-window")
     assert (round(b["width"]), round(b["height"])) == (400, 520)
-    assert round(W - (b["x"] + b["width"])) == 24 and round(H - 24 - (b["y"] + b["height"])) == 24  # 24 px above the status bar
+    assert round(W - (b["x"] + b["width"])) == 24 and round(H - 26 - (b["y"] + b["height"])) == 24  # 24 px above the status bar
 
 
 def test_the_icon_minimises_an_open_window_and_opens_a_closed_or_minimised_one(agent_page):

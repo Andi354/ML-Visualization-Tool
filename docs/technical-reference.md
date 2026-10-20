@@ -72,10 +72,10 @@ of the frame (`project-warnings`). A file that does not exist is no warning (the
 | `GET /api/runs` | all runs, newest first, with counts, best value, Lauf-Merkmal |
 | `GET /api/runs/{id}` | one run (404 when gone) |
 | `GET /api/runs/{id}/dims` | sidebar: dimensions (axes with more than one value, replicates, channel) with value counts and section, constants of the resolved config |
-| `POST /api/runs/{id}/table` | group table. Body: `dims` (`{dim: {mode: split\|agg, sel: [values]}}`), `sort` (`metric`, `stat` mean/min/max/n, `dir`), `limit` (default 200, max 1000), `overview` |
+| `POST /api/runs/{id}/table` | group table. Body: `dims` (`{dim: {mode: split\|agg, sel: [values]}}`), `sort` (`metric`, `stat` mean/min/max/n, `dir`), `limit` (default 200, max 1000; the run tab asks 100, 200 or 500) with `offset` (the page; the answer has `groups` = all combinations, `shown`, `offset`), `overview` |
 | `GET /api/runs/{id}/config?combo=` | resolved config for the config view: grid axes and replicates, blocks with entries, YAML lines with markers. `combo` is JSON `{axis: value}` and applies one combination to the resolved config |
 | `GET /api/widgets/catalog?scope=` | the widget catalog: key, label, question, scopes, settings, `requires` |
-| `POST /api/widgets/{key}` | data of one widget: `{run, combo, settings}` -> `{title, subtitle, note, unavailable, options, data}` |
+| `POST /api/widgets/{key}` | data of one widget: `{run, combo, settings}` -> `{title, title_meta?, subtitle, header?, unavailable, options, data}` (`header`, v0.3.2: `{what: [{text, mono?}], agg?, values?: {label?, style: chips\|list, items}}`, built by `widgets/common.make_header`; no `note` any more) |
 | `GET /api/folders?path=` | sub-folders of a project folder (no `runs/`, no hidden folders), for the target picker |
 | `POST /api/deliverables` | writes base64 PNGs below a project folder: `{target, files: [{name, data, title}], title, issue, runs, configs, overwrite}`; 409 with the clashing names unless `overwrite` |
 | `GET /api/agent` | chats of the project (newest first, without messages), the mode of the agent (`direct`, `mixed`, `confirm`) `limits` (subscription usage in percent, if Claude Code reported it) and `now`, the clock of the tool (the cache display counts from it) |
@@ -132,7 +132,7 @@ the same data as "Blöcke" or "YAML"; the choice is stored per project.
 A *widget* answers one question for a scope (`combination`, `run`, `two-runs`, `project`). The catalog
 (`widgets/registry.py`) lists key, label, question, scopes, settings (defaults) and what the run must
 provide (`curves`, `predictions`). Each widget function returns the data, a key-statement title
-generated from it, a subtitle (what is compared) and a note; a widget that cannot be drawn returns
+generated from it, a subtitle (what is compared) and, since v0.3.2, a `header` in parts (the web renders it in `widgets/header.tsx`: what line, aggregation note, fixed values as chips with "+n weitere" or as a list; a subtitle without header is the what line); a widget that cannot be drawn returns
 `unavailable` with the reason instead of data and cannot be saved. Dynamic setting options (channels,
 combinations to compare with) come back in `options`. Numbers in titles use the German format.
 
@@ -179,7 +179,7 @@ In the save dialog an *image* is one file and holds one widget or, after "Zu ein
 (`web/src/analysis/images.ts`, pure functions): `combine` merges the selected images in list order into
 a group at the place of the first, `split` ("Trennen") and `detach` ("lösen") undo it, `reorder` moves a
 member, the layout is `stack` or `side`. A group has one title (default "A und B"), its parts show no title
-of their own but their subtitle and note when "Hinweise einblenden" is on (default off for a group, on for
+of their own but their what line and values chips when "Hinweise einblenden" is on (default off for a group, on for
 a single image), and one footer. Group file names are `NN_<type>+<type>.png`.
 
 ## Running the tool
@@ -355,9 +355,12 @@ fields `short`, `purpose`, `shows`, `notes`, `expectation`, `compare_to` and a l
 
 - **`short` (Läufe):** `Run.short` is the `short` of the run list, one line, cut to `store.SHORT_MAX` (100)
   characters plus "…" (`store.cut_short`); empty counts as none. `/api/runs` carries `short` and
-  `has_description`. The run list shows it as its own line (`.short-line`) between name and axes, the view
-  Issues above the tags; the search of Läufe and the Issues view also matches it. The agent's `find_runs`
+  `has_description`. A run card (`web/src/runs/RunCard.tsx`, the same in the list and the Issues view) shows it
+  in two lines (`.short-line`) between name and axis chips, or the italic note "Keine Kurzbeschreibung"; the search of Läufe and the Issues view also matches it. The agent's `find_runs`
   (`text`) matches the run id, `short`, `purpose` and `shows`.
+- **Läufe (v0.3.2):** one section per issue and a last one "ohne Issue" (`model.buildSections`), each experiment is a card
+  with its newest run and the older ones folded (`older-toggle`); three overview tiles on top (`model.overviewTiles`);
+  ticking cards fills the floating compare bar (Vergleichen from two).
 - **Description (run tab):** `GET /api/runs/{id}/description` answers `{description}`: `null` without
   `description.yaml`, else `descriptions.describe`: `short`, `purpose` and `expectation` (text), `shows` and
   `notes` (lists), `compare_to` (`{name, run}`, `run` = the folder the name resolves to, by folder name first,
@@ -392,7 +395,7 @@ only) and `applyEffects` (`data-density`, `data-motion`, `zoom` on `<html>`, the
 Code that needs a value calls `setting(key)`; it is read when used, so a change applies without a reload.
 The tab is `SETTINGS_TAB` (`"@settings"`) in the frame state; Ctrl/Cmd+, opens it.
 
-Effects of the settings: `look.*` (see above), `runs.feature` (`listing.run_listing`), `runs.metric` (list "best value" and, as `Project.primary_override`, the primary metric of table sort, dims and widget defaults; set per request in `server._with_primary`), `runs.descOpen` and
+Effects of the settings: `project.name`, `project.short`, `project.color` (display only: the project symbol, search box, status bar and settings header, `web/src/settings/projectLook.ts`; the browser state keeps its keys on the name from project.yaml), `look.*` (see above), `runs.feature` (`listing.run_listing`), `runs.metric` (list "best value" and, as `Project.primary_override`, the primary metric of table sort, dims and widget defaults; set per request in `server._with_primary`), `runs.descOpen` and
 `runs.overview` (first open of a run tab), `runs.columns` (metrics open as columns until the user picks their own; names by key or label, `presetMetrics` in `experiment/model.ts`), `ana.width` (width of widgets added), `ana.template` (first board),
 `exp.*` (`analysis/images.ts`: file name, folder; `SaveDialog`, `agentSave`: background, pixel ratio, footer),
 `agent.cacheWarn`, `agent.quota`, `agent.claude` (`agent_run.command`).
@@ -487,6 +490,6 @@ as they stand in the prototype. The agent window's bounds end at the top of the 
 - `web/src/runs/model.ts`: pure logic of the Läufe area (filters, blocks, texts, timeline); components next to it.
 - `src/mlviz/server.py`: FastAPI app, `/api/...`, serves `src/mlviz/static` (the built frontend).
 - `src/mlviz/fixture.py`: synthetic demo project in the run format, written with the writers of `ds-store` (`mlviz demo`), the base of all tests. The package's `write_example_run` (8 cells) is too small for the views; `tests/test_store.py` uses it to check that the tool reads what the package writes.
-- `web/src/state/frame.ts`: frame state (areas, tabs). Stored per project in `localStorage`
+- `web/src/state/frame.ts`: frame state (areas, tabs, `pinned` tabs, which stay left and are skipped by the bulk closes of the tab menu `frame/TabMenu.tsx`; `close-tabs`, `pin-tab`, `unpin-tab`, `restore-tabs`, `show-in-runs`). Stored per project in `localStorage`
   (`mlviz:v1:<project>:...`), every access guarded.
 - `web/src/tokens.css` is generated from `design/tokens.json` (`npm run tokens`); never edit it.

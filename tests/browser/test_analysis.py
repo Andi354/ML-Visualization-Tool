@@ -57,7 +57,7 @@ def test_tile_header_has_name_question_settings_remove_and_a_small_save_button(p
     assert save.locator("svg").count() == 1
     box = save.bounding_box()
     assert box["width"] == 26 and box["height"] == 26
-    assert save.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(110, 155, 245)"
+    assert save.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(138, 164, 255)"
     # the save button is the rightmost control of the header
     xs = t.locator(".w-head > *").evaluate_all("els => els.map(e => e.getBoundingClientRect().left)")
     assert xs == sorted(xs)
@@ -77,7 +77,8 @@ def test_compare_table_best_per_column_first_row_bold_and_texts(page):
     t = tile(page, "compare-table")
     expect(t.get_by_test_id("widget-title")).to_have_text("rep-net ist in allen 6 Spalten am besten")
     expect(t.locator(".w-sub")).to_contain_text("forecaster × MAPE, MAE, MSE, RMSE, Commitment Cost, Asymmetrische Kosten")
-    expect(t.locator(".w-note")).to_have_text("niedriger = besser · grün = bester Wert je Spalte")
+    expect(t.locator(".w-note")).to_have_count(0)  # no hint lines (v0.3.2, Q.K)
+    expect(t.locator(".w-agg")).to_have_text("· ≡ Replikate gemittelt")
     rows = t.get_by_test_id("ct-row")
     expect(rows).to_have_count(5)
     assert rows.first.evaluate("e => getComputedStyle(e.cells[0]).fontWeight") == "600"  # own model
@@ -116,7 +117,12 @@ def test_per_region_table_and_bars(page):
 def test_config_tile_shows_the_best_combination_with_blocks_open(page):
     go(page)
     t = tile(page, "config")
-    expect(t.get_by_test_id("widget-title")).to_have_text("Beste Config: forecaster = rep-net")
+    expect(t.get_by_test_id("widget-title")).to_contain_text("Beste Kombination")
+    expect(t.get_by_test_id("widget-title-meta")).to_contain_text("test_mape")
+    expect(t.get_by_test_id("widget-title-meta").locator(".w-best")).to_have_text(re.compile(r"^\s*\d,\d+\s%$"))
+    expect(t.get_by_test_id("widget-list").locator(".w-list-row")).to_have_count(1)
+    expect(t.get_by_test_id("widget-list").locator(".w-list-row").first).to_contain_text("forecaster")
+    expect(t.get_by_test_id("widget-list").locator(".w-list-row").first).to_contain_text("rep-net")
     expect(t.get_by_test_id("cfg-entry").first).to_be_visible()  # not folded in the analysis
     expect(t.locator('[data-axis="forecaster"] .cfg-chip.current')).to_have_text("rep-net")
 
@@ -133,7 +139,7 @@ def test_axis_effect_and_stability(page):
     expect(stab.get_by_test_id("stab-row")).to_have_count(3)
     expect(stab.get_by_test_id("rep-dot")).to_have_count(9)  # 3 rows x 3 seeds
     expect(stab.get_by_test_id("mean-tick")).to_have_count(3)
-    expect(stab.locator(".w-note")).to_contain_text("deterministische Modelle variieren nur über Folds")
+    expect(stab.locator(".w-sub")).to_contain_text("je Wiederholung")
 
 
 # --- board control ------------------------------------------------------------------------------------
@@ -222,7 +228,7 @@ def test_preview_shows_the_image_exactly_as_exported_width_background_footer(pag
     expect(card.get_by_test_id("export-footer")).to_have_text(re.compile(rf"^{re.escape(RUN)} · Epoche eval-all-windows · [0-9a-f]{{7}}$"))
     dialog.get_by_test_id("bg-dark").click()
     expect(card).to_have_attribute("data-theme", "dark")
-    assert card.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(13, 16, 22)"
+    assert card.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(19, 19, 21)"
     dialog.get_by_test_id("bg-light").click()
     expect(card).to_have_attribute("data-theme", "light")
 
@@ -237,7 +243,6 @@ def test_title_hints_and_footer_are_switchable_per_image(page):
     expect(card.locator(".w-sub")).to_have_count(1)
     dialog.get_by_test_id("hints-check").uncheck()
     expect(card.locator(".w-sub")).to_have_count(0)
-    expect(card.locator(".w-note")).to_have_count(0)
     expect(card.get_by_test_id("widget-title")).to_be_visible()  # the title stays
     dialog.get_by_test_id("footer-check").uncheck()
     expect(card.get_by_test_id("export-footer")).to_have_count(0)

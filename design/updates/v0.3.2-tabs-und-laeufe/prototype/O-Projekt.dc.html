@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Projektkopf in den Einstellungen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131315}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,input:focus-visible{outline:2px solid #8AA4FF;outline-offset:2px}
+.scr{scrollbar-width:thin;scrollbar-color:#34343C transparent}
+.scr::-webkit-scrollbar{width:10px}
+.scr::-webkit-scrollbar-thumb{background:#34343C;border-radius:6px;border:3px solid transparent;background-clip:padding-box}
+.cat{display:flex;align-items:center;gap:10px;width:100%;height:36px;padding:0 12px;border:0;border-radius:9px;background:transparent;color:#B0B0BA;font:400 13px 'IBM Plex Sans',sans-serif;text-align:left;cursor:pointer}
+.cat:hover{background:#1F1F24;color:#EEEEF1}
+.cat.on{background:#262B42;color:#EEEEF1}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:center;padding:16px 0;border-top:1px solid #24242A}
+.lbl{font-weight:600;font-size:13.5px}
+.desc{color:#8E8E99;font-size:12.5px;line-height:1.45;margin-top:3px}
+.inp{width:100%;box-sizing:border-box;height:34px;padding:0 12px;background:#1C1C20;border:1px solid #2E2E35;border-radius:9px;color:#EEEEF1;font:400 13px 'IBM Plex Sans',sans-serif}
+.inp::placeholder{color:#5E5E68}
+.inp.mono{font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.08em;width:80px;text-align:center}
+.sw{width:28px;height:28px;border-radius:8px;border:2px solid transparent;cursor:pointer;padding:0}
+.ghost{font:400 12.5px 'IBM Plex Sans',sans-serif;color:#B0B0BA;background:transparent;border:1px solid #2E2E35;border-radius:16px;padding:6px 12px;cursor:pointer}
+.ghost:hover{color:#EEEEF1;border-color:#3A3A44}
+.chg{width:6px;height:6px;border-radius:50%;background:#8AA4FF;display:inline-block;margin-left:8px;vertical-align:middle}
+</style>
+</helmet>
+<div onClick="{{closePop}}" style="width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; background: #131315; color: #EEEEF1; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden; position: relative;">
+<div style="flex: 1; min-height: 0; display: flex;">
+<nav aria-label="Bereiche" style="width: 56px; flex-shrink: 0; background: #18181B; border-right: 1px solid #26262C; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 0; position: relative;">
+<button onClick="{{togglePop}}" title="{{name}}" aria-label="Projekt: {{name}}" style="{{avatarSt}}"><sc-if value="{{hasImg}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#131315" stroke-width="1.8" aria-hidden="true"><path d="M3 15l4-6 3 4 2-3 5 5"></path><circle cx="14" cy="6" r="2"></circle></svg></sc-if><sc-if value="{{noImg}}" hint-placeholder-val="{{true}}">{{short}}</sc-if></button>
+<button aria-label="Läufe" style="width: 38px; height: 38px; border-radius: 9px; border: 0; background: transparent; color: #7C7C87; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5h12M3 9h12M3 13.5h8"></path></svg></button>
+<button aria-label="Analyse" style="width: 38px; height: 38px; border-radius: 9px; border: 0; background: transparent; color: #7C7C87; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="3" width="5.5" height="12" rx="1.5"></rect><rect x="10" y="3" width="5.5" height="12" rx="1.5"></rect></svg></button>
+<span style="flex: 1;"></span>
+<button aria-label="Einstellungen" style="width: 38px; height: 38px; border-radius: 9px; border: 0; background: #262B42; color: #A9BBFF;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="9" cy="9" r="2.4"></circle><path d="M9 1.8v2M9 14.2v2M1.8 9h2M14.2 9h2M3.9 3.9l1.4 1.4M12.7 12.7l1.4 1.4M3.9 14.1l1.4-1.4M12.7 5.3l1.4-1.4"></path></svg></button>
+<button aria-label="Agent" style="width: 38px; height: 38px; border: 0; background: transparent; color: #7C7C87;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 2.5l1.4 3.6 3.6 1.4-3.6 1.4L9 12.5 7.6 8.9 4 7.5l3.6-1.4z"></path></svg></button>
+</nav>
+
+<sc-if value="{{popOpen}}" hint-placeholder-val="{{false}}">
+<div onClick="{{stop}}" style="position: absolute; left: 62px; top: 10px; z-index: 30; width: 330px; padding: 16px; box-sizing: border-box; background: #222227; border: 1px solid #34343C; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.55); display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; align-items: center; gap: 12px;"><span style="{{bigAvatarSt}}">{{short}}</span><div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-weight: 600; font-size: 14px;">{{name}}</span><span style="font: 400 11.5px 'IBM Plex Mono', monospace; color: #7C7C87; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">~/projects/repnet-bench</span></div></div>
+<label style="display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: #B0B0BA;">Anzeigename<input class="inp" value="{{nameVal}}" placeholder="repnet-bench" onInput="{{onName}}"></label>
+<div style="display: flex; gap: 12px; align-items: flex-end;">
+<label style="display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: #B0B0BA;">Kürzel<input class="inp mono" maxLength="2" value="{{shortVal}}" placeholder="{{autoShort}}" onInput="{{onShort}}"></label>
+<div style="display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: #B0B0BA;">Farbe<div style="display: flex; gap: 5px;"><sc-for list="{{swatches}}" as="w" hint-placeholder-count="8"><button class="sw" style="{{w.st}}" onClick="{{w.on}}" aria-label="{{w.label}}" aria-pressed="{{w.on2}}"></button></sc-for></div></div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding-top: 4px; border-top: 1px solid #34343C;"><span style="flex: 1;"></span><button class="ghost" onClick="{{stop}}">Alle Einstellungen</button></div>
+</div>
+</sc-if>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+<div style="flex-shrink: 0; height: 38px; display: flex; align-items: flex-end; gap: 2px; padding: 0 8px; background: #18181B; border-bottom: 1px solid #26262C; position: relative;">
+<div style="height: 30px; padding: 0 14px; display: flex; align-items: center; color: #7C7C87;">Läufe</div>
+<div style="height: 30px; padding: 0 14px; display: flex; align-items: center; gap: 8px; background: #131315; border: 1px solid #26262C; border-bottom: 0; border-radius: 8px 8px 0 0; margin-bottom: -1px;">Einstellungen <span style="color: #7C7C87;">×</span></div>
+<div style="position: absolute; left: 50%; transform: translateX(-50%); top: 7px; width: 340px; height: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; background: #222227; color: #7C7C87; font-size: 12px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5L14 14"></path></svg>{{name}}</div>
+</div>
+<div style="flex: 1; min-height: 0; display: flex;">
+<aside style="width: 250px; flex-shrink: 0; padding: 22px 12px; box-sizing: border-box; border-right: 1px solid #26262C; background: #161618; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; align-items: center; gap: 8px; margin: 0 4px 14px; padding: 7px 12px; background: #1C1C20; border: 1px solid #2E2E35; border-radius: 18px; color: #7C7C87; font-size: 12px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5L14 14"></path></svg>Einstellungen suchen<span style="margin-left: auto; font: 400 11px 'IBM Plex Mono', monospace; border: 1px solid #34343C; border-radius: 4px; padding: 0 5px;">/</span></div>
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #7C7C87; padding: 4px 12px 6px;">KATEGORIEN</span>
+<button class="cat">Darstellung</button>
+<button class="cat on">Läufe &amp; Experiment</button>
+<button class="cat">Analyse &amp; Widgets</button>
+<button class="cat">Export</button>
+<button class="cat">Agent</button>
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #7C7C87; padding: 14px 12px 6px;">MEHR</span>
+<button class="cat">Daten &amp; Erweitert</button>
+</aside>
+<main class="scr" style="flex: 1; min-width: 0; overflow-y: auto; padding: 28px 44px 80px; box-sizing: border-box;">
+<div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px;"><span style="font-size: 22px; font-weight: 600;">Läufe &amp; Experiment</span><span style="color: #7C7C87;">{{name}} · v0.3.2</span></div>
+<div style="color: #8E8E99; margin-bottom: 26px;">Läufe-Liste, Lauf-Tab und was beim Öffnen eines Laufs zu sehen ist.</div>
+<div style="font-size: 16px; font-weight: 600; margin-bottom: 14px;">Projekt</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 16px 18px; margin-bottom: 8px; background: #1C1C20; border: 1px solid #2A2A31; border-radius: 12px;">
+<span style="{{bigAvatarSt}}"><sc-if value="{{hasImg}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="#131315" stroke-width="1.8" aria-hidden="true"><path d="M3 15l4-6 3 4 2-3 5 5"></path><circle cx="14" cy="6" r="2"></circle></svg></sc-if><sc-if value="{{noImg}}" hint-placeholder-val="{{true}}">{{short}}</sc-if></span>
+<div style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0;"><span style="font-size: 15px; font-weight: 600;">{{name}}</span></div>
+<button class="ghost" onClick="{{reset}}" disabled="{{noChange}}" style="{{resetSt}}">Aus project.yaml</button>
+</div>
+
+<div class="row"><div><div class="lbl">Anzeigename<sc-if value="{{nameChanged}}" hint-placeholder-val="{{false}}"><span class="chg" title="geändert"></span></sc-if></div><div class="desc">Leer lassen: Name aus <span style="font-family: 'IBM Plex Mono', monospace;">project.yaml</span> (repnet-bench). Ändert nichts am Projekt selbst.</div></div><input class="inp" value="{{nameVal}}" placeholder="repnet-bench" onInput="{{onName}}" aria-label="Anzeigename"></div>
+<div class="row"><div><div class="lbl">Kürzel<sc-if value="{{shortChanged}}" hint-placeholder-val="{{false}}"><span class="chg" title="geändert"></span></sc-if></div><div class="desc">Zwei Zeichen im Projektsymbol. Leer: aus dem Namen ({{autoShort}}).</div></div><input class="inp mono" maxLength="2" value="{{shortVal}}" placeholder="{{autoShort}}" onInput="{{onShort}}" aria-label="Kürzel"></div>
+<div class="row"><div><div class="lbl">Farbe<sc-if value="{{colorChanged}}" hint-placeholder-val="{{false}}"><span class="chg" title="geändert"></span></sc-if></div><div class="desc">Farbe des Projektsymbols. Hilft, mehrere offene Projekte auseinanderzuhalten.</div></div><div style="display: flex; gap: 6px;"><sc-for list="{{swatches}}" as="w" hint-placeholder-count="8"><button class="sw" style="{{w.st}}" onClick="{{w.on}}" aria-label="{{w.label}}" aria-pressed="{{w.on2}}"></button></sc-for></div></div>
+<sc-if value="{{isImage}}" hint-placeholder-val="{{false}}">
+<div class="row"><div><div class="lbl">Bild<sc-if value="{{hasImg}}" hint-placeholder-val="{{false}}"><span class="chg" title="geändert"></span></sc-if></div><div class="desc">Eigenes Logo statt Kürzel, quadratisch, PNG oder SVG. Liegt in <span style="font-family: 'IBM Plex Mono', monospace;">.mlviz/</span> des Projekts.</div></div>
+<div style="display: flex; gap: 8px; align-items: center;"><sc-if value="{{noImg}}" hint-placeholder-val="{{true}}"><button class="ghost" onClick="{{setImg}}" style="flex: 1; height: 54px; border-style: dashed; border-radius: 10px;">Bild hierher ziehen oder auswählen</button></sc-if><sc-if value="{{hasImg}}" hint-placeholder-val="{{false}}"><span style="flex: 1; font: 400 12px 'IBM Plex Mono', monospace; color: #B0B0BA;">logo.png · 64 × 64</span><button class="ghost" onClick="{{clearImg}}">Entfernen</button></sc-if></div></div>
+</sc-if>
+<div class="row"><div><div class="lbl">Lauf-Merkmal</div><div class="desc">Merkmal, das zwischen Läufen wechselt und nach dem der Projektverlauf gefärbt wird.</div></div><span style="justify-self: start; font-size: 12.5px; color: #B0B0BA; background: #1C1C20; border: 1px solid #2E2E35; border-radius: 16px; padding: 6px 12px;">automatisch ▾</span></div>
+<div class="row"><div><div class="lbl">Primäre Metrik</div><div class="desc">Nach dieser Metrik sortieren Tabelle und „bester Wert“.</div></div><span style="justify-self: start; font-size: 12.5px; color: #B0B0BA; background: #1C1C20; border: 1px solid #2E2E35; border-radius: 16px; padding: 6px 12px;">aus project.yaml ▾</span></div>
+</main>
+</div>
+</div>
+</div>
+<footer style="flex-shrink: 0; height: 26px; display: flex; align-items: center; gap: 16px; padding: 0 14px; background: #18181B; border-top: 1px solid #26262C; font-size: 12px; color: #B0B0BA;">
+<span style="color: #8AA4FF;">● 1 Lauf läuft · 46 %</span><span style="flex: 1;"></span><span>Agent</span><span>{{name}} · v0.3.2</span>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"select","options":["rows","popover","image"],"default":"popover"},"$preview":{"width":1440,"height":860}}'>
+class Component extends DCLogic {
+renderVals() {
+  const P = this.props || {};
+  const variant = P.variant || 'popover';
+  const st = this.state || {};
+  const set = (p) => this.setState(p);
+  const YAML_NAME = 'repnet-bench';
+  const COLORS = [['#8AA4FF', 'Blau'], ['#5FD4A0', 'Grün'], ['#F4A259', 'Orange'], ['#E58BD0', 'Rosa'], ['#B39DFF', 'Lila'], ['#6CC6E8', 'Türkis'], ['#D9C36A', 'Gelb'], ['#B0B0BA', 'Grau']];
+  const nameVal = st.name !== undefined ? st.name : (variant === 'rows' ? 'REP-Net Benchmark' : '');
+  const shortVal = st.short !== undefined ? st.short : (variant === 'rows' ? 'RN' : '');
+  const color = st.color || (variant === 'rows' ? '#5FD4A0' : '#8AA4FF');
+  const name = nameVal.trim() || YAML_NAME;
+  const autoShort = name.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase();
+  const short = (shortVal.trim() || autoShort).toUpperCase().slice(0, 2);
+  const img = !!st.img;
+  const popOpen = st.pop !== undefined ? st.pop : variant === 'popover';
+  const noChange = !nameVal && !shortVal && color === '#8AA4FF' && !img;
+  return {
+    isImage: variant === 'image',
+    name, nameVal, shortVal, autoShort, short, hasImg: img, noImg: !img,
+    nameChanged: !!nameVal, shortChanged: !!shortVal, colorChanged: color !== '#8AA4FF',
+    onName: (e) => set({ name: e.target.value }),
+    onShort: (e) => set({ short: e.target.value.slice(0, 2) }),
+    swatches: COLORS.map(([c, l]) => ({ label: l, on2: c === color, on: (e) => { if (e && e.stopPropagation) e.stopPropagation(); set({ color: c }); },
+      st: 'background: ' + c + '; border-color: ' + (c === color ? '#EEEEF1' : 'transparent') + '; box-shadow: ' + (c === color ? '0 0 0 2px #131315 inset' : 'none') + ';' })),
+    avatarSt: "width: 34px; height: 34px; border-radius: 9px; border: 0; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font: 600 12.5px 'IBM Plex Sans', sans-serif; color: #131315; cursor: pointer; background: " + color + ';' + (popOpen ? ' box-shadow: 0 0 0 2px #18181B, 0 0 0 4px ' + color + ';' : ''),
+    bigAvatarSt: "width: 48px; height: 48px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; font: 600 17px 'IBM Plex Sans', sans-serif; color: #131315; background: " + color + ';',
+    reset: () => set({ name: '', short: '', color: '#8AA4FF', img: false }),
+    noChange, resetSt: noChange ? 'opacity: .4; cursor: default;' : '',
+    setImg: () => set({ img: true }), clearImg: () => set({ img: false }),
+    popOpen,
+    togglePop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); if (variant === 'popover') set({ pop: !popOpen }); },
+    closePop: () => { if (popOpen) set({ pop: false }); },
+    stop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); }
+  };
+}
+}
+</script>
+</body>
+</html>

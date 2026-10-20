@@ -160,6 +160,18 @@ def test_more_than_200_groups_renders_the_first_200(project, big):
     assert t["groups"] == 294 and t["shown"] == len(t["rows"]) == 200 and t["cells"] == 294
 
 
+def test_offset_pages_through_the_sorted_groups(project, big):
+    sort = {"metric": M, "dir": "asc"}
+    first = table(big, project, limit=100, sort=sort)
+    second = table(big, project, limit=100, offset=100, sort=sort)
+    last = table(big, project, limit=100, offset=200, sort=sort)
+    keys = [r["key"] for t in (first, second, last) for r in t["rows"]]
+    assert first["offset"] == 0 and second["offset"] == 100 and last["shown"] == 94
+    assert len(keys) == len(set(keys)) == 294 and second["groups"] == 294
+    assert table(big, project, limit=300, sort=sort)["rows"][100]["key"] == second["rows"][0]["key"]
+    assert table(big, project, limit=100, offset=500, sort=sort)["rows"] == []
+
+
 def test_best_is_the_best_group_of_the_sort_metric_over_all_groups(project, big):
     t = table(big, project, limit=3, sort={"metric": "test_mape", "dir": "desc"})
     ok = big.ok_cells()

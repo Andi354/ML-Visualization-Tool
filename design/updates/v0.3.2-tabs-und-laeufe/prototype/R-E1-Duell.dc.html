@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>E1 · Zwei Läufe · neuer Stil</title>
+<script src="./support.js"></script>
+<script src="./R-cmp-data.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+*{scrollbar-width:thin;scrollbar-color:#34343C transparent}*::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{background:#34343C;border-radius:6px;border:3px solid transparent;background-clip:padding-box}*::-webkit-scrollbar-thumb:hover{background:#45454F;background-clip:padding-box}
+body{margin:0;background:#131315}
+button{font-family:'IBM Plex Sans',sans-serif}
+button:focus-visible,a:focus-visible{outline:2px solid #8AA4FF;outline-offset:1px}
+.card{background:#1C1C20;border:1px solid #2E2E35;border-radius:12px;padding:14px 16px;box-sizing:border-box;min-width:0}
+.ct{font-weight:600;font-size:13px;margin:0 0 2px}
+.cs{font-size:12px;color:#7C7C87;margin:0 0 12px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.chip{font:400 12px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:7px;border:1px solid #2E2E35;background:#24242A;color:#B0B0BA;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 100%; height: {{rootH}}; box-sizing: border-box; display: flex; flex-direction: column; background: #131315; color: #EEEEF1; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; overflow: hidden;">
+<div style="flex-shrink: 0; min-height: 48px; box-sizing: border-box; padding: 8px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-bottom: 1px solid #2E2E35; {{headSt}}">
+<span>Vergleich</span><span style="color: #7C7C87;">/</span><span style="color: #B0B0BA;">Zwei Läufe</span>
+<span style="width: 16px;"></span>
+<span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #1FA3A3;"></span><span class="mono">A</span><span class="mono" style="color: #B0B0BA;">{{aName}}</span></span>
+<span style="color: #7C7C87;">gegen</span>
+<span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #8C7CF0;"></span><span class="mono">B</span><span class="mono" style="color: #B0B0BA;">{{bName}}</span></span>
+<span style="flex: 1;"></span>
+<span style="font-size: 12px; color: #7C7C87;">Beispielpaare</span>
+<div style="display: flex; padding: 2px; gap: 2px; background: #1C1C20; border: 1px solid #2E2E35; border-radius: 9px;"><sc-for list="{{pairs}}" as="p" hint-placeholder-count="2"><button style="{{p.st}}" onClick="{{p.on}}">{{p.label}}</button></sc-for></div>
+</div>
+<div style="flex-shrink: 0; padding: 10px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; border-bottom: 1px solid #2E2E35; {{w.diff}}">
+<span style="color: #7C7C87; font-size: 12px;">Config gleich bis auf</span>
+<sc-for list="{{diffs}}" as="d" hint-placeholder-count="1"><span class="chip" style="color: #EEEEF1;">{{d}}</span></sc-for>
+<sc-if value="{{warn}}" hint-placeholder-val="{{false}}"><span style="margin-left: 8px; font-size: 12px; color: #F0B44C; background: #2E2414; border: 1px solid #5A4420; border-radius: 8px; padding: 3px 8px;">{{warnText}}</span></sc-if>
+</div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 18px 28px; display: grid; grid-template-columns: 520px minmax(0, 1fr); gap: 16px; align-content: start;">
+<div style="display: flex; flex-direction: column; gap: 16px;">
+<div class="card" style="{{w.wins}}">
+<div style="display: flex; align-items: baseline; gap: 10px;"><p class="ct">Wer gewinnt wo?</p><span style="flex: 1;"></span>
+<div style="display: flex; padding: 2px; gap: 2px; background: #131315; border: 1px solid #2E2E35; border-radius: 9px;"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><button style="{{m.st}}" onClick="{{m.on}}">{{m.label}}</button></sc-for></div></div>
+<p class="cs">{{modeNote}} · kleiner ist besser · Balken = Abstand in %</p>
+<div style="display: grid; grid-template-columns: 130px 70px 70px minmax(0, 1fr); column-gap: 12px; row-gap: 12px; align-items: center;">
+<span style="font-size: 11px; color: #7C7C87;">Metrik</span><span style="font-size: 11px; color: #1FA3A3; text-align: right;">A</span><span style="font-size: 11px; color: #8C7CF0; text-align: right;">B</span><span style="font-size: 11px; color: #7C7C87; display: flex;"><span style="flex: 1;">← A besser</span><span>B besser →</span></span>
+<sc-for list="{{score}}" as="s" hint-placeholder-count="4">
+<span>{{s.label}}<sc-if value="{{s.scaled}}"><span style="font-size: 11px; color: #7C7C87;"> · skaliert</span></sc-if></span>
+<span class="mono" style="{{s.aSt}}">{{s.a}}</span><span class="mono" style="{{s.bSt}}">{{s.b}}</span>
+<div style="position: relative; height: 22px;"><div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #2E2E35;"></div><div style="{{s.bar}}"></div><span class="mono" style="{{s.dSt}}">{{s.d}}</span></div>
+</sc-for>
+</div>
+<p style="margin: 14px 0 0; font-size: 12px; color: #B0B0BA;">{{verdict}}</p>
+</div>
+<div class="card" style="{{w.facts}}">
+<p class="ct">Umfang und Fehler</p><p class="cs">aus meta.json und cells</p>
+<div style="display: grid; grid-template-columns: 130px 1fr 1fr; row-gap: 8px;">
+<span style="color: #7C7C87;"></span><span style="color: #1FA3A3; font-size: 11px;">A</span><span style="color: #8C7CF0; font-size: 11px;">B</span>
+<sc-for list="{{facts}}" as="f" hint-placeholder-count="4"><span style="color: #B0B0BA;">{{f.k}}</span><span class="mono" style="{{f.aSt}}">{{f.a}}</span><span class="mono" style="{{f.bSt}}">{{f.b}}</span></sc-for>
+</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 16px; min-width: 0;">
+<div class="card" style="{{w.bests}}">
+<p class="ct">Beste Config je Lauf, und wo sie im anderen landet</p><p class="cs">gemittelt über Seeds und Folds · MAPE %</p>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+<sc-for list="{{bests}}" as="b" hint-placeholder-count="2">
+<div style="{{b.boxSt}}">
+<div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;"><span style="{{b.dot}}"></span><span style="font-weight: 600;">Beste in {{b.side}}</span><span style="flex: 1;"></span><span class="mono" style="font-size: 16px;">{{b.own}}</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px;"><sc-for list="{{b.cfg}}" as="c" hint-placeholder-count="4"><span class="chip">{{c}}</span></sc-for></div>
+<div style="display: flex; align-items: baseline; gap: 8px; padding-top: 10px; border-top: 1px solid #2E2E35;"><span style="color: #7C7C87;">in {{b.other}}:</span><span class="mono">{{b.there}}</span><span style="{{b.rankSt}}">Rang {{b.rank}} von {{b.n}}</span></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div class="card" style="{{w.strips}}">
+<p class="ct">Alle Kombinationen</p><p class="cs">jeder Punkt = eine Kombination · MAPE % · Strich = Median · großer Punkt = beste</p>
+<div style="display: grid; grid-template-columns: 24px minmax(0, 1fr); row-gap: 6px; align-items: center;">
+<sc-for list="{{strips}}" as="r" hint-placeholder-count="2">
+<span class="mono" style="{{r.lSt}}">{{r.side}}</span>
+<div style="position: relative; height: 34px; border-bottom: 1px solid #2E2E35;"><sc-for list="{{r.dots}}" as="d" hint-placeholder-count="36"><span title="{{d.t}}" style="{{d.st}}"></span></sc-for><span style="{{r.med}}"></span></div>
+</sc-for>
+<span></span>
+<div style="position: relative; height: 16px;"><sc-for list="{{ticks}}" as="t" hint-placeholder-count="5"><span class="mono" style="{{t.st}}">{{t.v}}</span></sc-for></div>
+</div>
+</div>
+<div class="card" style="{{w.regions}}">
+<p class="ct">Regionen</p><p class="cs">beste Kombination je Lauf, aufgeteilt nach channel · MAPE %</p>
+<div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) 90px; row-gap: 8px; column-gap: 12px; align-items: center;">
+<sc-for list="{{regions}}" as="g" hint-placeholder-count="4">
+<span class="mono" style="color: #B0B0BA;">{{g.ch}}</span>
+<div style="display: flex; flex-direction: column; gap: 3px;"><div style="{{g.aBar}}"></div><div style="{{g.bBar}}"></div></div>
+<span class="mono" style="{{g.dSt}}">{{g.d}}</span>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+  const C = window.CmpData;
+  const st = this.state || {};
+  const PR = this.props || {};
+  const show = PR.show || {}, w = {};
+  ['diff', 'wins', 'facts', 'bests', 'strips', 'regions'].forEach((k) => { w[k] = show[k] === false ? 'display: none;' : ''; });
+  const set = (p) => this.setState(p);
+  const PAIRS = [
+    { label: 'Wiederholung TIM-49', a: '2026-10-08_2105_TIM-49_ets_gap_90', b: '2026-10-09_1422_TIM-49_ets_gap_90', diffs: ['Code-Stand a1c93f2 → e70b4d1'] },
+    { label: 'TIM-52 · 30 gegen 90', a: '2026-10-13_1830_TIM-52_best_combined_30', b: '2026-10-14_0912_TIM-52_best_combined_90', diffs: ['data.pred_len 30 → 90'], warn: 'Verschiedene Horizonte: Absolutwerte sind nicht fair vergleichbar, Rang und Wirkung schon' }
+  ];
+  const pi = PR.pair ?? st.pair ?? 0, P = PAIRS[pi], mode = st.mode || 'best';
+  const seg = (on) => "font: 500 12px 'IBM Plex Sans', sans-serif; cursor: pointer; border: 0; border-radius: 7px; padding: 3px 10px; background: " + (on ? '#24242A' : 'transparent') + '; color: ' + (on ? '#EEEEF1' : '#7C7C87') + ';';
+  const A = C.combos(P.a), B = C.combos(P.b), ra = C.run(P.a), rb = C.run(P.b);
+  const pick = (cs, k) => mode === 'best' ? cs[0].m[k] : C.median(cs.map((x) => x.m[k]));
+  let aw = 0, bw = 0;
+  const score = C.METRICS.map((mt) => {
+    const a = pick(A, mt.key), b = pick(B, mt.key), d = (b / a - 1) * 100;
+    const w = Math.min(48, Math.abs(d) * 6), bBetter = d < 0;
+    if (bBetter) bw++; else aw++;
+    return {
+      label: mt.label, scaled: !!mt.scaled, a: C.fmt(a, mt.d), b: C.fmt(b, mt.d),
+      aSt: 'text-align: right; color: ' + (!bBetter ? '#5FD4A0' : '#B0B0BA') + ';', bSt: 'text-align: right; color: ' + (bBetter ? '#5FD4A0' : '#B0B0BA') + ';',
+      bar: 'position: absolute; top: 5px; height: 12px; border-radius: 2px; width: ' + w + '%; ' + (bBetter ? 'left: 50%; background: #8C7CF0;' : 'right: 50%; background: #1FA3A3;'),
+      d: (bBetter ? 'B ' : 'A ') + C.fmt(Math.abs(d), 1) + ' %',
+      dSt: 'position: absolute; top: 3px; font-size: 11px; color: #B0B0BA; ' + (bBetter ? 'right: 0;' : 'left: 0;')
+    };
+  });
+  const bests = [['A', A, B, '#1FA3A3'], ['B', B, A, '#8C7CF0']].map(([side, own, oth, col]) => {
+    const top = own[0], k = C.key(top.c), there = oth.find((x) => C.key(x.c) === k);
+    return {
+      side, other: side === 'A' ? 'B' : 'A', own: C.fmt(top.m.mape, 2) + ' %', there: C.fmt(there.m.mape, 2) + ' %',
+      rank: String(there.rank), n: String(oth.length),
+      rankSt: 'margin-left: auto; font-size: 12px; padding: 2px 8px; border-radius: 7px; ' + (there.rank <= 3 ? 'color: #5FD4A0; border: 1px solid #245A45;' : there.rank > 10 ? 'color: #F0B44C; border: 1px solid #5A4420; background: #2E2414;' : 'color: #B0B0BA; border: 1px solid #2E2E35;'),
+      cfg: C.AX.map((ax, i) => ax.key + ' = ' + ax.values[top.c[i]]),
+      dot: 'width: 10px; height: 10px; border-radius: 50%; background: ' + col + ';',
+      boxSt: 'border: 1px solid #2E2E35; border-top: 2px solid ' + col + '; border-radius: 12px; padding: 12px; background: #161618;'
+    };
+  });
+  const all = A.concat(B).map((x) => x.m.mape), lo = Math.min.apply(null, all) * 0.98, hi = Math.max.apply(null, all) * 1.02;
+  const xp = (v) => ((v - lo) / (hi - lo) * 100).toFixed(2) + '%';
+  const strips = [['A', A, '#1FA3A3'], ['B', B, '#8C7CF0']].map(([side, cs, col]) => ({
+    side, lSt: 'color: ' + col + ';',
+    dots: cs.map((x, i) => ({ t: x.label.join(' · ') + ' → ' + C.fmt(x.m.mape, 2) + ' %', st: 'position: absolute; left: ' + xp(x.m.mape) + '; top: ' + (i === 0 ? 9 : 12 + (i % 3) * 4) + 'px; width: ' + (i === 0 ? 14 : 7) + 'px; height: ' + (i === 0 ? 14 : 7) + 'px; margin-left: -' + (i === 0 ? 7 : 3.5) + 'px; border-radius: 50%; background: ' + col + '; opacity: ' + (i === 0 ? 1 : 0.55) + ';' + (i === 0 ? ' box-shadow: 0 0 0 2px #1C1C20, 0 0 0 3px ' + col + ';' : '') })),
+    med: 'position: absolute; left: ' + xp(C.median(cs.map((x) => x.m.mape))) + '; top: 4px; height: 26px; width: 2px; background: #EEEEF1;'
+  }));
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => ({ v: C.fmt(lo + (hi - lo) * t, 1), st: 'position: absolute; top: 2px; font-size: 11px; color: #7C7C87; left: ' + (t * 100) + '%; transform: translateX(' + (t === 0 ? '0' : t === 1 ? '-100%' : '-50%') + ');' }));
+  const chMax = Math.max.apply(null, C.CH.map((c) => Math.max(A[0].ch[c], B[0].ch[c])));
+  const regions = C.CH.map((c) => {
+    const a = A[0].ch[c], b = B[0].ch[c], d = (b / a - 1) * 100;
+    return {
+      ch: c, d: C.signed(d, 1) + ' %', dSt: 'font-size: 12px; text-align: right; color: ' + (d < 0 ? '#5FD4A0' : '#B0B0BA') + ';',
+      aBar: 'height: 8px; border-radius: 2px; background: #1FA3A3; width: ' + (a / chMax * 100).toFixed(1) + '%;',
+      bBar: 'height: 8px; border-radius: 2px; background: #8C7CF0; width: ' + (b / chMax * 100).toFixed(1) + '%;'
+    };
+  });
+  const errSt = (r) => 'color: ' + (r.err > 50 ? '#FF6B6B' : '#EEEEF1') + ';';
+  return {
+    rootH: PR.embedded ? 'auto' : '900px', headSt: PR.embedded ? 'display: none;' : '', w,
+    aName: C.short(P.a), bName: C.short(P.b), diffs: P.diffs, warn: !!P.warn, warnText: P.warn || '',
+    pairs: PAIRS.map((p, i) => ({ label: p.label, st: seg(i === pi), on: () => set({ pair: i }) })),
+    modes: [['best', 'Bester Wert'], ['median', 'Median']].map(([k, l]) => ({ label: l, st: seg(mode === k), on: () => set({ mode: k }) })),
+    modeNote: mode === 'best' ? 'beste Kombination je Lauf' : 'Median über alle Kombinationen',
+    score, verdict: (bw > aw ? 'B' : 'A') + ' ist bei ' + Math.max(aw, bw) + ' von ' + score.length + ' Metriken besser.' + (aw && bw ? ' Nicht eindeutig: ' + (bw > aw ? 'A' : 'B') + ' gewinnt bei ' + Math.min(aw, bw) + '.' : ''),
+    facts: [
+      { k: 'Zellen', a: C.fmt(ra.cells, 0), b: C.fmt(rb.cells, 0), aSt: '', bSt: '' },
+      { k: 'Fehler', a: C.fmt(ra.err, 0), b: C.fmt(rb.err, 0), aSt: errSt(ra), bSt: errSt(rb) },
+      { k: 'Dauer', a: ra.dur, b: rb.dur, aSt: '', bSt: '' },
+      { k: 'pred_len · Epoche', a: ra.h + ' · ' + (ra.epoch || 'eval-all-windows'), b: rb.h + ' · ' + (rb.epoch || 'eval-all-windows'), aSt: '', bSt: '' }
+    ],
+    bests, strips, ticks, regions
+  };
+}
+}
+</script>
+</body>
+</html>

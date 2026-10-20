@@ -8,7 +8,7 @@ import pandas as pd
 from ..aggregate import CHANNEL, _ordered_values, dimension_axes, has_channels, join_cells
 from ..project import Metric, Project
 from ..runs import Run, get_run
-from .common import combo_cells, de, metric_text
+from .common import combo_cells, de, make_header, metric_text
 from .registry import Widget, seg, select, widget
 
 SCOPES = ("run",)
@@ -153,7 +153,12 @@ def compare_table(project: Project, req: dict) -> dict:
         + (f" · Spalten nach {groups_axis}" if groups_axis else "")
         + fixed_text(fixed)
         + " · Replikate gemittelt",
-        "note": ("höher = besser" if direction == "max" else "niedriger = besser") + " · grün = bester Wert je Spalte",
+        "header": make_header(
+            [(axis, True), (" × ", False), (", ".join(m.label for m in metrics), True)]
+            + ([(" · Spalten nach ", False), (groups_axis, True)] if groups_axis else []),
+            "Replikate gemittelt",
+            fixed,
+        ),
         "options": {"rows": axes, "groups": [{"value": "none", "label": "keine"}] + [{"value": a, "label": a} for a in axes if a != axis]},
         "data": {
             "row_key": axis,
@@ -218,7 +223,7 @@ def per_region(project: Project, req: dict) -> dict:
     return {
         "title": f"{top} ist in {wins[top]} von {len(channels)} Regionen {verb}",
         "subtitle": f"{metric.label} je Region × {axis}" + fixed_text(fixed) + " · Replikate gemittelt",
-        "note": ("höher = besser" if metric.direction == "max" else "niedriger = besser") + " · grün = bester Wert je Region",
+        "header": make_header([(metric.label, True), (" je Region × ", False), (axis, True)], "Replikate gemittelt", fixed),
         "options": {"rows": axes, "metric": [{"value": m.key, "label": m.label} for m in project.metrics if m.key in ch.columns]},
         "data": {
             "series_key": axis,
@@ -274,7 +279,6 @@ def axis_effect(project: Project, req: dict) -> dict:
     return {
         "title": f"{top['axis']} wirkt am stärksten: {de(top['spread'])} % Spanne, am besten bei {top['best']}",
         "subtitle": f"{metric.label}: Abstand zwischen bestem und schlechtestem Wert je Achse, relativ zum Lauf-Mittel",
-        "note": "Mittel über alle anderen Achsen und Replikate",
         "options": {"metric": [{"value": m.key, "label": m.label} for m in project.metrics if m.key in run.cells.columns]},
         "data": {
             "axes": out,
@@ -330,7 +334,7 @@ def stability(project: Project, req: dict) -> dict:
     return {
         "title": title,
         "subtitle": f"{metric.label} je Wiederholung × {axis}" + fixed_text(fixed),
-        "note": "Punkt = Wiederholung · Strich = Mittel · Band = ±1 sd · deterministische Modelle variieren nur über Folds",
+        "header": make_header([(metric.label, True), (" je Wiederholung × ", False), (axis, True)], None, fixed),
         "options": {"rows": axes, "metric": [{"value": m.key, "label": m.label} for m in project.metrics if m.key in run.cells.columns]},
         "data": {
             "row_key": axis,

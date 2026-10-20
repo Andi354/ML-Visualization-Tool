@@ -1,3 +1,4 @@
+import { Val } from "./header";
 import type { ProjectInfo, RunInfo, WidgetResult } from "../api";
 import type { ConfigInfo } from "../api";
 import { ConfigBlocks, ConfigView, Legend as ConfigLegend, type ConfigMode } from "../config/ConfigView";
@@ -205,7 +206,7 @@ export function ReplicatesGrid({ data, project }: { data: any; project: ProjectI
         <tbody>
           {data.rows.map((r: string, i: number) => (
             <tr key={r}>
-              <th class="mono">{r}</th>
+              <th class="mono"><Val v={r} /></th>
               {data.grid[i].map((c: any, j: number) => (
                 <td
                   key={j}
@@ -252,7 +253,7 @@ export function CompareTable({ data }: { data: any }) {
         <tbody>
           {data.rows.map((r: string, i: number) => (
             <tr key={r} class={data.own_row === r ? "own" : ""} data-testid="ct-row" data-row={r}>
-              <th class="mono row-head">{r}</th>
+              <th class="mono row-head"><Val v={r} /></th>
               {data.cells[i].flatMap((block: any, gi: number) =>
                 data.columns.map((c: any) => {
                   const cell = block[c.key];

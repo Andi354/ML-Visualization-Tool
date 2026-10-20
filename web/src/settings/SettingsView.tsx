@@ -3,6 +3,8 @@ import { getRuns, type ProjectInfo } from "../api";
 import { getInstructions, putInstructions } from "../agent/api";
 import { CATS, DEFAULTS, PRESETS, ROWS, type Row, type Value } from "./catalog";
 import { changedCount, isChanged, search, valueOf } from "./model";
+import { look } from "./projectLook";
+import { Swatches } from "./Swatches";
 import { canRedo, canUndo, change, current, load, redoLast, resetAll, takeFocus, undoLast, useSettings } from "./store";
 import { SearchIcon } from "../frame/icons";
 import { clearViewState } from "./viewState";
@@ -24,6 +26,8 @@ const catTitle = (id: string) => CATS.find((c) => c.id === id)?.title ?? id;
 
 /** Options that depend on the project: metrics, templates. */
 function withProjectOptions(row: Row, project: ProjectInfo, templates: string[], features: string[]): Row {
+  if (row.key === "project.name") return { ...row, ph: project.name } as Row;
+  if (row.key === "project.short") return { ...row, ph: project.short } as Row;
   if (row.key === "runs.feature") return { ...row, opts: [["auto", "automatisch"], ...features.map((f): [string, string] => [f, f.split(".").pop()!]), ["none", "keins"]] } as Row;
   if (row.key === "runs.metric") return { ...row, opts: [["yaml", `aus project.yaml${project.primary_metric ? ` (${project.primary_metric})` : ""}`], ...project.metrics.map((m): [string, string] => [m.key, m.label])] } as Row;
   if (row.key === "ana.template") return { ...row, opts: [["last", "zuletzt benutzt"], ...templates.map((t): [string, string] => [t, t])] } as Row;
@@ -99,7 +103,7 @@ export function SettingsView({ project, templates }: { project: ProjectInfo; tem
       <header class="settings-top">
         <div class="settings-title">
           <span class="settings-title-main">Einstellungen</span>
-          <span class="settings-title-sub" data-testid="settings-sub">{project.name} · v{data?.version ?? ""}</span>
+          <span class="settings-title-sub" data-testid="settings-sub">{look(project).name} · v{data?.version ?? ""}</span>
         </div>
         <label class="settings-search-box">
           <SearchIcon />
@@ -165,6 +169,7 @@ export function SettingsView({ project, templates }: { project: ProjectInfo; tem
               {active.subs.map((s) => (
                 <div key={s.id} data-sub={`${active.id}.${s.id}`}>
                   <h3>{s.title}</h3>
+                  {active.id === "runs" && s.id === "project" && <ProjectCard project={project} values={values} run={run} />}
                   {shown.filter((r) => r.sub === s.id).map((r) => <RowView key={r.key} row={r} values={values} run={run} flash={flash === r.key} />)}
                 </div>
               ))}
@@ -185,6 +190,26 @@ export function SettingsView({ project, templates }: { project: ProjectInfo; tem
         </div>
       </section>
       </div>
+    </div>
+  );
+}
+
+const PROJECT_KEYS = ["project.name", "project.short", "project.color"];
+
+/** Preview of the project symbol with the way back to project.yaml (v0.3.2, O). */
+function ProjectCard({ project, values, run }: { project: ProjectInfo; values: Record<string, Value>; run: (p: Promise<unknown>) => void }) {
+  useSettings();
+  const l = look(project);
+  const differs = PROJECT_KEYS.some((k) => isChanged(values, k));
+  return (
+    <div class="project-card" data-testid="project-card">
+      <div class="project-badge big" style={{ background: l.color }} data-testid="project-card-badge">{l.short}</div>
+      <div class="pp-id">
+        <div class="pp-name" data-testid="project-card-name">{l.name}</div>
+        <div class="pp-path mono">{current()?.project_path}</div>
+      </div>
+      <span class="grow" />
+      <button class="ghost" data-testid="project-card-reset" disabled={!differs} onClick={() => run(change({}, PROJECT_KEYS))}>Aus project.yaml</button>
     </div>
   );
 }
@@ -260,8 +285,11 @@ function Control({ row, value, run }: { row: Exclude<Row, { type: "action" }>; v
       </div>
     );
   }
+  if (row.type === "color") {
+    return <Swatches swatches={row.swatches} value={String(value)} custom={!row.swatches.some((c) => c.toLowerCase() === String(value).toLowerCase())} onPick={set} />;
+  }
   return (
-    <input class="s-input mono" aria-label={row.label} value={text} placeholder={DEFAULTS[row.key] as string} onInput={(e) => setText((e.target as HTMLInputElement).value)} onBlur={() => text !== String(value) && set(text)} onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} />
+    <input class="s-input mono" style={row.key === "project.short" ? { textTransform: "uppercase" } : undefined} aria-label={row.label} maxLength={row.max} value={text} placeholder={row.ph ?? (DEFAULTS[row.key] as string)} onInput={(e) => setText((e.target as HTMLInputElement).value)} onBlur={() => text !== String(value) && set(text)} onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} />
   );
 }
 

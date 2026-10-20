@@ -78,7 +78,7 @@
   color: var(--text-2);
   background: var(--raised);
   border: 1px solid transparent;
-  border-radius: 3px;
+  border-radius: 7px;
 }
 .cfg-chip.current {
   font-weight: 600;
@@ -165,7 +165,7 @@
 }
 .cfg-lines {
   font-size: 11px;
-  background: #0f131b;
+  background: var(--bg);
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
   padding: 6px 0;

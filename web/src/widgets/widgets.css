@@ -64,7 +64,7 @@
   flex-wrap: wrap;
   gap: 10px 16px;
   padding: 8px 12px;
-  background: #0f131b;
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 .w-settings .seg {
@@ -169,7 +169,7 @@
 }
 .w-overview {
   cursor: pointer;
-  background: #0f131b;
+  background: var(--bg);
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
 }
@@ -195,7 +195,7 @@
   height: 30px;
   padding: 0 10px;
   font-size: var(--size-small);
-  border-radius: 3px;
+  border-radius: 7px;
 }
 .rep-cell.empty {
   border: 1px dashed var(--line);
@@ -354,14 +354,14 @@
 .effect-track {
   height: 10px;
   background: var(--raised);
-  border-radius: 5px;
+  border-radius: 9px;
   overflow: hidden;
 }
 .effect-bar {
   display: block;
   height: 100%;
   background: var(--series-1);
-  border-radius: 5px;
+  border-radius: 9px;
 }
 .effect-value {
   text-align: right;
@@ -398,7 +398,7 @@
   padding: 0 var(--gutter);
   font-size: var(--size-small);
   color: var(--text-3);
-  background: #0f131b;
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 .analysis {
@@ -486,7 +486,7 @@
   z-index: 50;
   display: grid;
   place-items: center;
-  background: rgba(5, 7, 10, 0.7);
+  background: rgba(0, 0, 0, 0.7);
 }
 .modal {
   display: flex;
@@ -717,7 +717,7 @@
   padding: 0 5px;
   color: var(--text-3);
   border: 1px solid var(--line);
-  border-radius: 3px;
+  border-radius: 7px;
 }
 .diff-chips {
   display: flex;
@@ -766,7 +766,7 @@
   position: relative;
   height: 12px;
   background: var(--raised);
-  border-radius: 6px;
+  border-radius: 12px;
 }
 .wins-centre {
   position: absolute;
@@ -780,7 +780,7 @@
   position: absolute;
   top: 2px;
   bottom: 2px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 .wins-fill.a {
   right: 50%;
@@ -846,7 +846,7 @@
   height: 8px;
   min-width: 2px;
   background: var(--series-1);
-  border-radius: 4px;
+  border-radius: 8px;
 }
 .pb-point {
   cursor: pointer;
@@ -866,7 +866,7 @@
   padding: 0 6px;
   text-align: center;
   font-size: 11px;
-  border-radius: 3px;
+  border-radius: 7px;
 }
 .pm-cell.empty {
   border: 1px dashed var(--line);
@@ -965,7 +965,7 @@
   font-size: var(--size-tiny);
   color: #b9aef7;
   border: 1px dashed var(--series-5);
-  border-radius: 3px;
+  border-radius: 7px;
 }
 .draft-title {
   font-weight: 500;
@@ -985,7 +985,7 @@
 .draft-row {
   position: relative;
   padding: 10px;
-  border: 1px dashed #2c3547;
+  border: 1px dashed var(--line-strong);
   border-radius: 8px;
   background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(140, 124, 240, 0.035) 8px 16px);
 }
@@ -1012,7 +1012,7 @@
   justify-content: center;
   font-size: var(--size-tiny);
   text-align: center;
-  color: #4a5265;
+  color: var(--line-stronger);
 }
 .draft-hint.left {
   left: 0;
@@ -1112,4 +1112,89 @@
 }
 .agent-glow {
   animation: agent-glow 1.5s ease-out;
+}
+
+/* Widget header (v0.3.2, Q.I) and config title (Q.J) */
+.w-title-meta {
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-3);
+}
+.w-best {
+  color: var(--best);
+}
+.w-what {
+  font-size: 13px;
+  color: var(--text-2);
+}
+.w-what-mono {
+  color: #c9d3e3;
+}
+.w-agg {
+  color: var(--text-3);
+}
+.w-values {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+.w-values-label {
+  margin-right: 2px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+.w-chip {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 8px;
+  font-size: 12px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.w-chip-name {
+  color: var(--text-2);
+}
+.w-more {
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #a9bbff;
+}
+.w-more:hover {
+  background: none;
+  text-decoration: underline;
+}
+.w-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 28px;
+  margin: 6px 0 8px;
+}
+.w-list-row {
+  display: flex;
+  gap: 12px;
+  padding: 5px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.w-list-name {
+  flex: none;
+  width: 170px;
+  color: var(--text-3);
+}
+.w-list-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.null-value {
+  font-style: italic;
+  color: #6a6a74;
 }

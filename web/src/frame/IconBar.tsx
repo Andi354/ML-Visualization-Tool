@@ -9,6 +9,10 @@ export const AREAS: { id: Area; label: string; built: boolean; Icon: () => preac
 interface Props {
   short: string;
   projectName: string;
+  /** Colour of the project symbol (setting `project.color`). */
+  color: string;
+  /** The project symbol was clicked: the popover with name, letters and colour. */
+  onProject: () => void;
   area: Area;
   onSelect: (a: Area) => void;
   /** The agent window is open or minimised (the icon is lit). */
@@ -18,12 +22,12 @@ interface Props {
   onSettings: () => void;
 }
 
-export function IconBar({ short, projectName, area, onSelect, agentActive, onAgent, settingsActive, onSettings }: Props) {
+export function IconBar({ short, projectName, color, onProject, area, onSelect, agentActive, onAgent, settingsActive, onSettings }: Props) {
   return (
     <nav class="icon-bar" aria-label="Bereiche">
-      <div class="project-badge" title={projectName} data-testid="project-badge">
+      <button class="project-badge" title={projectName} aria-label={`Projekt ${projectName}`} aria-haspopup="dialog" data-testid="project-badge" style={{ background: color }} onClick={onProject}>
         {short}
-      </div>
+      </button>
       {AREAS.filter((a) => a.built).map(({ id, label, Icon }) => (
         <button
           key={id}

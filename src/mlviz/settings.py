@@ -7,7 +7,7 @@ overwritten when a value is changed. The screen (`web/src/settings/`) reads and 
 the backend reads the ones it needs through `SettingsStore.get`.
 
 `SCHEMA` knows every setting that holds a value (the screen also has action rows, which hold none): kind, default and
-the range or the options. Where the options depend on the project (`runs.feature`, `runs.metric`, `ana.template`) any
+the range or the options (`project.name`, `project.short` and `project.color` only change how the project is shown). Where the options depend on the project (`runs.feature`, `runs.metric`, `ana.template`) any
 non-empty text is accepted and the user of the value falls back to the default for a text it does not know.
 """
 
@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -29,7 +30,7 @@ FILE = "settings.json"
 @dataclass(frozen=True)
 class Spec:
     key: str
-    kind: str  # enum | choice (options depend on the project) | bool | num | text
+    kind: str  # enum | choice (options depend on the project) | bool | num | text | color (#RRGGBB)
     default: Any
     options: tuple[str, ...] = ()
     min: int | None = None
@@ -54,8 +55,11 @@ class Spec:
             if isinstance(value, str) and value.strip():
                 return value
         elif self.kind == "text":
-            if isinstance(value, str) and len(value) <= 4000:
+            if isinstance(value, str) and len(value) <= (self.max or 4000):
                 return value
+        elif self.kind == "color":
+            if isinstance(value, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", value):
+                return value.upper()
         raise ValueError(f"{self.key}: ungültiger Wert {value!r}")
 
 
@@ -64,6 +68,10 @@ def _enum(key, default, *options, **kw) -> Spec:
 
 
 SPECS: tuple[Spec, ...] = (
+    # the display of the project (v0.3.2): name and two letters of the project symbol, its colour; empty = from project.yaml
+    Spec("project.name", "text", ""),
+    Spec("project.short", "text", "", max=2),
+    Spec("project.color", "color", "#8AA4FF"),
     _enum("look.density", "comfortable", "comfortable", "compact"),
     Spec("look.scale", "num", 100, min=85, max=125, step=5),
     _enum("look.decimal", "de", "de", "en"),

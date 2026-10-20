@@ -96,3 +96,14 @@ def test_the_defaults_match_the_ones_of_the_screen():
 
     expected = json.loads((Path(__file__).parent / "settings_defaults.json").read_text())
     assert DEFAULTS == expected
+
+
+def test_the_project_display_settings_accept_a_name_two_letters_and_a_hex_colour(store):
+    store.change({"project.name": "RepNet", "project.short": "RB", "project.color": "#5fd4a0"})
+    assert store.get("project.name") == "RepNet" and store.get("project.short") == "RB"
+    assert store.get("project.color") == "#5FD4A0"
+    for key, bad in (("project.short", "RBX"), ("project.color", "blue"), ("project.color", "#12345"), ("project.name", 3)):
+        with pytest.raises(ValueError):
+            store.change({key: bad})
+    store.change({"project.name": "", "project.short": "", "project.color": "#8AA4FF"})
+    assert not store.path.exists()  # empty and default values are not written

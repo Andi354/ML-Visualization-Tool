@@ -1,16 +1,20 @@
 /* Generated from design/tokens.json by scripts/gen-tokens.mjs. Do not edit. */
 :root {
-  --bg: #0D1016;
-  --surface: #131720;
-  --raised: #1A2030;
-  --line: #262E3E;
-  --text: #E4E8EF;
-  --text-2: #A1AABB;
-  --text-3: #8590A3;
-  --accent: #6E9BF5;
-  --accent-bg: #192640;
-  --accent-line: #2C4572;
-  --selected-row: #172238;
+  --bg: #131315;
+  --surface: #1C1C20;
+  --raised: #24242A;
+  --line: #2E2E35;
+  --line-strong: #34343C;
+  --line-stronger: #45454F;
+  --chrome: #18181B;
+  --text: #EEEEF1;
+  --text-2: #B0B0BA;
+  --text-3: #7C7C87;
+  --accent: #8AA4FF;
+  --accent-bg: #262B42;
+  --accent-line: #3A4166;
+  --accent-fill: #5B6FD6;
+  --selected-row: #222330;
   --best: #5FD4A0;
   --best-line: #245A45;
   --error: #FF6B6B;
@@ -49,13 +53,15 @@
   --row-height: 34px;
   --cell-padding: 8px;
   --gutter: 24px;
-  --radius-control: 4px;
-  --radius-panel: 6px;
-  --icon-bar: 52px;
-  --tab-strip: 36px;
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --radius-chip: 7px;
+  --radius-pill: 18px;
+  --icon-bar: 56px;
+  --tab-strip: 38px;
   --detail-panel: 640px;
   --experiment-sidebar: 270px;
-  --status-bar: 24px;
+  --status-bar: 26px;
   --notes-column: 300px;
   --best-bg: color-mix(in srgb, var(--best) 14%, transparent);
 }

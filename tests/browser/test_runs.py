@@ -27,7 +27,8 @@ def block(page, issue):
 
 def test_start_page_is_the_list_view_titled_laeufe(page):
     expect(page.get_by_test_id("view-list")).to_have_attribute("aria-pressed", "true")
-    expect(page.locator('[data-testid="runs-view"] .view-head > span').first).to_have_text("Läufe")
+    expect(page.locator('[data-testid="runs-view"] .view-name')).to_have_text("Läufe")
+    expect(page.get_by_test_id("count")).to_have_text(re.compile(r"^9 Läufe in 7 Issues · zuletzt "))
 
 
 def test_issues_with_a_run_in_the_last_7_days_are_expanded_others_collapsed(page):
@@ -46,21 +47,23 @@ def test_click_on_issue_head_expands_and_collapses(page):
     expect(row(page, TIM45)).to_have_count(0)
 
 
-def test_blocks_are_sorted_by_their_newest_run_standalone_rows_at_their_own_date(page):
+def test_sections_are_sorted_by_their_newest_run_and_the_runs_without_issue_come_last(page):
     expect(page.get_by_test_id("issue-block").first).to_be_visible()  # the list is loaded
-    keys = page.locator("[data-testid=issue-block], [data-testid=run-row].standalone").evaluate_all(
-        "els => els.map(e => e.dataset.issue || e.dataset.run)"
-    )
-    assert keys == ["TIM-83", ALONE, "TIM-71", "TIM-52", "TIM-45", "TIM-39", "TIM-30"]
+    keys = page.get_by_test_id("issue-block").evaluate_all("els => els.map(e => e.dataset.issue)")
+    assert keys == ["TIM-83", "TIM-71", "TIM-52", "TIM-45", "TIM-39", "TIM-30", "—"]
 
 
-def test_newest_run_card(page):
+def test_overview_tiles_show_the_running_run_and_the_best_value_per_horizon(page):
     card = page.get_by_test_id("newest")
-    expect(card).to_contain_text("Neuester Lauf · heute 11:00")
+    expect(card).to_contain_text("Läuft gerade · seit heute 11:00")
     expect(card).to_contain_text(TIM83)
-    expect(card).to_contain_text("TIM-83")
-    expect(card).to_contain_text("läuft · 9 / 24 Zellen")
-    expect(card).to_contain_text("bester MAPE bisher · pred_len 30")
+    expect(card).to_contain_text("TIM-83 · 9 / 24 Zellen")
+    expect(card.get_by_role("img")).to_have_attribute("aria-label", "38 Prozent fertig")
+    tiles = page.get_by_test_id("best-tile")
+    expect(tiles).to_have_count(2)
+    expect(tiles.nth(0)).to_contain_text("Bester Wert · pred_len 30")
+    expect(tiles.nth(1)).to_contain_text("Bester Wert · pred_len 90")
+    assert tiles.nth(0).locator(".tile-value").evaluate("e => getComputedStyle(e).color") == "rgb(95, 212, 160)"
     page.get_by_test_id("newest-open").click()
     expect(page.locator(f'[data-testid="tab-run"][data-run="{TIM83}"]')).to_have_class(re.compile("active"))
 
@@ -83,17 +86,19 @@ def test_row_shows_name_without_issue_prefix_and_flags_only_for_deviations(page)
     expect(row(page, TIM45).locator(".flag.warn")).to_have_text("Epoche tsrm6")
 
 
-def test_second_line_lists_axes_then_extras(page):
-    expect(row(page, TIM71).locator(".sub")).to_have_text("forecaster · lstm_layer   —   Kurven · Vorhersagen")
+def test_card_shows_axes_as_chips_and_the_migrated_flag(page):
+    expect(row(page, TIM71).locator(".axis-chips .chip")).to_have_text(["forecaster", "lstm_layer"])
     block(page, "TIM-45").get_by_test_id("issue-toggle").click()
-    expect(row(page, TIM45).locator(".sub")).to_have_text(
-        "lr_epochs · lstm_layer · time_embedding   —   migriert"
-    )
+    expect(row(page, TIM45).locator(".axis-chips .chip")).to_have_text(["lr_epochs", "lstm_layer", "time_embedding"])
+    expect(row(page, TIM45).locator(".when .flag").filter(has_text="migriert")).to_have_count(1)
 
 
-def test_standalone_row_starts_with_ohne_issue(page):
-    expect(row(page, ALONE).locator(".sub")).to_have_text("ohne Issue · time_embedding")
+def test_runs_without_issue_are_one_section_at_the_end(page):
+    section = block(page, "—")
+    expect(section.locator(".issue-key")).to_have_text("ohne Issue")
+    expect(row(page, ALONE)).to_be_visible()
     expect(row(page, ALONE).locator(".run-name")).to_have_text("sweep_check")
+    expect(row(page, ALONE).locator(".axis-chips .chip")).to_have_text(["time_embedding"])
 
 
 def test_cell_progress_and_errors(page):
@@ -113,10 +118,11 @@ def test_best_value_with_metric_and_horizon_provisional_while_running(page):
 
 def test_older_runs_of_an_experiment_unfold_dimmed_and_named_by_timestamp(page):
     toggle = row(page, TIM52_NEW).get_by_test_id("older-toggle")
-    expect(toggle).to_have_text("▸ 1 älterer Lauf")
-    expect(row(page, TIM52_OLD)).to_have_count(0)
+    expect(toggle).to_have_text("+ 1 · älterer Lauf")
+    expect(toggle).to_have_attribute("aria-expanded", "false")
+    expect(page.get_by_test_id("older-row")).to_have_count(0)
     toggle.click()
-    expect(toggle).to_have_text("▾ 1 älterer Lauf")
+    expect(toggle).to_have_attribute("aria-expanded", "true")
     older = page.locator(f'[data-testid="older-row"][data-run="{TIM52_OLD}"]')
     expect(older.locator(".run-name")).to_have_text("↳ 2026-10-06_1000")
     assert float(older.evaluate("e => getComputedStyle(e).opacity")) < 1
@@ -143,15 +149,17 @@ def test_status_filters(page):
     page.get_by_role("button", name="Mit Fehlern").click()
     expect(row(page, TIM39)).to_be_visible()  # its issue was collapsed and is expanded by the filter
     expect(page.get_by_test_id("count")).to_have_text("1 von 9 Läufen")
+    page.get_by_role("button", name="Diese Woche").click()
+    expect(page.get_by_test_id("count")).to_have_text("4 von 9 Läufen")  # TIM-83, the run without issue, TIM-71 and one of TIM-52
     page.get_by_role("button", name="Alle", exact=True).click()
-    expect(page.get_by_test_id("count")).to_have_text("9 von 9 Läufen")
+    expect(page.get_by_test_id("count")).to_contain_text("9 Läufe in 7 Issues")
 
 
 def test_epoch_filter(page):
     page.get_by_role("button", name="tsrm6", exact=True).click()
     expect(page.get_by_test_id("count")).to_have_text("3 von 9 Läufen")
     page.get_by_role("button", name="Alle Epochen").click()
-    expect(page.get_by_test_id("count")).to_have_text("9 von 9 Läufen")
+    expect(page.get_by_test_id("count")).to_contain_text("9 Läufe in 7 Issues")
 
 
 def test_empty_search_result_says_so(page):
@@ -161,7 +169,7 @@ def test_empty_search_result_says_so(page):
 
 def test_project_without_runs(empty_page):
     expect(empty_page.get_by_test_id("empty")).to_have_text("Dieses Projekt hat noch keine Läufe.")
-    expect(empty_page.get_by_test_id("count")).to_have_text("0 von 0 Läufen")
+    expect(empty_page.get_by_test_id("count")).to_contain_text("0 Läufe in 0 Issues")
 
 
 def test_click_on_name_or_row_opens_the_experiment_in_a_tab(page):
@@ -173,14 +181,20 @@ def test_click_on_name_or_row_opens_the_experiment_in_a_tab(page):
 
 
 def test_compare_needs_two_ticked_runs_and_opens_the_analysis(page):
-    button = page.get_by_test_id("compare")
-    expect(button).to_be_disabled()
+    expect(page.get_by_test_id("compare-bar")).to_have_count(0)  # the bar appears with the first tick
     row(page, TIM71).get_by_test_id("sel").check()
+    button = page.get_by_test_id("compare")
+    expect(page.get_by_test_id("compare-count")).to_have_text("1 Lauf ausgewählt")
     expect(button).to_be_disabled()
+    expect(row(page, TIM71)).to_have_class(re.compile("selected"))
     row(page, ALONE).get_by_test_id("sel").check()
     expect(button).to_be_enabled()
-    expect(button).to_have_text("Vergleichen (2)")
+    expect(page.get_by_test_id("compare-count")).to_have_text("2 Läufe ausgewählt")
     assert page.get_by_test_id("tab-run").count() == 0  # ticking does not open the run
+    page.get_by_test_id("compare-clear").click()
+    expect(page.get_by_test_id("compare-bar")).to_have_count(0)
+    row(page, TIM71).get_by_test_id("sel").check()
+    row(page, ALONE).get_by_test_id("sel").check()
     button.click()
     expect(page.get_by_test_id("analysis-view")).to_be_visible()
     state = page.evaluate("JSON.parse(localStorage.getItem('mlviz:v1:Demo Bench:frame'))")
@@ -251,29 +265,26 @@ def test_issues_view_selects_the_issue_of_the_newest_run_first(page):
     expect(page.locator('[data-testid="issue-item"].active')).to_have_attribute("data-issue", "TIM-83")
 
 
-def test_issues_list_has_the_order_of_the_list_view_and_an_entry_for_runs_without_issue(page):
+def test_issues_list_has_the_order_of_the_list_view_and_the_runs_without_issue_last(page):
     page.get_by_test_id("view-issues").click()
     keys = page.get_by_test_id("issue-item").evaluate_all("els => els.map(e => e.dataset.issue)")
-    assert keys == ["TIM-83", "—", "TIM-71", "TIM-52", "TIM-45", "TIM-39", "TIM-30"]
+    assert keys == ["TIM-83", "TIM-71", "TIM-52", "TIM-45", "TIM-39", "TIM-30", "—"]
     expect(page.locator('[data-testid="issue-item"][data-issue="TIM-83"]')).to_contain_text("● läuft")
     expect(page.locator('[data-testid="issue-item"][data-issue="—"]')).to_contain_text("Ohne Issue")
 
 
-def test_issue_detail_shows_figures_and_one_card_per_experiment_with_all_runs(page):
+def test_issue_detail_shows_its_size_and_one_card_per_experiment_with_the_older_runs_folded(page):
     page.get_by_test_id("view-issues").click()
     page.locator('[data-testid="issue-item"][data-issue="TIM-52"]').click()
     detail = page.get_by_test_id("issue-detail")
-    stats = detail.locator(".stat")
-    expect(stats.nth(0)).to_contain_text("Läufe")
-    expect(stats.nth(0)).to_contain_text("3")
-    expect(stats.nth(1)).to_have_text(re.compile(r"Zellen\s*90\s*0 Fehler"))  # 3 runs x 30 cells
-    expect(detail.locator(".stat", has_text="pred_len 30")).to_have_count(1)
-    expect(detail.locator(".stat", has_text="pred_len 90")).to_have_count(1)
-    cards = detail.get_by_test_id("exp-card")
+    expect(detail.get_by_test_id("issue-meta")).to_have_text(re.compile(r"^2 Experimente · 3 Läufe · zuletzt "))
+    cards = detail.get_by_test_id("run-row")
     expect(cards).to_have_count(2)
     # experiments by their newest run: best_90 (one run) before best_30 (two runs)
-    expect(cards.nth(0).get_by_test_id("exp-run")).to_have_count(1)
-    expect(cards.nth(1).get_by_test_id("exp-run")).to_have_count(2)
+    expect(cards.nth(0).get_by_test_id("older-toggle")).to_have_count(0)
+    expect(cards.nth(1).get_by_test_id("older-toggle")).to_have_text("+ 1 · älterer Lauf")
+    cards_per_row = detail.locator(".cards").evaluate("e => getComputedStyle(e).gridTemplateColumns.split(' ').length")
+    assert cards_per_row == 2
 
 
 def test_issues_view_open_button_opens_the_run(page):
@@ -299,22 +310,24 @@ def test_a_run_with_a_description_shows_short_between_name_and_axes(page):
     r = row(page, BEST_90)
     short = r.get_by_test_id("short")
     expect(short).to_have_text("Bestes Setup aus dem Grid mit Horizont 90 gegen die Baselines")
-    lines = r.locator(".name-col > span").evaluate_all("els => els.map(e => e.className.split(' ')[0])")
-    assert lines[:3] == ["name-line", "short-line", "sub"]
+    lines = r.locator(":scope > *").evaluate_all("els => els.map(e => e.className.split(' ')[0])")
+    assert lines[:3] == ["rcard-head", "short-line", "axis-chips"]
     assert short.evaluate("e => getComputedStyle(e).fontFamily").startswith('"IBM Plex Sans"')
 
 
-def test_a_run_without_a_description_looks_as_before(page):
+def test_a_run_without_a_description_says_so_in_italics(page):
     expect(row(page, TIM71).get_by_test_id("short")).to_have_count(1)  # the demo run with a long short
-    expect(row(page, TIM83).get_by_test_id("short")).to_have_count(0)
-    expect(row(page, ALONE).get_by_test_id("short")).to_have_count(0)
+    for run in (TIM83, ALONE):
+        note = row(page, run).get_by_test_id("short-empty")
+        expect(note).to_have_text("Keine Kurzbeschreibung")
+        assert note.evaluate("e => getComputedStyle(e).fontStyle") == "italic"
 
 
-def test_a_long_short_is_cut_with_an_ellipsis_and_the_tooltip_has_the_cut_text(page):
+def test_a_long_short_is_cut_after_two_lines_and_the_tooltip_has_the_cut_text(page):
     short = row(page, TIM71).get_by_test_id("short")
     text = short.get_attribute("title")
     assert len(text) == 101 and text.endswith("…")
-    assert short.evaluate("e => getComputedStyle(e).whiteSpace") == "nowrap"
+    assert short.evaluate("e => getComputedStyle(e).webkitLineClamp") == "2"
 
 
 def test_an_older_run_shows_its_own_short_when_opened(page):
@@ -328,11 +341,11 @@ def test_search_matches_the_text_of_short(page):
     expect(row(page, TIM71)).to_have_count(0)
 
 
-def test_the_issues_view_shows_short_above_the_tags(page):
+def test_the_issues_view_shows_the_same_cards_with_short_above_the_axes(page):
     page.get_by_test_id("view-issues").click()
     page.locator('[data-testid="issue-item"][data-issue="TIM-52"]').click()
-    run_line = page.locator(f'[data-testid="exp-run"][data-run="{BEST_90}"]')
-    expect(run_line.get_by_test_id("short")).to_have_text("Bestes Setup aus dem Grid mit Horizont 90 gegen die Baselines")
-    short_y = run_line.get_by_test_id("short").bounding_box()["y"]
-    tags_y = run_line.locator(".tags").bounding_box()["y"]
-    assert short_y < tags_y
+    card = page.get_by_test_id("issue-detail").locator(f'[data-testid="run-row"][data-run="{BEST_90}"]')
+    expect(card.get_by_test_id("short")).to_have_text("Bestes Setup aus dem Grid mit Horizont 90 gegen die Baselines")
+    short_y = card.get_by_test_id("short").bounding_box()["y"]
+    chips_y = card.locator(".axis-chips").bounding_box()["y"]
+    assert short_y < chips_y

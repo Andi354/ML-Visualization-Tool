@@ -4,9 +4,9 @@ The ML Visualization Tool is a dark, calm workbench for looking at results of ds
 Tokens live in `tokens.json`; this file says how to use them.
 
 ## Colour carries meaning
-- Everything is slate grey (`bg`, `surface`, `raised`, `line`, `text`, `text-2`, `text-3`) unless it
+- Everything is graphite (`bg`, `chrome`, `surface`, `raised`, `line`, `text`, `text-2`, `text-3`) unless it
   means something.
-- `accent` = selection, focus, active controls. `best` = best value. `error` = failed cells.
+- `accent` = selection, focus, active controls, and a run that is running. `best` = best value. `error` = failed cells.
   `warn` = comparability problem (mixed epochs, metric families, horizons) and a run that stalls.
   `note` = Tim's own notes, nothing else (warm, never for problems). A running recording (voice input)
   uses `error` red with a pulse, the common sign for "recording". Never use these for decoration.
@@ -24,8 +24,14 @@ Tokens live in `tokens.json`; this file says how to use them.
 
 ## Density
 - Everything at a glance, no detail overload: table rows about 34 px, 8 px cell padding, 24 px gutter,
-  radii 4 px (controls) and 6 px (panels).
+  radii 8 px (controls) and 12 px (panels and cards), 7 px for chips; filter chips, view switches and
+  primary buttons are pills.
+- Every scroll area uses the tool's own thin scrollbar, never the browser default.
 - Secondary information folds away (constants, config blocks, timeline strip) instead of being cut.
+
+## No hint lines
+- No explanatory, legend or "how to read" lines under widgets, tables or screens ("niedriger = besser ·
+  …"), and the agent adds none either, unless Tim asks for them.
 
 ## Project-agnostic
 - The tool knows nothing about a project. Axes, replicates, metrics (direction, family), channels,

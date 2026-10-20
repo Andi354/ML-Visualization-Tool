@@ -104,8 +104,6 @@ def project_best(project: Project, req: dict) -> dict:
     return {
         "title": f"Bestes Ergebnis{' der aktuellen Epoche' if cur else ''}: {metric_text(metric, top['value'])} ({top['label']}{where})",
         "subtitle": f"Bester {metric.label} je Lauf" + (f" · gefärbt nach {key.split('.', 1)[1]}" if key else ""),
-        "note": "Linie = bester Wert bisher je Serie · hohle Punkte = andere Epoche, nicht in der Linie · Klick wählt den Lauf für die Landkarte"
-        + (" · vorläufig = Lauf läuft noch" if any(p["running"] for p in points) else ""),
         "options": project_options(project, runs),
         "data": {
             "metric": {"key": metric.key, "label": metric.label, "unit": metric.unit, "scale": metric.scale, "direction": metric.direction},
@@ -206,7 +204,6 @@ def param_map(project: Project, req: dict) -> dict:
     return {
         "title": title,
         "subtitle": f"Wirkung = Mittel der Kombinationen mit dem Wert gegenüber dem Lauf-Mittel, {metric.label}, in Prozent",
-        "note": "türkis = besser · bernstein = schlechter · gestrichelt = Achse im Lauf nicht variiert · Deckelung bei ±6 %",
         "options": project_options(project, readable_runs(project)),
         "data": {
             "metric": {"key": metric.key, "label": metric.label, "direction": metric.direction},

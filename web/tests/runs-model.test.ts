@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ProjectInfo, RunRow } from "../src/api";
+import { axisChips } from "../src/runs/RunCard";
 import {
   bestText,
   buildBlocks,
+  buildSections,
+  experimentsOf,
+  NO_ISSUE,
+  overviewTiles,
   buildTimeline,
   cellBar,
   cellText,
@@ -11,7 +16,6 @@ import {
   matchRun,
   noFilters,
   relTime,
-  secondLine,
   shortName,
 } from "../src/runs/model";
 
@@ -116,6 +120,46 @@ describe("blocks", () => {
   });
 });
 
+describe("sections and tiles (v0.3.2, P)", () => {
+  const rs = [
+    run({ issue: "A-1", name: "A-1_e", started: "2026-10-12T10:00:00", merkmal: { key: "k", label: "pred_len", value: "90" }, best: { metric: "m", label: "MAPE", unit: "%", scale: 100, value: 0.06 } }),
+    run({ issue: "A-1", name: "A-1_e", started: "2026-10-10T10:00:00", merkmal: { key: "k", label: "pred_len", value: "30" }, best: { metric: "m", label: "MAPE", unit: "%", scale: 100, value: 0.05 } }),
+    run({ issue: null, name: "alone", started: "2026-10-14T10:00:00", merkmal: { key: "k", label: "pred_len", value: "30" }, best: { metric: "m", label: "MAPE", unit: "%", scale: 100, value: 0.04 } }),
+    run({ issue: null, name: "alone2", started: "2026-10-13T10:00:00" }),
+  ];
+  it("one section per issue, newest first, and the runs without issue together at the end", () => {
+    const s = buildSections(rs);
+    expect(s.map((x) => x.key)).toEqual(["A-1", NO_ISSUE]);
+    expect(s[1].runs.map((r) => r.name)).toEqual(["alone", "alone2"]);
+    expect(s[1].experiments.map((e) => e.name)).toEqual(["alone", "alone2"]);
+  });
+  it("experiments keep the order of the runs", () => {
+    expect(experimentsOf(rs.slice(0, 2)).map((e) => [e.name, e.runs.length])).toEqual([["A-1_e", 2]]);
+  });
+  it("tiles: the running run first (else the newest) and the best value per Lauf-Merkmal value", () => {
+    const metrics = [{ key: "m", direction: "min" }] as ProjectInfo["metrics"];
+    const t = overviewTiles(rs, metrics);
+    expect(t.first.name).toBe("alone"); // nothing runs: the newest
+    expect(t.bests.map((b) => [b.run.merkmal?.value, Math.round(b.value * 100) / 100])).toEqual([["30", 3.97], ["90", 6]]);
+    const running = [...rs, run({ running: true, started: "2026-10-01T10:00:00", name: "going" })];
+    expect(overviewTiles(running, metrics).first.name).toBe("going");
+  });
+  it("the week filter keeps the runs of the last 7 days", () => {
+    const now = new Date(NOW).getTime();
+    const f = { ...noFilters, status: "week" as const };
+    expect(matchRun(run({ started: "2026-10-12T10:00:00" }), {}, f, now)).toBe(true);
+    expect(matchRun(run({ started: "2026-10-01T10:00:00" }), {}, f, now)).toBe(false);
+  });
+});
+
+describe("card chips", () => {
+  it("shows the first three axes, then +n", () => {
+    expect(axisChips(["a", "b"])).toEqual(["a", "b"]);
+    expect(axisChips(["a", "b", "c"])).toEqual(["a", "b", "c"]);
+    expect(axisChips(["a", "b", "c", "d", "e"])).toEqual(["a", "b", "c", "+2"]);
+  });
+});
+
 describe("texts", () => {
   it("relative time like the prototype", () => {
     expect(relTime(NOW, "2026-10-15T09:05:00")).toBe("heute 09:05");
@@ -160,11 +204,6 @@ describe("texts", () => {
       "Epoche tsrm6",
     ]);
     expect(flags(run({ epoch: "tsrm6" }), null)).toEqual([]);
-  });
-  it("second line: axes, extras, and 'ohne Issue' for standalone rows", () => {
-    const r = run({ axes: ["a", "b"], has_curves: true, migrated: true });
-    expect(secondLine(r, false)).toBe("a · b   —   Kurven · migriert");
-    expect(secondLine(run({ axes: ["a"] }), true)).toBe("ohne Issue · a");
   });
 });
 

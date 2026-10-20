@@ -12,19 +12,19 @@ def css(locator, prop):
 # --- F · Frame ------------------------------------------------------------------------------------
 def test_icon_rail_uses_the_svg_icons_and_the_small_badge(page):
     badge = page.get_by_test_id("project-badge")
-    assert badge.bounding_box()["width"] == 32 and css(badge, "borderRadius") == "6px"
+    assert badge.bounding_box()["width"] == 32 and css(badge, "borderRadius") == "9px"
     for area in ("runs", "analysis"):
         icon = page.get_by_test_id(f"area-{area}").locator("svg")
         assert icon.get_attribute("viewBox") == "0 0 18 18"
     # the analysis icon is the two columns of the prototype, not bars
     assert page.get_by_test_id("area-analysis").locator("svg rect").count() == 2
-    assert css(page.get_by_test_id("area-runs"), "borderRadius") == "6px"
+    assert css(page.get_by_test_id("area-runs"), "borderRadius") == "12px"
 
 
 def test_tabs_are_the_prototype_tabs(page):
     pinned = page.get_by_test_id("tab-pinned")
     assert css(pinned, "paddingLeft") == "12px" and css(pinned, "fontSize") == "12px"
-    assert css(pinned, "borderRightWidth") == "1px" and css(pinned, "borderTopColor") == "rgb(110, 155, 245)"
+    assert css(pinned, "borderRightWidth") == "1px" and css(pinned, "borderTopColor") == "rgb(138, 164, 255)"
     open_run(page, folder("TIM-71_example"))
     tab = page.get_by_test_id("tab-run").first
     assert "Mono" in css(tab.locator(".tab-label"), "fontFamily")
@@ -39,7 +39,7 @@ def test_search_box_sits_centred_with_a_magnifier(page):
     assert (b["width"], b["height"], b["y"]) == (340, 24, 6)
     assert abs((b["x"] + b["width"] / 2) - (52 + (1440 - 52) / 2)) < 1 or abs(b["x"] + b["width"] / 2 - page.viewport_size["width"] / 2) < 30
     assert box.locator("svg").count() == 1
-    assert css(box, "borderRadius") == "6px" and css(box, "borderTopColor") == "rgb(44, 53, 71)"
+    assert css(box, "borderRadius") == "12px" and css(box, "borderTopColor") == "rgb(52, 52, 60)"
 
 
 def test_status_bar_items_fill_the_bar_and_the_bell_is_an_svg(page):
@@ -47,7 +47,7 @@ def test_status_bar_items_fill_the_bar_and_the_bell_is_an_svg(page):
     assert css(bar, "fontSize") == "12px"
     bell = page.get_by_test_id("sb-bell")
     assert bell.locator("svg").count() == 1 and "🔔" not in bell.inner_text()
-    assert bell.bounding_box()["height"] == 23 and css(bell, "paddingLeft") == "9px"
+    assert bell.bounding_box()["height"] == 25 and css(bell, "paddingLeft") == "9px"
     expect(page.get_by_test_id("sb-agent")).to_contain_text("✦")
 
 
@@ -56,24 +56,27 @@ def test_popovers_are_the_raised_panels_of_the_prototype(page):
     pop = page.get_by_test_id("runs-popover")
     box = pop.bounding_box()
     assert box["width"] == 480 and box["x"] == 6
-    assert css(pop, "borderTopColor") == "rgb(44, 69, 114)" and css(pop, "borderRadius") == "8px"
-    assert css(pop, "backgroundColor") == "rgb(26, 32, 48)"
+    assert css(pop, "borderTopColor") == "rgb(58, 65, 102)" and css(pop, "borderRadius") == "8px"
+    assert css(pop, "backgroundColor") == "rgb(36, 36, 42)"
     # progress bar of a run: 5 px, round
     assert page.locator(".sb-bar").first.bounding_box()["height"] == 5
-    assert css(page.get_by_test_id("sb-run-open"), "borderTopColor") == "rgb(44, 53, 71)"
+    assert css(page.get_by_test_id("sb-run-open"), "borderTopColor") == "rgb(52, 52, 60)"
     page.get_by_test_id("sb-bell").click()
     note = page.get_by_test_id("notes-popover")
     assert note.bounding_box()["width"] == 430
 
 
 # --- G · Läufe ------------------------------------------------------------------------------------
-def test_runs_header_shows_only_the_area_name_and_the_list_has_the_wide_gutter(page):
+def test_runs_header_has_the_title_the_view_switch_and_pills_and_the_list_has_the_wide_gutter(page):
     head = page.locator("[data-testid=runs-view] .view-head")
-    expect(head).to_have_text("LäufeListeIssues")
+    expect(head.locator(".view-name")).to_have_text("Läufe")
     assert css(head, "paddingLeft") == "32px"
-    assert css(page.locator("[data-testid=runs-view] .view-head .seg"), "borderRadius") == "5px"
-    assert page.get_by_test_id("search").bounding_box()["x"] == 52 + 32
-    assert page.locator(".run-row").first.evaluate("e => getComputedStyle(e).gridTemplateColumns").endswith("120px")
+    assert css(head.locator(".switch-pill"), "borderRadius") == "18px"
+    assert css(head.locator(".pill").first, "borderRadius") == "16px"
+    assert page.get_by_test_id("search").bounding_box()["x"] > 56 + 32  # in its own pill
+    card = page.locator(".rcard").first
+    assert css(card, "borderRadius") == "12px" and css(card, "backgroundColor") == "rgb(28, 28, 32)"
+    assert css(page.locator(".tile").first, "borderRadius") == "14px"
 
 
 def test_issue_view_has_its_search_in_the_list_column_and_fills_the_height(page):
@@ -84,11 +87,11 @@ def test_issue_view_has_its_search_in_the_list_column_and_fills_the_height(page)
     box = aside.bounding_box()
     assert box["y"] + box["height"] >= page.get_by_test_id("status-bar").bounding_box()["y"] - 1
     assert 295 <= box["width"] <= 360
-    assert css(page.locator(".issue-item").first, "borderRadius") == "6px"
+    assert css(page.locator(".issue-item").first, "borderRadius") == "10px"
     page.locator('[data-testid="issue-item"][data-issue="TIM-83"]').click()
-    tag = page.locator(".exp-run .tags .flag").first
-    assert css(tag, "borderTopWidth") == "1px" and "Mono" in css(tag, "fontFamily")
-    assert page.locator(".exp-run .bar").first.bounding_box()["height"] == 5
+    chip = page.locator(".rcard .axis-chips .chip").first
+    assert "Mono" in css(chip, "fontFamily") and css(chip, "borderRadius") == "7px"
+    assert page.locator(".rcard .bar").first.bounding_box()["height"] == 5
 
 
 # --- H · Run tab ----------------------------------------------------------------------------------
@@ -100,7 +103,7 @@ def test_groups_table_has_the_prototype_heads_and_right_aligned_numbers(page):
     assert "Mono" in css(head, "fontFamily") and css(head, "textAlign") == "right" and css(head, "paddingLeft") == "10px"
     cell = page.locator(".exp-table td.metric-cell").first
     assert css(cell, "textAlign") == "right" and css(cell, "paddingTop") == "7px"
-    assert css(cell, "borderBottomColor") == "rgb(38, 46, 62)"
+    assert css(cell, "borderBottomColor") == "rgb(46, 46, 53)"
     expect(page.locator(".sort-arrow").first).to_have_text("↑")
 
 
@@ -115,7 +118,7 @@ def test_notes_column_is_the_amber_column_of_the_prototype(page):
     page.get_by_test_id("note-input").fill("Seed **auffällig**")
     page.get_by_test_id("note-save").click()
     card = page.get_by_test_id("my-note")
-    assert css(card, "backgroundColor") == "rgb(21, 18, 9)" and css(card, "borderRadius") == "6px"
+    assert css(card, "backgroundColor") == "rgb(21, 18, 9)" and css(card, "borderRadius") == "12px"
     assert css(card.locator(".note-anchor"), "borderRadius") == "9px"
     assert css(card.locator("strong"), "color") == "rgb(255, 226, 168)"
     expect(card.get_by_test_id("note-edit")).to_have_class("lnk")
@@ -126,7 +129,7 @@ def test_notes_column_is_the_amber_column_of_the_prototype(page):
 def test_analysis_has_the_scope_strip_and_the_prototype_header(page):
     page.get_by_test_id("area-analysis").click()
     strip = page.locator(".scope-strip")
-    assert strip.bounding_box()["height"] == 40 and css(strip, "backgroundColor") == "rgb(15, 19, 27)"
+    assert strip.bounding_box()["height"] == 40 and css(strip, "backgroundColor") == "rgb(19, 19, 21)"
     expect(strip).to_contain_text("Umfang")
     expect(strip.get_by_test_id("analysis-view-run")).to_have_text("Ein Lauf")
     head = page.locator(".analysis > .view-head")
@@ -134,8 +137,8 @@ def test_analysis_has_the_scope_strip_and_the_prototype_header(page):
     expect(head.locator(".crumb")).to_contain_text("Analyse")
     expect(head.locator(".crumb-view")).to_have_text("Ein Lauf")
     save = page.get_by_test_id("save-deliverable")
-    assert css(save, "fontSize") == "13px" and css(save, "backgroundColor") == "rgb(110, 155, 245)"
-    assert css(page.get_by_test_id("template-menu"), "backgroundColor") == "rgb(19, 23, 32)"
+    assert css(save, "fontSize") == "13px" and css(save, "backgroundColor") == "rgb(138, 164, 255)"
+    assert css(page.get_by_test_id("template-menu"), "backgroundColor") == "rgb(28, 28, 32)"
 
 
 def test_widget_tables_follow_the_prototype_table(page):
@@ -143,7 +146,7 @@ def test_widget_tables_follow_the_prototype_table(page):
     table = page.locator(".w-table").first
     table.wait_for()
     th = table.locator("thead th").first
-    assert css(th, "backgroundColor") == "rgb(26, 32, 48)" and css(th, "fontSize") == "12px"
+    assert css(th, "backgroundColor") == "rgb(36, 36, 42)" and css(th, "fontSize") == "12px"
     td = table.locator("tbody td:not(.row-head)").first
     assert css(td, "textAlign") == "center" and css(td, "paddingTop") == "9px" and css(td, "fontSize") == "13px"
 
@@ -157,9 +160,9 @@ def test_agent_window_sits_above_the_status_bar_with_the_prototype_controls(page
     assert box["y"] + box["height"] <= status["y"] - 20
     assert win.locator(".agent-header > svg path").count() == 1  # the big star alone
     send = page.get_by_test_id("agent-send")
-    assert css(send, "backgroundColor") == "rgb(47, 91, 211)" and css(send, "color") == "rgb(255, 255, 255)"
+    assert css(send, "backgroundColor") == "rgb(91, 111, 214)" and css(send, "color") == "rgb(255, 255, 255)"
     mic = page.get_by_test_id("agent-mic")
-    assert css(mic, "borderTopColor") == "rgb(44, 53, 71)" and css(mic, "backgroundColor") == "rgb(19, 23, 32)"
+    assert css(mic, "borderTopColor") == "rgb(52, 52, 60)" and css(mic, "backgroundColor") == "rgb(28, 28, 32)"
 
 
 # --- K · Settings ---------------------------------------------------------------------------------
@@ -167,7 +170,7 @@ def test_settings_header_rail_and_rows_follow_the_prototype(page):
     page.get_by_test_id("settings-icon").click()
     sp = page.get_by_test_id("settings")
     expect(sp.locator(".settings-title-main")).to_have_text("Einstellungen")
-    expect(page.get_by_test_id("settings-sub")).to_contain_text("Demo Bench · v0.3.1")
+    expect(page.get_by_test_id("settings-sub")).to_contain_text("Demo Bench · v0.3.2")
     box = sp.locator(".settings-search-box")
     assert box.locator("svg").count() == 1 and box.locator("kbd").inner_text() == "/"
     pill = page.get_by_test_id("only-changed")
@@ -197,7 +200,7 @@ def test_palette_is_the_raised_panel_with_icons_and_group_hints(page):
     panel = page.get_by_test_id("palette")
     box = panel.bounding_box()
     assert box["width"] == 640 and box["y"] == 40
-    assert css(panel, "backgroundColor") == "rgb(26, 32, 48)" and css(panel, "borderTopColor") == "rgb(44, 69, 114)"
+    assert css(panel, "backgroundColor") == "rgb(36, 36, 42)" and css(panel, "borderTopColor") == "rgb(58, 65, 102)"
     assert css(panel, "borderRadius") == "8px"
     assert "Mono" not in css(page.get_by_test_id("palette-input"), "fontFamily")
     first = page.get_by_test_id("palette-item").first
@@ -212,4 +215,4 @@ def test_palette_is_the_raised_panel_with_icons_and_group_hints(page):
     first = page.get_by_test_id("palette-item").first
     expect(first.locator(".palette-label")).to_contain_text("Läufe: ")
     expect(first.locator(".palette-key")).to_have_text("Ctrl+P")
-    assert css(first.locator(".palette-key"), "borderRadius") == "3px"
+    assert css(first.locator(".palette-key"), "borderRadius") == "7px"
