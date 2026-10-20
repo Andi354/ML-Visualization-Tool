@@ -165,11 +165,11 @@ def test_the_recording_row_and_the_review_box_have_the_prototype_look(vp):
     expect(vp.get_by_test_id("agent-input")).to_be_visible()
     record(vp)
     box = vp.get_by_test_id("voice-review")
-    assert box.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(21, 28, 43)"
+    assert box.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(24, 24, 27)"
     expect(box).to_contain_text("zum Ändern anklicken")
     assert box.locator(".voice-review-head svg").count() == 1
     send = vp.get_by_test_id("voice-send")
     expect(send.locator(".vkbd")).to_have_text("Enter")
-    assert send.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(47, 91, 211)"
+    assert send.evaluate("e => getComputedStyle(e).backgroundColor") == "rgb(91, 111, 214)"
     chip = vp.get_by_test_id("voice-chip").first
     assert chip.evaluate("e => getComputedStyle(e).borderBottomStyle") == "dotted"
