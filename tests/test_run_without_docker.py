@@ -18,10 +18,10 @@ def make(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["make", "-C", str(ROOT), *args], capture_output=True, text=True)
 
 
-def test_make_run_installs_ds_store_and_the_wheel_into_its_own_venv_and_serves(tmp_path):
-    out = make("-n", "run", f"PROJECT={tmp_path}", "DS_STORE=/some/ds-store").stdout
+def test_make_run_installs_ds_runstore_and_the_wheel_into_its_own_venv_and_serves(tmp_path):
+    out = make("-n", "run", f"PROJECT={tmp_path}", "DS_RUNSTORE=/some/ds-runstore").stdout
     assert "uv venv --allow-existing .venv-run" in out
-    assert "/some/ds-store" in out and "dist/ml_visualization_tool-*.whl" in out
+    assert "/some/ds-runstore" in out and "dist/ml_visualization_tool-*.whl" in out
     assert f".venv-run/bin/mlviz serve --project \"{tmp_path}\"" in out
     assert ".venv/bin" not in out.replace(".venv-run/bin", "")  # the development venv is left alone
 
@@ -36,9 +36,9 @@ def test_make_run_refuses_a_project_folder_that_does_not_exist(tmp_path):
     assert r.returncode != 0 and "project folder not found" in r.stderr
 
 
-def test_make_run_install_says_where_it_looked_for_ds_store(tmp_path):
-    r = make("run-install", f"DS_STORE={tmp_path / 'missing'}")
-    assert r.returncode != 0 and "ds-store not found" in r.stderr and "DS_STORE=" in r.stderr
+def test_make_run_install_says_where_it_looked_for_ds_runstore(tmp_path):
+    r = make("run-install", f"DS_RUNSTORE={tmp_path / 'missing'}")
+    assert r.returncode != 0 and "ds-runstore not found" in r.stderr and "DS_RUNSTORE=" in r.stderr
 
 
 def test_mlviz_serve_answers_without_docker(demo_project):

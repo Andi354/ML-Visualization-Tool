@@ -1,7 +1,7 @@
-"""Stand-in for the description functions of `ds-store` (they arrive with TIM-71).
+"""Stand-in for the description functions of `ds-runstore` (they arrive with TIM-71).
 
 `list_runs` then returns `short` and `has["description"]` per run, `read_description(run_dir)` returns None without
-`description.yaml`, else the fields and a list `problems`. The shim is installed only while the installed `ds-store`
+`description.yaml`, else the fields and a list `problems`. The shim is installed only while the installed `ds-runstore`
 does not have them, so the tests switch to the real functions by themselves once they exist.
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import ds_store
+import ds_runstore
 import yaml
 
 FIELDS = ("short", "purpose", "shows", "notes", "expectation", "compare_to")
@@ -32,9 +32,9 @@ def read_description(run_dir):
 
 
 def install() -> None:
-    if hasattr(ds_store, "read_description"):
+    if hasattr(ds_runstore, "read_description"):
         return
-    original = ds_store.list_runs
+    original = ds_runstore.list_runs
 
     def list_runs(runs_root, *args, **kwargs):
         items = original(runs_root, *args, **kwargs)
@@ -44,5 +44,5 @@ def install() -> None:
             item["has"] = {**item.get("has", {}), "description": description is not None}
         return items
 
-    ds_store.read_description = read_description
-    ds_store.list_runs = list_runs
+    ds_runstore.read_description = read_description
+    ds_runstore.list_runs = list_runs

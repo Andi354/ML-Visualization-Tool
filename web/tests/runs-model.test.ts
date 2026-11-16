@@ -192,7 +192,7 @@ describe("texts", () => {
     expect(bestText(stalled).note).toContain("vorläufig");
     expect(flags(stalled, "eval-all-windows").map((f) => f.text)).toEqual(["◐ steht still"]);
   });
-  it("a run ds-store cannot read is flagged with the reason and has no progress", () => {
+  it("a run ds-runstore cannot read is flagged with the reason and has no progress", () => {
     const bad = run({ state: "unsupported", problem: "store_version 99 is newer", cells: 0, planned: 0 });
     expect(flags(bad, "eval-all-windows")).toEqual([{ text: "⚠ nicht lesbar", kind: "warn", title: "store_version 99 is newer" }]);
     expect(cellText(bad)).toBe("0 Zellen");

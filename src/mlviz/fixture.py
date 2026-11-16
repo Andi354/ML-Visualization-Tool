@@ -1,7 +1,7 @@
 """Synthetic demo project in the layout of a ds-init project.
 
 Used by the tests and by `mlviz demo <dir>` to try the tool without real results. All numbers are
-made up and deterministic. The tables are written with the writers of `ds-store`, so the layout is the
+made up and deterministic. The tables are written with the writers of `ds-runstore`, so the layout is the
 run format of ds-init (store_version 1): `plan`, `cells`, `channels`, `curves`, `predictions`, the last
 two flat with `cell_id`; `config.base.yaml` sits next to `config.yaml`. A finished run is compacted
 (one file per table), a running one keeps its part files.
@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yaml
-from ds_store import compact, write_part, write_plan
+from ds_runstore import compact, write_part, write_plan
 
 SCALED = ["test_mse_missing", "test_mae_missing", "test_rmse_missing", "test_mape_missing"]
 REAL = [

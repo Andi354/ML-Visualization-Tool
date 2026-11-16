@@ -1,10 +1,10 @@
-"""Runs are read through `ds-store`: the tables of the run format, state and progress, errors."""
+"""Runs are read through `ds-runstore`: the tables of the run format, state and progress, errors."""
 
 import json
 import shutil
 import sys
 
-import ds_store
+import ds_runstore
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
@@ -112,7 +112,7 @@ def test_new_part_files_of_a_running_experiment_show_up(tmp_path):
     extra = cells.iloc[:1].copy()
     extra["row"] = int(cells["row"].max()) + 1
     extra["finished_at"] = "2026-10-15T12:30:00"
-    ds_store.write_part(run_dir, "cells", 0, extra)
+    ds_runstore.write_part(run_dir, "cells", 0, extra)
     assert get_run(Project.load(root), RUNNING).done_cells == before + 1
 
 
@@ -136,14 +136,14 @@ def test_a_run_the_package_cannot_read_is_listed_with_the_reason(tmp_path):
 
 def test_without_the_package_the_tool_says_so(tmp_path, monkeypatch):
     root = fixture.make_project(tmp_path)
-    monkeypatch.setitem(sys.modules, "ds_store", None)  # `import ds_store` raises ImportError
+    monkeypatch.setitem(sys.modules, "ds_runstore", None)  # `import ds_runstore` raises ImportError
     r = TestClient(create_app(root)).get("/api/runs")
-    assert r.status_code == 409 and "ds-store" in r.json()["detail"]
+    assert r.status_code == 409 and "ds-runstore" in r.json()["detail"]
 
 
 def test_the_example_run_of_the_package_is_readable(tmp_path):
     root = tmp_path / "p"
-    run_dir = ds_store.write_example_run(root / "runs" / "2026-01-01_1000_example")
+    run_dir = ds_runstore.write_example_run(root / "runs" / "2026-01-01_1000_example")
     project = Project.load(root)
     run = get_run(project, run_dir.name)
     assert run.name == "example" and run.state == "finished" and run.planned_cells == 8
@@ -159,7 +159,7 @@ def test_the_example_run_of_the_package_is_readable(tmp_path):
 
 def test_the_example_run_while_it_is_going_has_its_parts_read(tmp_path):
     root = tmp_path / "p"
-    run_dir = ds_store.write_example_run(root / "runs" / "2026-01-01_1000_example", finished=False, compacted=False)
+    run_dir = ds_runstore.write_example_run(root / "runs" / "2026-01-01_1000_example", finished=False, compacted=False)
     run = get_run(Project.load(root), run_dir.name)
     assert run.running and run.done_cells == 8
 
@@ -209,8 +209,8 @@ def test_derived_cells_with_empty_axis_values_are_grouped_as_their_own_value(tmp
             for r, cid, f, base, w, mape in rows
         ]
     )
-    ds_store.write_plan(run_dir, cells[["row", "cell_id", "duplicate_of", "forecaster", "ensemble_base", "ensemble_weight", "seed"]].assign(derived_from=[None, None, 0, 1]))
-    ds_store.write_part(run_dir, "cells", 0, cells)
+    ds_runstore.write_plan(run_dir, cells[["row", "cell_id", "duplicate_of", "forecaster", "ensemble_base", "ensemble_weight", "seed"]].assign(derived_from=[None, None, 0, 1]))
+    ds_runstore.write_part(run_dir, "cells", 0, cells)
     (run_dir / "meta.json").write_text(
         json.dumps(
             {

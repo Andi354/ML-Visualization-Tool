@@ -1,4 +1,4 @@
-"""Descriptions of runs (v0.2.1): `short` in the run list (G), `read_description` through `ds-store` (H)."""
+"""Descriptions of runs (v0.2.1): `short` in the run list (G), `read_description` through `ds-runstore` (H)."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -58,10 +58,10 @@ def test_an_empty_short_counts_as_no_description_line(project, monkeypatch):
     assert run.short is None and run.has_description is True
 
 
-def test_a_ds_store_without_the_description_functions_means_no_description(project, monkeypatch):
-    import ds_store
+def test_a_ds_runstore_without_the_description_functions_means_no_description(project, monkeypatch):
+    import ds_runstore
 
-    monkeypatch.delattr(ds_store, "read_description")
+    monkeypatch.delattr(ds_runstore, "read_description")
     assert store.read_description(project.path("runs") / BEST_90) is None
 
 
@@ -124,23 +124,23 @@ def test_problems_come_with_the_fields_that_can_be_read(client):
 
 
 def test_a_description_that_cannot_be_read_is_a_problem_not_an_error(project, monkeypatch):
-    import ds_store
+    import ds_runstore
 
     from mlviz import descriptions
 
     def broken(run_dir):
         raise OSError("kaputt")
 
-    monkeypatch.setattr(ds_store, "read_description", broken)
+    monkeypatch.setattr(ds_runstore, "read_description", broken)
     d = descriptions.describe(project, get_run(project, BEST_90))
     assert d["problems"] == ["kaputt"] and d["purpose"] is None and d["shows"] == []
 
 
 def test_markdown_is_not_interpreted(project, monkeypatch):
-    import ds_store
+    import ds_runstore
 
     from mlviz import descriptions
 
-    monkeypatch.setattr(ds_store, "read_description", lambda d: {"short": "**fett**", "purpose": "# kein Titel", "shows": ["_x_"], "problems": []})
+    monkeypatch.setattr(ds_runstore, "read_description", lambda d: {"short": "**fett**", "purpose": "# kein Titel", "shows": ["_x_"], "problems": []})
     d = descriptions.describe(project, get_run(project, BEST_90))
     assert d["short"] == "**fett**" and d["purpose"] == "# kein Titel" and d["shows"] == ["_x_"]

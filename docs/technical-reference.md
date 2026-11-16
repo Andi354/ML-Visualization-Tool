@@ -13,15 +13,15 @@ The tool knows nothing about a project except these files. Every reader tolerate
 | `runs/<YYYY-MM-DD_HHMM>_<name>/meta.json` | `name`, `store_version`, `issue`, `config`, `started_at`, `ended_at`, `axes`, `replicates`, `primary_metric`, `epoch`, `commit`, `plan: {cells, excluded, duplicates}`, `counts` (final tally, not used for progress); `migrated: true` marks converted runs |
 | `.../config.yaml` | resolved config: blocks `data`, `model`, `train`, `sweep`, `replicates`, `run`, `report` |
 | `.../config.base.yaml` | the merged base configs as they were at the start of the run (missing for migrated runs) |
-| tables, through `ds-store` | `plan`: `row`, `cell_id`, `duplicate_of`, axes, replicates. `cells`: one row per planned cell, those plus `is_duplicate`, `status` (`ok`/`error`), `error`, `duration_s`, `finished_at`, `shard`, metric columns. `channels`: cell x channel (`cell_id`, `channel`, metric columns). `curves`: `cell_id`, `epoch`, `metric` (`train_loss`, `val_loss`), `value`. `predictions`: `cell_id`, `date`, `channel`, `y_pred`, `y_true` (whole test period) |
+| tables, through `ds-runstore` | `plan`: `row`, `cell_id`, `duplicate_of`, axes, replicates. `cells`: one row per planned cell, those plus `is_duplicate`, `status` (`ok`/`error`), `error`, `duration_s`, `finished_at`, `shard`, metric columns. `channels`: cell x channel (`cell_id`, `channel`, metric columns). `curves`: `cell_id`, `epoch`, `metric` (`train_loss`, `val_loss`), `value`. `predictions`: `cell_id`, `date`, `channel`, `y_pred`, `y_true` (whole test period) |
 
-**Run tables are read only through `ds-store`** (`read_table`, `list_runs`, `run_status`,
+**Run tables are read only through `ds-runstore`** (`read_table`, `list_runs`, `run_status`,
 `table_version`), wrapped in `store.py`; the tool has no reader of its own and never opens a table file.
-`ds-store` is a package of its own (not on an index) and lives next to this repo in `../ds-store`:
-`make setup` installs it from there (`DS_STORE=` overrides the path), the Dockerfile builds it from the
-build context `ds-store` (docker-compose.yml passes `DS_STORE_PATH`, default `../ds-store`; plain docker:
-`--build-context ds-store=../ds-store`), so the image contains it and the container needs no sibling
-folder. Installing the tool's wheel elsewhere needs ds-store installed first (`pip install ../ds-store
+`ds-runstore` is a package of its own (not on an index) and lives next to this repo in `../ds-runstore`:
+`make setup` installs it from there (`DS_RUNSTORE=` overrides the path), the Dockerfile builds it from the
+build context `ds-runstore` (docker-compose.yml passes `DS_RUNSTORE_PATH`, default `../ds-runstore`; plain docker:
+`--build-context ds-runstore=../ds-runstore`), so the image contains it and the container needs no sibling
+folder. Installing the tool's wheel elsewhere needs ds-runstore installed first (`pip install ../ds-runstore
 dist/ml_visualization_tool-*.whl`). Axis values are text
 (lists as JSON, paired axes as one label column). `curves` and `predictions` exist once per `cell_id`
 and carry no replicate columns (`read_table(..., with_cells=True)` adds them). A duplicate cell
@@ -31,7 +31,7 @@ wrapper returns None); derived cells (`forecaster: hybrid`) leave `ensemble_*` a
 cells, and an empty axis value is a value of its own. The package sorts `channels` by name, so regions
 appear alphabetically, not in model order. Caches are keyed by `table_version` (and `meta.json`), so a
 running experiment shows up as it writes. Errors from the package (`UnsupportedStoreVersion`) become
-`StoreError`; without the package installed the API answers 409 and the run list shows that `ds-store`
+`StoreError`; without the package installed the API answers 409 and the run list shows that `ds-runstore`
 is missing.
 
 State and progress are `run_status`: `finished` (`ended_at` set), `running` (something written within 15
@@ -186,10 +186,10 @@ a single image), and one footer. Group file names are `NN_<type>+<type>.png`.
 
 Two ways, equal in rank. **Docker:** `docker compose up --build` (see `.env.example`). **Without Docker:**
 `make run PROJECT=<path>` for a machine without Docker rights. It creates the venv `.venv-run` (not the
-development `.venv`), installs `ds-store` from `../ds-store` (`DS_STORE=` overrides; a folder or a wheel)
+development `.venv`), installs `ds-runstore` from `../ds-runstore` (`DS_RUNSTORE=` overrides; a folder or a wheel)
 and the tool's wheel from `dist/` (the frontend is built into it, so no Node is needed), then starts
 `mlviz serve --project <path>` on `127.0.0.1:8765` (`MLVIZ_PORT`, `MLVIZ_HOST`). It needs `uv`, the wheel
-in `dist/` and the `ds-store` folder; each missing piece stops it with a message. The tool is meant for one
+in `dist/` and the `ds-runstore` folder; each missing piece stops it with a message. The tool is meant for one
 person; it is not exposed in the network unless `MLVIZ_HOST` says so. `make check-run` installs into a
 temporary venv, serves the demo project and asks the API and the frontend; `tests/test_run_without_docker.py`
 covers what `make run` does, how it refuses, and that `mlviz serve` answers.
@@ -346,11 +346,11 @@ Types that no longer exist are dropped when applying; own widgets that were dele
 ## Run descriptions (v0.2.1)
 
 A run folder may hold `description.yaml` (optional; a run without it stays valid). It is read **only through
-`ds-store`** (`store.read_description`), after TIM-71 delivers the functions: `list_runs` then returns per
+`ds-runstore`** (`store.read_description`), after TIM-71 delivers the functions: `list_runs` then returns per
 run `short` and `has["description"]`, `read_description(run_dir)` returns `None` without a file, else the
 fields `short`, `purpose`, `shows`, `notes`, `expectation`, `compare_to` and a list `problems`. With a
-`ds-store` that does not have them yet, every run counts as "no description". The tests install a stand-in
-(`tests/ds_store_shim.py`) while the package lacks the functions; the demo project writes a few
+`ds-runstore` that does not have them yet, every run counts as "no description". The tests install a stand-in
+(`tests/ds_runstore_shim.py`) while the package lacks the functions; the demo project writes a few
 `description.yaml`.
 
 - **`short` (Läufe):** `Run.short` is the `short` of the run list, one line, cut to `store.SHORT_MAX` (100)
@@ -476,7 +476,7 @@ as they stand in the prototype. The agent window's bounds end at the top of the 
 ## Code
 
 - `src/mlviz/project.py`: `Project` (project files, clock). `MLVIZ_NOW` fixes the clock for tests.
-- `src/mlviz/store.py`: the only reader of run tables (wraps `ds-store`, caches by `table_version`).
+- `src/mlviz/store.py`: the only reader of run tables (wraps `ds-runstore`, caches by `table_version`).
 - `src/mlviz/runs.py`: `Run` (meta, config, tables and state through `store.py`), `list_runs`, `get_run`. Run ids never leave `runs/`.
 - `src/mlviz/aggregate.py`: dimensions, constants and group table of one run (feature D).
 - `web/src/experiment/`: experiment view; `model.ts` holds the pure logic (dimension state, chips, columns, formatting).
@@ -489,7 +489,7 @@ as they stand in the prototype. The agent window's bounds end at the top of the 
 - `src/mlviz/linear.py`: Linear client and local issue links.
 - `web/src/runs/model.ts`: pure logic of the Läufe area (filters, blocks, texts, timeline); components next to it.
 - `src/mlviz/server.py`: FastAPI app, `/api/...`, serves `src/mlviz/static` (the built frontend).
-- `src/mlviz/fixture.py`: synthetic demo project in the run format, written with the writers of `ds-store` (`mlviz demo`), the base of all tests. The package's `write_example_run` (8 cells) is too small for the views; `tests/test_store.py` uses it to check that the tool reads what the package writes.
+- `src/mlviz/fixture.py`: synthetic demo project in the run format, written with the writers of `ds-runstore` (`mlviz demo`), the base of all tests. The package's `write_example_run` (8 cells) is too small for the views; `tests/test_store.py` uses it to check that the tool reads what the package writes.
 - `web/src/state/frame.ts`: frame state (areas, tabs, `pinned` tabs, which stay left and are skipped by the bulk closes of the tab menu `frame/TabMenu.tsx`; `close-tabs`, `pin-tab`, `unpin-tab`, `restore-tabs`, `show-in-runs`). Stored per project in `localStorage`
   (`mlviz:v1:<project>:...`), every access guarded.
 - `web/src/tokens.css` is generated from `design/tokens.json` (`npm run tokens`); never edit it.

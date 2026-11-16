@@ -3,9 +3,9 @@ services:
   mlviz:
     build:
       context: .
-      # ds-store sits next to this repo; the image contains it, the container does not need the folder
+      # ds-runstore sits next to this repo; the image contains it, the container does not need the folder
       additional_contexts:
-        ds-store: "${DS_STORE_PATH:-../ds-store}"
+        ds-runstore: "${DS_RUNSTORE_PATH:-../ds-runstore}"
     image: ml-visualization-tool:0.1.1
     # run as your own user, so exported files do not belong to root
     user: "${UID:-1000}:${GID:-1000}"

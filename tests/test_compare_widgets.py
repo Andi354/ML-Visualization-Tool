@@ -173,7 +173,7 @@ def test_all_combinations_title_names_the_better_middle(project):
 # --- Regionen --------------------------------------------------------------------------------------------------------
 def test_regions_best_combination_per_channel_and_the_relative_difference(project):
     d = two(project, "regions-ab")["data"]
-    assert [x["channel"] for x in d["rows"]] == ["asia", "eu", "latam", "us"]  # ds-store sorts channels by name
+    assert [x["channel"] for x in d["rows"]] == ["asia", "eu", "latam", "us"]  # ds-runstore sorts channels by name
     run = get_run(project, A30)
     best = means(project, A30, ["forecaster"]).idxmin()
     ch = run.channels.drop(columns="forecaster").merge(run.ok_cells()[["row", "forecaster"]], on="row")

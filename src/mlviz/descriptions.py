@@ -1,4 +1,4 @@
-"""The description of a run for the run tab (feature H): `ds-store` reads `description.yaml`, this module
+"""The description of a run for the run tab (feature H): `ds-runstore` reads `description.yaml`, this module
 puts it into the shape the screen shows.
 
 Fields in the order of the screen: `purpose` (paragraphs), `shows` (list), `expectation` (paragraph), `notes`

@@ -37,7 +37,7 @@ def create_app(project_root: Path | str | None = None) -> FastAPI:
 
     @app.exception_handler(StoreError)
     def store_error(_, e: StoreError) -> JSONResponse:
-        """ds-store could not read a run (missing package, `store_version` too new): say it plainly."""
+        """ds-runstore could not read a run (missing package, `store_version` too new): say it plainly."""
         return JSONResponse({"detail": str(e), "store_error": True}, status_code=409)
 
     def _with_primary() -> Project:
