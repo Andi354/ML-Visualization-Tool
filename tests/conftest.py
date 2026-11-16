@@ -14,9 +14,9 @@ os.environ.pop("ANTHROPIC_API_KEY", None)
 
 from mlviz.fixture import make_project  # noqa: E402
 
-import ds_store_shim  # noqa: E402
+import ds_runstore_shim  # noqa: E402
 
-ds_store_shim.install()
+ds_runstore_shim.install()
 
 
 @pytest.fixture(scope="session")

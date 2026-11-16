@@ -30,7 +30,7 @@ export interface RunInfo {
   ended: string | null;
   /** `finished`, `running` or `stalled` (not finished and nothing written for a while). */
   state: "finished" | "running" | "stalled" | "unsupported";
-  /** Why the run cannot be shown (`unsupported`: written by a newer ds-store), else null. */
+  /** Why the run cannot be shown (`unsupported`: written by a newer ds-runstore), else null. */
   problem: string | null;
   running: boolean;
   migrated: boolean;
@@ -66,7 +66,7 @@ export interface IssueInfo {
 }
 
 export class NotFound extends Error {}
-/** The run store (ds-store) could not read the runs; the message is meant to be shown. */
+/** The run store (ds-runstore) could not read the runs; the message is meant to be shown. */
 export class StoreProblem extends Error {}
 
 export async function getJson<T>(url: string): Promise<T> {

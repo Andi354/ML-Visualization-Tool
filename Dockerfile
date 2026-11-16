@@ -16,17 +16,17 @@ COPY src src
 COPY --from=web /repo/src/mlviz/static src/mlviz/static
 RUN python -m build --wheel --outdir /dist
 
-# Stage 3: ds-store (reads the runs), built from the folder next to this repo. It is passed as the
-# build context "ds-store" (docker-compose.yml does that; plain docker: --build-context ds-store=../ds-store).
+# Stage 3: ds-runstore (reads the runs), built from the folder next to this repo. It is passed as the
+# build context "ds-runstore" (docker-compose.yml does that; plain docker: --build-context ds-runstore=../ds-runstore).
 FROM python:3.12-slim AS dswheel
-COPY --from=ds-store . /ds-store
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /dist /ds-store
+COPY --from=ds-runstore . /ds-runstore
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /dist /ds-runstore
 
 # Stage 4: runtime
 FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
-# ds-store reads the runs (pandas and pyarrow only, not the project): installed together with the
+# ds-runstore reads the runs (pandas and pyarrow only, not the project): installed together with the
 # tool, so pip finds the dependency in the wheel built above.
 COPY --from=dswheel /dist/*.whl /tmp/
 COPY --from=wheel /dist/*.whl /tmp/

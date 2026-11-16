@@ -2,7 +2,7 @@
 
 A run folder holds `meta.json`, the resolved `config.yaml`, `config.base.yaml` and the tables
 `plan`, `cells`, `channels`, `curves` and `predictions`. The tables, the state and the progress come
-from `ds-store` (see `store.py`); `meta.json` and the YAML files are read here. Everything is cached
+from `ds-runstore` (see `store.py`); `meta.json` and the YAML files are read here. Everything is cached
 by modification time, so a running experiment shows up as it writes.
 """
 
@@ -67,7 +67,7 @@ class Run:
     """One run folder."""
 
     path: Path
-    #: Status as `ds-store` listed it, so a run list does not read every run twice.
+    #: Status as `ds-runstore` listed it, so a run list does not read every run twice.
     listed: dict | None = field(default=None, repr=False, compare=False)
 
     @property
@@ -114,7 +114,7 @@ class Run:
         except (OSError, yaml.YAMLError):
             return None
 
-    # --- tables (through ds-store) -------------------------------------------------------------
+    # --- tables (through ds-runstore) -------------------------------------------------------------
     def table(self, name: str, with_cells: bool = False) -> pd.DataFrame | None:
         return store.read_table(self.path, name, with_cells=with_cells)
 
@@ -145,7 +145,7 @@ class Run:
         df = self.table("predictions")
         return df is not None and not df.empty
 
-    # --- state and progress (ds-store: finished | running | stalled | unsupported) --------------
+    # --- state and progress (ds-runstore: finished | running | stalled | unsupported) --------------
     @property
     def status(self) -> dict:
         if self.listed is not None:
@@ -154,7 +154,7 @@ class Run:
 
     @property
     def short(self) -> str | None:
-        """One-line description from `ds-store`'s run list (cut to 100 characters), None without a description."""
+        """One-line description from `ds-runstore`'s run list (cut to 100 characters), None without a description."""
         return store.cut_short((self.listed or {}).get("short"))
 
     @property
@@ -288,7 +288,7 @@ def list_runs(project: Project) -> list[Run]:
 
 
 def readable_runs(project: Project) -> list[Run]:
-    """`list_runs` without the runs ds-store cannot read (the widgets need their tables)."""
+    """`list_runs` without the runs ds-runstore cannot read (the widgets need their tables)."""
     return [r for r in list_runs(project) if not r.problem]
 
 

@@ -1,7 +1,7 @@
-"""The one place that reads run tables: the `ds-store` package.
+"""The one place that reads run tables: the `ds-runstore` package.
 
 The run folder layout (one file per table, or part files while a run is going) is the business of
-`ds-store`; this tool never opens a run table itself. What it uses:
+`ds-runstore`; this tool never opens a run table itself. What it uses:
 
 - `list_runs(runs_root)`: one dict per run (meta essentials plus planned/done/ok/error/remaining/state;
   a run from a newer package is listed with `state: "unsupported"` and a `message`)
@@ -9,9 +9,9 @@ The run folder layout (one file per table, or part files while a run is going) i
   as one table (empty when the run has none); `with_cells=True` adds the axis and replicate columns
 - `run_status(run_dir)`: the same numbers for one run; state is `finished`, `running` or `stalled`
 - `table_version(run_dir, name)`: changes when the table's files change (cache key)
-- `read_description(run_dir)` (from `ds-store` after TIM-71): `None` without `description.yaml`, else the fields
+- `read_description(run_dir)` (from `ds-runstore` after TIM-71): `None` without `description.yaml`, else the fields
   `short`, `purpose`, `shows`, `notes`, `expectation`, `compare_to` and a list `problems`. `list_runs` then also
-  returns per run `short` and `has["description"]`. A `ds-store` without them means "no description".
+  returns per run `short` and `has["description"]`. A `ds-runstore` without them means "no description".
 
 `meta.json` and `config.yaml` are plain files and are read by `runs.py`.
 """
@@ -32,21 +32,21 @@ STATUS_TTL_S = 30
 
 
 class StoreError(RuntimeError):
-    """`ds-store` could not read a run (for example a `store_version` newer than the package knows)."""
+    """`ds-runstore` could not read a run (for example a `store_version` newer than the package knows)."""
 
 
 class StoreUnavailable(StoreError):
-    """The `ds-store` package is not installed."""
+    """The `ds-runstore` package is not installed."""
 
 
 def _api():
     try:
-        import ds_store
+        import ds_runstore
     except ImportError as e:
         raise StoreUnavailable(
-            "Das Paket ds-store ist nicht installiert. Es liest die Läufe, ohne es zeigt das Tool keine Ergebnisse."
+            "Das Paket ds-runstore ist nicht installiert. Es liest die Läufe, ohne es zeigt das Tool keine Ergebnisse."
         ) from e
-    return ds_store
+    return ds_runstore
 
 
 def _wrap(error: Exception) -> StoreError:
@@ -95,7 +95,7 @@ def run_status(run_dir: Path) -> dict:
 
 
 def list_runs(runs_root: Path) -> list[tuple[Path, dict]]:
-    """Run folders with their status dicts, as `ds-store` lists them. A run it cannot read comes back
+    """Run folders with their status dicts, as `ds-runstore` lists them. A run it cannot read comes back
     with `state: "unsupported"` and a `message`."""
     try:
         items = _api().list_runs(Path(runs_root))
@@ -113,7 +113,7 @@ def cut_short(text) -> str | None:
 
 
 def read_description(run_dir: Path) -> dict | None:
-    """The description of a run: None without a file (or with a `ds-store` that cannot read descriptions),
+    """The description of a run: None without a file (or with a `ds-runstore` that cannot read descriptions),
     else its fields and `problems`. A file that cannot be read at all comes back as a problem, not an error."""
     fn = getattr(_api(), "read_description", None)
     if fn is None:
